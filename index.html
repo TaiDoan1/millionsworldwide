@@ -220,10 +220,17 @@
         
         // 1. Link GIF hiển thị chính trong khung Polaroid ở giữa trang:
         const MY_MAIN_MEDIA_URL = "https://media1.tenor.com/m/Ile97eFHbdIAAAAd/doggy-cute.gif";
-        // https://media.tenor.com/SxUYi735VE0AAAP1/double2t-tuti.mp4
-        // https://media.tenor.com/meDTXXdESAoAAAAm/dancing-dance.webp
-        // 2. Link GIF chạy hiệu ứng trôi nổi ở background nền:
-        const MY_FLOATING_MEDIA_URL = "https://media.tenor.com/meDTXXdESAoAAAAm/dancing-dance.webp";
+        
+        // 2. Danh sách các link GIF chạy hiệu ứng trôi nổi ở background nền (Thêm nhiều GIF khác nhau tại đây!):
+        const FLOATING_MEDIA_URLS = [
+            "https://media.tenor.com/meDTXXdESAoAAAAm/dancing-dance.webp",
+            "https://media.tenor.com/Fio4C8J5a2MAAAAj/cute-aesthetic.gif",
+            "https://media.tenor.com/qF3S-rA1o4QAAAAj/mochi-peach.gif",
+            "https://media.tenor.com/k6lP0qI2f-8AAAAj/cute-cat.gif",
+            "https://media.tenor.com/B94S0cchm-gAAAAj/peach-goma.gif",
+            "https://media.tenor.com/39_j_j_mksIAAAAj/mochi-peach-cat.gif",
+            "https://media.tenor.com/y8U-4aG77d0AAAAj/cute-cat.gif"
+        ];
         // ==========================================
 
         // Hàm kiểm tra đường dẫn có phải là video (mp4, webm, v.v.) hay không
@@ -250,9 +257,9 @@
             container.appendChild(img);
         }
 
-        // Tạo hiệu ứng trôi nổi động bằng cách sử dụng đường dẫn GIF/Video nền riêng
+        // Tạo hiệu ứng trôi nổi động bằng cách sử dụng nhiều đường dẫn GIF nền ngẫu nhiên
         const decorationsContainer = document.getElementById('decorations-container');
-        const numFloatingElements = 8; // Số lượng phần tử trôi nổi trong nền
+        const numFloatingElements = 15; // Tăng số lượng phần tử trôi nổi cho sinh động hơn
 
         for (let i = 0; i < numFloatingElements; i++) {
             const wrapper = document.createElement('div');
@@ -260,20 +267,23 @@
             
             // Random kích thước, vị trí bắt đầu và thời gian delay
             const size = Math.floor(Math.random() * 30) + 40; // 40px đến 70px
-            const leftPos = Math.random() * 90; // 0% đến 90%
-            const duration = Math.random() * 8 + 8; // 8s đến 16s
-            const delay = Math.random() * 10; // 0s đến 10s
+            const leftPos = Math.random() * 95; // 0% đến 95%
+            const duration = Math.random() * 10 + 10; // 10s đến 20s (bay chậm và mượt hơn)
+            const delay = Math.random() * 15; // 0s đến 15s
 
             wrapper.style.width = `${size}px`;
             wrapper.style.height = `${size}px`;
             wrapper.style.left = `${leftPos}%`;
             wrapper.style.animationDuration = `${duration}s`;
-            wrapper.style.animationDelay = `-${delay}s`; // Sử dụng số âm để bắt đầu chuyển động ngay
+            wrapper.style.animationDelay = `-${delay}s`; // Bắt đầu chuyển động ngay lập tức
+
+            // Lấy ngẫu nhiên một GIF trong danh sách đã cấu hình
+            const randomMediaUrl = FLOATING_MEDIA_URLS[Math.floor(Math.random() * FLOATING_MEDIA_URLS.length)];
 
             // Thêm nội dung media nền vào phần tử nổi
-            if (isVideo(MY_FLOATING_MEDIA_URL)) {
+            if (isVideo(randomMediaUrl)) {
                 const miniVideo = document.createElement('video');
-                miniVideo.src = MY_FLOATING_MEDIA_URL;
+                miniVideo.src = randomMediaUrl;
                 miniVideo.autoplay = true;
                 miniVideo.loop = true;
                 miniVideo.muted = true;
@@ -281,7 +291,7 @@
                 wrapper.appendChild(miniVideo);
             } else {
                 const miniImg = document.createElement('img');
-                miniImg.src = MY_FLOATING_MEDIA_URL;
+                miniImg.src = randomMediaUrl;
                 wrapper.appendChild(miniImg);
             }
 
