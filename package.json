@@ -1,0 +1,12 @@
+{
+  "name": "millionsworldwide-web",
+  "version": "1.0.0",
+  "description": "Static web server for MillionsWorldwide",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -s . -p $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}
