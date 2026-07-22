@@ -135,13 +135,23 @@
             margin-bottom: 2rem;
         }
 
-        .sparkle-icon {
+        .title-icon {
             display: inline-block;
-            animation: spin 3s infinite linear;
+            width: 38px;
+            height: 38px;
+            vertical-align: middle;
+            margin-left: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
+        .title-icon img,
+        .title-icon video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
         }
 
         /* Khung ảnh Polaroid chứa GIF/Video */
@@ -152,10 +162,11 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
             transform: rotate(-2deg);
             transition: all 0.3s ease;
-            display: inline-block;
+            display: block;
             width: 100%;
             max-width: 320px;
             margin: 0 auto;
+            box-sizing: border-box;
         }
 
         .polaroid:hover {
@@ -165,6 +176,8 @@
 
         .gif-container {
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
             aspect-ratio: 1 / 1;
             border-radius: 8px;
             overflow: hidden;
@@ -178,7 +191,12 @@
         .gif-container video {
             width: 100%;
             height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            min-width: 0;
+            min-height: 0;
             object-fit: cover;
+            display: block;
         }
 
         .polaroid-caption {
@@ -187,6 +205,85 @@
             color: var(--primary-color);
             margin-top: 12px;
             font-weight: 500;
+        }
+
+        /* Responsive CSS cho thiết bị di động */
+        @media (max-width: 600px) {
+            .welcome-card {
+                width: 85%;
+                max-width: 310px;
+                padding: 1.25rem 1rem;
+                border-radius: 24px;
+                border-width: 3px;
+            }
+
+            .title {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .title-icon {
+                width: 28px;
+                height: 28px;
+                margin-left: 6px;
+            }
+
+            .message {
+                font-size: 0.88rem;
+                line-height: 1.4;
+                margin-bottom: 1.2rem;
+            }
+
+            .polaroid {
+                max-width: 210px;
+                padding: 8px 8px 16px 8px;
+                border-radius: 12px;
+            }
+
+            .polaroid-caption {
+                font-size: 0.85rem;
+                margin-top: 8px;
+            }
+
+            .floating-gift {
+                max-width: 48px;
+                max-height: 48px;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 380px), (max-height: 660px) {
+            .welcome-card {
+                width: 82%;
+                max-width: 270px;
+                padding: 1rem 0.8rem;
+            }
+
+            .title {
+                font-size: 1.3rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .title-icon {
+                width: 24px;
+                height: 24px;
+                margin-left: 4px;
+            }
+
+            .message {
+                font-size: 0.8rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .polaroid {
+                max-width: 170px;
+                padding: 6px 6px 12px 6px;
+            }
+
+            .polaroid-caption {
+                font-size: 0.78rem;
+                margin-top: 6px;
+            }
         }
     </style>
 </head>
@@ -197,7 +294,7 @@
 
     <!-- Khung nội dung chính -->
     <div class="welcome-card">
-        <h1 class="title">MillionsWorldwide<span class="sparkle-icon">✨</span></h1>
+        <h1 class="title">MillionsWorldwide<span class="title-icon" id="title-icon-container"></span></h1>
         
         <!-- Thay đổi lời chào mừng của bạn ở đây -->
         <p class="message">
@@ -219,10 +316,13 @@
         // CẤU HÌNH ĐƯỜNG DẪN GIF HOẶC VIDEO CỦA BẠN TẠI ĐÂY:
         // (Hỗ trợ cả link GIF, WebP truyền thống và file video MP4)
         
-        // 1. Link GIF hiển thị chính trong khung Polaroid ở giữa trang:
+        // 1. Link GIF icon nhỏ hiển thị cạnh tiêu đề MillionsWorldwide:
+        const MY_TITLE_ICON_URL = "https://media.tenor.com/meDTXXdESAoAAAAm/dancing-dance.webp";
+
+        // 2. Link GIF hiển thị chính trong khung Polaroid ở giữa trang:
         const MY_MAIN_MEDIA_URL = "https://media1.tenor.com/m/Ile97eFHbdIAAAAd/doggy-cute.gif";
         
-        // 2. Danh sách các link GIF chạy hiệu ứng trôi nổi ở background nền (Thêm nhiều GIF khác nhau tại đây!):
+        // 3. Danh sách các link GIF chạy hiệu ứng trôi nổi ở background nền (Thêm nhiều GIF khác nhau tại đây!):
         const FLOATING_MEDIA_URLS = [
             "https://media.tenor.com/meDTXXdESAoAAAAm/dancing-dance.webp",
             "https://media.tenor.com/GQAsycjoZG8AAAAm/scuba-scuba-cat.webp",
@@ -239,6 +339,27 @@
             return url.toLowerCase().includes('.mp4') || 
                    url.toLowerCase().includes('.webm') || 
                    url.toLowerCase().includes('.ogg');
+        }
+
+        // Tạo icon GIF cạnh tiêu đề
+        const titleIconContainer = document.getElementById('title-icon-container');
+        if (titleIconContainer) {
+            if (isVideo(MY_TITLE_ICON_URL)) {
+                const titleVideo = document.createElement('video');
+                titleVideo.src = MY_TITLE_ICON_URL;
+                titleVideo.autoplay = true;
+                titleVideo.loop = true;
+                titleVideo.muted = true;
+                titleVideo.setAttribute('playsinline', '');
+                titleVideo.setAttribute('referrerpolicy', 'no-referrer');
+                titleIconContainer.appendChild(titleVideo);
+            } else {
+                const titleImg = document.createElement('img');
+                titleImg.src = MY_TITLE_ICON_URL;
+                titleImg.alt = "Title Icon Gift";
+                titleImg.setAttribute('referrerpolicy', 'no-referrer');
+                titleIconContainer.appendChild(titleImg);
+            }
         }
 
         // Tạo phần tử media chính cho Polaroid
