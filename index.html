@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="referrer" content="no-referrer">
     
     <style>
         :root {
@@ -249,11 +250,13 @@
             video.loop = true;
             video.muted = true;
             video.setAttribute('playsinline', '');
+            video.setAttribute('referrerpolicy', 'no-referrer');
             container.appendChild(video);
         } else {
             const img = document.createElement('img');
             img.src = MY_MAIN_MEDIA_URL;
             img.alt = "Cute Welcome Gift";
+            img.setAttribute('referrerpolicy', 'no-referrer');
             container.appendChild(img);
         }
 
@@ -288,10 +291,12 @@
                 miniVideo.loop = true;
                 miniVideo.muted = true;
                 miniVideo.setAttribute('playsinline', '');
+                miniVideo.setAttribute('referrerpolicy', 'no-referrer');
                 wrapper.appendChild(miniVideo);
             } else {
                 const miniImg = document.createElement('img');
                 miniImg.src = randomMediaUrl;
+                miniImg.setAttribute('referrerpolicy', 'no-referrer');
                 wrapper.appendChild(miniImg);
             }
 
