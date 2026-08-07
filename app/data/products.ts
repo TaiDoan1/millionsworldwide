@@ -16,12 +16,12 @@ export const CATEGORIES: Category[] = ["t-shirts", "sneakers", "sweatpants"];
 
 export const PRODUCTS: Product[] = [
   // t-shirts
-  { id: "t1", name: "diagonal arrow tee", price: 300, category: "t-shirts", image: "/products/tee-1.jpg" },
-  { id: "t2", name: "monogram skate tee", price: 300, category: "t-shirts", image: "/products/tee-2.jpg" },
-  { id: "t3", name: "worldwide logo tee", price: 300, category: "t-shirts", image: "/products/tee-3.jpg", soldOut: true },
-  { id: "t4", name: "cupid graphic tee", price: 350, category: "t-shirts", image: "/products/tee-4.jpg" },
-  { id: "t5", name: "cloud arrow tee", price: 300, category: "t-shirts", image: "/products/tee-5.jpg", compareAt: 350 },
-  { id: "t6", name: "building slim logo tee", price: 300, category: "t-shirts", image: "/products/tee-6.jpg", preOrder: true },
+  { id: "t1", name: "signature logo tee", price: 300, category: "t-shirts", image: "/products/prod-1.jpg" },
+  { id: "t2", name: "stay mad stay real tee", price: 300, category: "t-shirts", image: "/products/prod-2.jpg" },
+  { id: "t3", name: "worldwide oversized tee", price: 300, category: "t-shirts", image: "/products/prod-3.jpg", soldOut: true },
+  { id: "t4", name: "essential logo tee", price: 350, category: "t-shirts", image: "/products/prod-1.jpg" },
+  { id: "t5", name: "stay real skate tee", price: 300, category: "t-shirts", image: "/products/prod-2.jpg", compareAt: 350 },
+  { id: "t6", name: "worldwide slim tee", price: 300, category: "t-shirts", image: "/products/prod-3.jpg", preOrder: true },
 
   // sneakers
   { id: "s1", name: "court low sneakers", price: 650, category: "sneakers", image: "/products/sneaker-1.jpg" },
