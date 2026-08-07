@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <ellipse cx="100" cy="80" rx="70" ry="46" transform="rotate(-18 100 80)"
+    stroke="#111" stroke-width="10" />
+  <ellipse cx="100" cy="80" rx="52" ry="32" transform="rotate(-18 100 80)"
+    stroke="#111" stroke-width="4" opacity="0.5" />
+  <text x="100" y="88" text-anchor="middle" font-family="Arial, sans-serif"
+    font-size="26" font-weight="800" fill="#111"
+    transform="rotate(-18 100 80)">MW</text>
+</svg>
