@@ -8,8 +8,8 @@ interface Logo3DProps {
   priority?: boolean;
 }
 
-// 14 extrusion slices (1px apart) per side = 28px total solid 3D block thickness
-const SLICES = Array.from({ length: 14 }, (_, i) => i);
+// 8 extrusion slices (1px apart) per side = 16px clean solid 3D block thickness
+const SLICES = Array.from({ length: 8 }, (_, i) => i);
 
 export default function Logo3D({
   className = "w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28",
@@ -135,7 +135,7 @@ export default function Logo3D({
         className="relative w-full h-full will-change-transform"
         style={{ transformStyle: "preserve-3d" }}
       >
-        {/* FRONT BLOCK: Visible when facing forward. Zero bleed to the back */}
+        {/* FRONT BLOCK: Visible when facing forward. Zero shadow, zero bleed to the back */}
         <div
           className="absolute inset-0 select-none pointer-events-none"
           style={{
@@ -146,15 +146,15 @@ export default function Logo3D({
         >
           {SLICES.map((z) => {
             const isTop = z === SLICES.length - 1;
-            // Shading: core layers are darker brushed steel, top layer is full bright chrome
-            const brightness = isTop ? 1 : 0.42 + (z / SLICES.length) * 0.45;
+            // Clean metallic silver, no dark muddy gray
+            const brightness = isTop ? 1 : 0.85 + (z / SLICES.length) * 0.12;
             return (
               <div
                 key={`front-${z}`}
                 className="absolute inset-0 select-none pointer-events-none"
                 style={{
                   transform: `translateZ(${z}px)`,
-                  filter: `brightness(${brightness}) contrast(${isTop ? 1 : 1.2})`,
+                  filter: isTop ? "none" : `brightness(${brightness})`,
                 }}
               >
                 <Image
@@ -162,9 +162,7 @@ export default function Logo3D({
                   alt={isTop ? "MILLIONS" : ""}
                   fill
                   sizes="160px"
-                  className={`object-contain select-none pointer-events-none ${
-                    isTop ? "drop-shadow-[0_12px_28px_rgba(255,255,255,0.25)]" : ""
-                  }`}
+                  className="object-contain select-none pointer-events-none"
                   priority={priority && isTop}
                   draggable={false}
                   aria-hidden={!isTop}
@@ -175,7 +173,7 @@ export default function Logo3D({
         </div>
 
         {/* BACK BLOCK: Exactly identical to front block, rotated 180deg around Y */}
-        {/* Visible when facing backward. Zero bleed to the front, NO extra crossed strokes */}
+        {/* Zero shadow, zero bleed, clean chrome */}
         <div
           className="absolute inset-0 select-none pointer-events-none"
           style={{
@@ -187,14 +185,14 @@ export default function Logo3D({
         >
           {SLICES.map((z) => {
             const isTop = z === SLICES.length - 1;
-            const brightness = isTop ? 1 : 0.42 + (z / SLICES.length) * 0.45;
+            const brightness = isTop ? 1 : 0.85 + (z / SLICES.length) * 0.12;
             return (
               <div
                 key={`back-${z}`}
                 className="absolute inset-0 select-none pointer-events-none"
                 style={{
                   transform: `translateZ(${z}px)`,
-                  filter: `brightness(${brightness}) contrast(${isTop ? 1 : 1.2})`,
+                  filter: isTop ? "none" : `brightness(${brightness})`,
                 }}
               >
                 <Image
@@ -202,9 +200,7 @@ export default function Logo3D({
                   alt={isTop ? "MILLIONS" : ""}
                   fill
                   sizes="160px"
-                  className={`object-contain select-none pointer-events-none ${
-                    isTop ? "drop-shadow-[0_12px_28px_rgba(255,255,255,0.25)]" : ""
-                  }`}
+                  className="object-contain select-none pointer-events-none"
                   priority={priority && isTop}
                   draggable={false}
                   aria-hidden={!isTop}
