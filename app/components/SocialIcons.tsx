@@ -7,13 +7,24 @@ type Social = {
 const SOCIALS: Social[] = [
   {
     name: "Instagram",
-    href: "https://instagram.com/",
+    href: "https://www.instagram.com/millions.worldwide?xtok=MTZ5emN0bGV4aWkxZg%3D%3D&utm_source=qr",
     path: (
       <>
         <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
         <circle cx="12" cy="12" r="4.5" />
         <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none" />
       </>
+    ),
+  },
+  {
+    name: "Facebook",
+    href: "https://www.facebook.com/share/14sNnRXMaZJ/?mibextid=wwXIfr",
+    path: (
+      <path
+        d="M14 8.5V7c0-.7.3-1 1.2-1H17V3h-2.5C12 3 11 4.4 11 6.5V8.5H9V12h2v9h3v-9h2.2l.5-3.5H14z"
+        fill="currentColor"
+        stroke="none"
+      />
     ),
   },
   {

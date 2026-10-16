@@ -8,7 +8,7 @@ export default function InstagramSection() {
       <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">follow us on instagram</h2>
 
       <a
-        href="https://instagram.com/"
+        href="https://www.instagram.com/millions.worldwide?xtok=MTZ5emN0bGV4aWkxZg%3D%3D&utm_source=qr"
         target="_blank"
         rel="noopener noreferrer"
         className="mt-6 inline-block bg-black px-8 py-3 text-base text-white transition-opacity hover:opacity-80"
@@ -21,7 +21,7 @@ export default function InstagramSection() {
         {IG_IMAGES.map((src, i) => (
           <a
             key={src}
-            href="https://instagram.com/"
+            href="https://www.instagram.com/millions.worldwide?xtok=MTZ5emN0bGV4aWkxZg%3D%3D&utm_source=qr"
             target="_blank"
             rel="noopener noreferrer"
             className="group relative block aspect-square overflow-hidden bg-neutral-100"

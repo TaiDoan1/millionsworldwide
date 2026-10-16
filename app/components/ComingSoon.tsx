@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import Logo3D from "./Logo3D"
 
 interface ComingSoonProps {
   launchDate?: string
@@ -180,12 +181,8 @@ export default function ComingSoon({
           className="flex items-center justify-center hover:opacity-90 transition-opacity"
           aria-label="Millions Worldwide"
         >
-          <Image
-            src="/logo-spin.png"
-            alt="MILLIONS"
-            width={80}
-            height={80}
-            className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain drop-shadow-2xl animate-spin-slow select-none pointer-events-none"
+          <Logo3D
+            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
             priority
           />
         </Link>
@@ -353,7 +350,7 @@ export default function ComingSoon({
 
         <div className="flex items-center gap-6">
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/millions.worldwide?xtok=MTZ5emN0bGV4aWkxZg%3D%3D&utm_source=qr"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-white transition-colors"
@@ -362,7 +359,7 @@ export default function ComingSoon({
           </a>
           <span className="text-white/20">|</span>
           <a
-            href="https://facebook.com"
+            href="https://www.facebook.com/share/14sNnRXMaZJ/?mibextid=wwXIfr"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-white transition-colors"

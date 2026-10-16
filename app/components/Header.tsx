@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import Logo3D from "./Logo3D";
 
 export default function Header() {
   return (
@@ -7,14 +7,7 @@ export default function Header() {
       {/* Left - Logo */}
       <div className="flex-1">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-fit">
-          <Image
-            src="/logo-spin.png"
-            alt="MILLIONS"
-            width={36}
-            height={36}
-            className="w-7 h-7 object-contain drop-shadow animate-spin-slow"
-            priority
-          />
+          <Logo3D className="w-8 h-8" priority />
           <span className="text-sm font-semibold tracking-widest uppercase">
             Millions
           </span>
