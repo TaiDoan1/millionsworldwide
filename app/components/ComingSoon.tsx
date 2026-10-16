@@ -176,16 +176,15 @@ export default function ComingSoon({
           </span>
         </div>
 
-        <Link
-          href="/"
-          className="flex items-center justify-center hover:opacity-90 transition-opacity"
+        <div
+          className="flex items-center justify-center"
           aria-label="Millions Worldwide"
         >
           <Logo3D
-            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
+            className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
             priority
           />
-        </Link>
+        </div>
 
         {/* Sound toggle button */}
         <button
