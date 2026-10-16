@@ -8,6 +8,9 @@ interface Logo3DProps {
   priority?: boolean;
 }
 
+// 14 extrusion slices (1px apart) per side = 28px total solid 3D block thickness
+const SLICES = Array.from({ length: 14 }, (_, i) => i);
+
 export default function Logo3D({
   className = "w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28",
   priority = false,
@@ -35,15 +38,15 @@ export default function Logo3D({
         // Handle fling / momentum from drag release
         if (Math.abs(velocityRef.current.x) > 0.005) {
           rotationRef.current.y += velocityRef.current.x * dt;
-          // Apply friction damping
+          // Friction damping
           velocityRef.current.x *= Math.pow(0.93, dt / 16);
         } else {
           velocityRef.current.x = 0;
-          // Continuous auto-rotation
+          // Smooth continuous auto-rotation
           rotationRef.current.y += baseSpeed * dt;
         }
 
-        // Smoothly spring tilt back towards 0
+        // Return tilt smoothly to 0
         rotationRef.current.x *= Math.pow(0.9, dt / 16);
 
         // Normalize Y rotation
@@ -80,15 +83,12 @@ export default function Logo3D({
     const deltaX = e.clientX - lastPosRef.current.x;
     const deltaY = e.clientY - lastPosRef.current.y;
 
-    // Drag horizontally to rotate around Y
     rotationRef.current.y += deltaX * 0.8;
-    // Drag vertically to tilt around X (clamped between -35° and 35°)
     rotationRef.current.x = Math.max(
       -35,
       Math.min(35, rotationRef.current.x - deltaY * 0.45)
     );
 
-    // Compute velocity for inertia fling
     velocityRef.current = {
       x: (deltaX * 0.8) / dt,
       y: (-deltaY * 0.45) / dt,
@@ -110,7 +110,6 @@ export default function Logo3D({
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {}
 
-    // Cap velocity so it doesn't spin uncontrollably
     const maxVelocity = 1.2;
     velocityRef.current.x = Math.max(
       -maxVelocity,
@@ -128,64 +127,91 @@ export default function Logo3D({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      title="Nhấn và kéo để xoay logo 3D"
+      title="Nhấn và kéo để xoay khối logo 3D"
       aria-label="Interactive 3D Millions Logo"
     >
       <div
         ref={modelRef}
-        className="relative w-full h-full transition-transform ease-out will-change-transform"
+        className="relative w-full h-full will-change-transform"
         style={{ transformStyle: "preserve-3d" }}
       >
-        {/* Center metallic edge plate to give thickness when turning edge-on */}
+        {/* FRONT BLOCK: Visible when facing forward. Zero bleed to the back */}
         <div
           className="absolute inset-0 select-none pointer-events-none"
           style={{
-            transform: "translateZ(0px)",
-            filter: "brightness(0.65) contrast(1.2)",
+            transformStyle: "preserve-3d",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
           }}
         >
-          <Image
-            src="/logo-spin.png"
-            alt=""
-            fill
-            sizes="160px"
-            className="object-contain"
-            aria-hidden="true"
-            draggable={false}
-          />
+          {SLICES.map((z) => {
+            const isTop = z === SLICES.length - 1;
+            // Shading: core layers are darker brushed steel, top layer is full bright chrome
+            const brightness = isTop ? 1 : 0.42 + (z / SLICES.length) * 0.45;
+            return (
+              <div
+                key={`front-${z}`}
+                className="absolute inset-0 select-none pointer-events-none"
+                style={{
+                  transform: `translateZ(${z}px)`,
+                  filter: `brightness(${brightness}) contrast(${isTop ? 1 : 1.2})`,
+                }}
+              >
+                <Image
+                  src="/logo-spin.png"
+                  alt={isTop ? "MILLIONS" : ""}
+                  fill
+                  sizes="160px"
+                  className={`object-contain select-none pointer-events-none ${
+                    isTop ? "drop-shadow-[0_12px_28px_rgba(255,255,255,0.25)]" : ""
+                  }`}
+                  priority={priority && isTop}
+                  draggable={false}
+                  aria-hidden={!isTop}
+                />
+              </div>
+            );
+          })}
         </div>
 
-        {/* Back face: Exactly identical to front face, rotated 180deg around Y so it faces backwards */}
-        {/* When the medallion turns 180deg, this face turns towards the user, 100% upright and identical */}
+        {/* BACK BLOCK: Exactly identical to front block, rotated 180deg around Y */}
+        {/* Visible when facing backward. Zero bleed to the front, NO extra crossed strokes */}
         <div
-          className="absolute inset-0 select-none pointer-events-none [backface-visibility:hidden]"
-          style={{ transform: "rotateY(180deg) translateZ(2px)" }}
+          className="absolute inset-0 select-none pointer-events-none"
+          style={{
+            transform: "rotateY(180deg)",
+            transformStyle: "preserve-3d",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+          }}
         >
-          <Image
-            src="/logo-spin.png"
-            alt="MILLIONS"
-            fill
-            sizes="160px"
-            className="object-contain drop-shadow-[0_8px_24px_rgba(255,255,255,0.25)] select-none pointer-events-none"
-            priority={priority}
-            draggable={false}
-          />
-        </div>
-
-        {/* Front face: Exactly identical, facing forward */}
-        <div
-          className="absolute inset-0 select-none pointer-events-none [backface-visibility:hidden]"
-          style={{ transform: "translateZ(2px)" }}
-        >
-          <Image
-            src="/logo-spin.png"
-            alt="MILLIONS"
-            fill
-            sizes="160px"
-            className="object-contain drop-shadow-[0_8px_24px_rgba(255,255,255,0.25)] select-none pointer-events-none"
-            priority={priority}
-            draggable={false}
-          />
+          {SLICES.map((z) => {
+            const isTop = z === SLICES.length - 1;
+            const brightness = isTop ? 1 : 0.42 + (z / SLICES.length) * 0.45;
+            return (
+              <div
+                key={`back-${z}`}
+                className="absolute inset-0 select-none pointer-events-none"
+                style={{
+                  transform: `translateZ(${z}px)`,
+                  filter: `brightness(${brightness}) contrast(${isTop ? 1 : 1.2})`,
+                }}
+              >
+                <Image
+                  src="/logo-spin.png"
+                  alt={isTop ? "MILLIONS" : ""}
+                  fill
+                  sizes="160px"
+                  className={`object-contain select-none pointer-events-none ${
+                    isTop ? "drop-shadow-[0_12px_28px_rgba(255,255,255,0.25)]" : ""
+                  }`}
+                  priority={priority && isTop}
+                  draggable={false}
+                  aria-hidden={!isTop}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
