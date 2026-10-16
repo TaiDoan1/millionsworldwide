@@ -1,21 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { CATEGORIES, PRODUCTS, type Category } from "../data/products";
 import ProductCard from "./ProductCard";
-
-function Arrow({ dir }: { dir: "left" | "right" }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      {dir === "left" ? <polyline points="15 5 8 12 15 19" /> : <polyline points="9 5 16 12 9 19" />}
-    </svg>
-  );
-}
 
 export default function ShopSection() {
   const [category, setCategory] = useState<Category>("t-shirts");
   const [hideSoldOut, setHideSoldOut] = useState(false);
-  const trackRef = useRef<HTMLDivElement>(null);
 
   const products = useMemo(
     () =>
@@ -24,14 +15,6 @@ export default function ShopSection() {
       ),
     [category, hideSoldOut]
   );
-
-  function scroll(dir: "left" | "right") {
-    const track = trackRef.current;
-    if (!track) return;
-    const card = track.querySelector<HTMLElement>("[data-card]");
-    const amount = card ? card.offsetWidth + 32 : track.clientWidth * 0.8;
-    track.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
-  }
 
   return (
     <section className="mx-auto w-full max-w-[1400px] px-6">
@@ -73,40 +56,17 @@ export default function ShopSection() {
         ))}
       </div>
 
-      {/* Carousel */}
-      <div className="relative mt-14">
-        <button
-          aria-label="Previous"
-          onClick={() => scroll("left")}
-          className="absolute -left-2 top-[38%] z-10 -translate-y-1/2 bg-white/80 p-1 transition-opacity hover:opacity-60 sm:-left-4"
-        >
-          <Arrow dir="left" />
-        </button>
-        <button
-          aria-label="Next"
-          onClick={() => scroll("right")}
-          className="absolute -right-2 top-[38%] z-10 -translate-y-1/2 bg-white/80 p-1 transition-opacity hover:opacity-60 sm:-right-4"
-        >
-          <Arrow dir="right" />
-        </button>
-
-        <div
-          ref={trackRef}
-          className="no-scrollbar flex snap-x snap-mandatory gap-8 overflow-x-auto scroll-smooth px-6"
-        >
-          {products.length === 0 && (
-            <p className="w-full py-20 text-center text-neutral-400">no products found.</p>
-          )}
-          {products.map((p) => (
-            <div
-              key={p.id}
-              data-card
-              className="w-[calc(100%-2rem)] shrink-0 snap-start sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.333rem)]"
-            >
-              <ProductCard product={p} />
-            </div>
-          ))}
-        </div>
+      {/* Product grid — one row of 3 on desktop */}
+      <div className="mt-14 px-6">
+        {products.length === 0 ? (
+          <p className="py-20 text-center text-neutral-400">no products found.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-x-12 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

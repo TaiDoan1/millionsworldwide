@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import "./globals.css";
+import Header from "./components/Header";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -13,10 +14,13 @@ export const metadata: Metadata = {
   description: "MILLIONS WORLDWIDE — official store",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${archivo.variable} h-full antialiased`}>
-      <body className="min-h-full bg-white text-black">{children}</body>
+      <body className="min-h-full bg-white text-black">
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }
