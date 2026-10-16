@@ -1,12 +1,23 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Header() {
   return (
     <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 text-white drop-shadow-md">
       {/* Left - Logo */}
       <div className="flex-1">
-        <Link href="/" className="text-sm font-semibold tracking-widest uppercase">
-          Millions
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-fit">
+          <Image
+            src="/logo.png"
+            alt="MILLIONS"
+            width={32}
+            height={24}
+            className="h-6 w-auto object-contain drop-shadow"
+            priority
+          />
+          <span className="text-sm font-semibold tracking-widest uppercase">
+            Millions
+          </span>
         </Link>
       </div>
 

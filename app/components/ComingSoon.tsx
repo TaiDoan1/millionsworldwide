@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import Image from "next/image"
 
 interface ComingSoonProps {
   launchDate?: string
@@ -37,9 +38,22 @@ export default function ComingSoon({
   const [email, setEmail] = useState("")
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(true)
 
   const desktopVideoRef = useRef<HTMLVideoElement>(null)
   const mobileVideoRef = useRef<HTMLVideoElement>(null)
+
+  // Track viewport to only play ONE video at a time (prevent overlapping sounds)
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)")
+    setIsDesktop(mq.matches)
+
+    const handler = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches)
+    }
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
 
   // Calculate remaining time
   useEffect(() => {
@@ -81,12 +95,36 @@ export default function ComingSoon({
     return () => clearInterval(timer)
   }, [launchDate])
 
+  // Synchronize playback and muting strictly to the ACTIVE video
+  useEffect(() => {
+    if (isDesktop) {
+      // Inactive: pause and mute mobile video
+      if (mobileVideoRef.current) {
+        mobileVideoRef.current.pause()
+        mobileVideoRef.current.muted = true
+      }
+      // Active: play desktop video with selected mute state
+      if (desktopVideoRef.current) {
+        desktopVideoRef.current.muted = isMuted
+        desktopVideoRef.current.play().catch(() => {})
+      }
+    } else {
+      // Inactive: pause and mute desktop video
+      if (desktopVideoRef.current) {
+        desktopVideoRef.current.pause()
+        desktopVideoRef.current.muted = true
+      }
+      // Active: play mobile video with selected mute state
+      if (mobileVideoRef.current) {
+        mobileVideoRef.current.muted = isMuted
+        mobileVideoRef.current.play().catch(() => {})
+      }
+    }
+  }, [isDesktop, isMuted])
+
   // Sound toggle handler
   const toggleSound = () => {
-    const nextMuted = !isMuted
-    setIsMuted(nextMuted)
-    if (desktopVideoRef.current) desktopVideoRef.current.muted = nextMuted
-    if (mobileVideoRef.current) mobileVideoRef.current.muted = nextMuted
+    setIsMuted((prev) => !prev)
   }
 
   // Handle email submit
@@ -97,22 +135,6 @@ export default function ComingSoon({
   }
 
   const formatNumber = (num: number) => String(num).padStart(2, "0")
-
-  // Ensure autoplay triggers reliably on mobile / Safari
-  useEffect(() => {
-    const playVideo = (v: HTMLVideoElement | null) => {
-      if (!v) return
-      v.muted = true
-      const promise = v.play()
-      if (promise !== undefined) {
-        promise.catch(() => {
-          // Autoplay was prevented or postponed by power saving
-        })
-      }
-    }
-    playVideo(desktopVideoRef.current)
-    playVideo(mobileVideoRef.current)
-  }, [])
 
   return (
     <div className="fixed inset-0 z-[100] w-full h-full bg-black text-white overflow-hidden flex flex-col justify-between select-none">
@@ -155,9 +177,19 @@ export default function ComingSoon({
 
         <Link
           href="/"
-          className="text-base md:text-lg font-bold tracking-[0.3em] uppercase hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
         >
-          Millions
+          <Image
+            src="/logo.png"
+            alt="MILLIONS"
+            width={34}
+            height={26}
+            className="h-6 md:h-7 w-auto object-contain drop-shadow"
+            priority
+          />
+          <span className="text-sm md:text-base font-bold tracking-[0.25em] uppercase">
+            Millions
+          </span>
         </Link>
 
         {/* Sound toggle button */}

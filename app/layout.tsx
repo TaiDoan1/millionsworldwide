@@ -12,6 +12,14 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   title: "MILLIONS WORLDWIDE",
   description: "MILLIONS WORLDWIDE — official store",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
