@@ -177,19 +177,17 @@ export default function ComingSoon({
 
         <Link
           href="/"
-          className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+          className="flex items-center justify-center hover:opacity-90 transition-opacity"
+          aria-label="Millions Worldwide"
         >
           <Image
-            src="/logo.png"
+            src="/logo-spin.png"
             alt="MILLIONS"
-            width={34}
-            height={26}
-            className="h-6 md:h-7 w-auto object-contain drop-shadow"
+            width={80}
+            height={80}
+            className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain drop-shadow-2xl animate-spin-slow select-none pointer-events-none"
             priority
           />
-          <span className="text-sm md:text-base font-bold tracking-[0.25em] uppercase">
-            Millions
-          </span>
         </Link>
 
         {/* Sound toggle button */}

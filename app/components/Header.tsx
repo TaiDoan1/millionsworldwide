@@ -8,11 +8,11 @@ export default function Header() {
       <div className="flex-1">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-fit">
           <Image
-            src="/logo.png"
+            src="/logo-spin.png"
             alt="MILLIONS"
-            width={32}
-            height={24}
-            className="h-6 w-auto object-contain drop-shadow"
+            width={36}
+            height={36}
+            className="w-7 h-7 object-contain drop-shadow animate-spin-slow"
             priority
           />
           <span className="text-sm font-semibold tracking-widest uppercase">
