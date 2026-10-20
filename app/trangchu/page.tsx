@@ -26,7 +26,7 @@ export default function TrangChuPage() {
       <main className="w-full">
         {/* Hero — sized with the reference homepage hero's own formula:
             height calc(100vh - 2rem); from 760px up, calc(100vh - 5rem) capped at
-            calc(100vh - 4.5vw). 12px radius, centred title. Autoplay, muted, loop. */}
+            calc(100vh - 4.5vw). 12px radius, no overlay title. Autoplay, muted, loop. */}
         <div className="px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
           <div className="relative h-[calc(100vh-2rem)] min-[760px]:h-[calc(100vh-5rem)] min-[760px]:max-h-[calc(100vh-4.5vw)] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
             <video
@@ -40,9 +40,6 @@ export default function TrangChuPage() {
               aria-label="Millions Worldwide collection"
               className="absolute inset-0 h-full w-full object-cover"
             />
-            <h1 className="absolute inset-0 flex items-center justify-center text-[24px] font-normal text-white lg:text-[27px]">
-              Products
-            </h1>
           </div>
         </div>
 
