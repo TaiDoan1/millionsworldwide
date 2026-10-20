@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PRODUCTS } from "../data/products";
+import Logo3D from "./Logo3D";
 
 const NAV_LINKS = [
   { label: "SHOP", href: "/shop" },
@@ -94,12 +95,15 @@ export default function CollectionHeader() {
           </button>
         </div>
 
-        {/* Center logo */}
-        <Link href="/" className="flex items-baseline gap-2 whitespace-nowrap">
-          <span className="text-2xl font-extrabold tracking-tight text-black">
-            MILLIONS
+        {/* Center logo — rotating 3D logo from the Coming Soon screen */}
+        <Link
+          href="/"
+          aria-label="Millions Worldwide"
+          className="flex items-center justify-center whitespace-nowrap"
+        >
+          <span className="pointer-events-none block">
+            <Logo3D className="h-[70px] w-[70px] sm:h-16 sm:w-16" priority />
           </span>
-          <span className="font-serif text-2xl italic text-black">Worldwide</span>
         </Link>
 
         {/* Right utils */}
