@@ -24,10 +24,10 @@ export default function ShopPage() {
       <CollectionHeader />
 
       <main className="w-full">
-        {/* Hero — 5:4 banner frame (reference image file is 2560×2048), 12px radius, centred title.
-            The frame now plays the Tokyo denim hero video (autoplay, muted, loop). */}
+        {/* Hero — the frame matches the hero video's native 16:9 so the video fits
+            exactly (no zoom/crop), 12px radius, centred title. Autoplay, muted, loop. */}
         <div className="px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
-          <div className="relative aspect-[5/4] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
+          <div className="relative aspect-video w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
             <video
               src="/videos/desktop.mp4"
               autoPlay
