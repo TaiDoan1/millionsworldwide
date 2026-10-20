@@ -1,7 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Logo3D from "./Logo3D";
 
 export default function Header() {
+  const pathname = usePathname();
+
+  // The shop/collection pages use their own floating CollectionHeader instead.
+  if (pathname?.startsWith("/shop")) {
+    return null;
+  }
+
   return (
     <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 text-white drop-shadow-md">
       {/* Left - Logo */}
