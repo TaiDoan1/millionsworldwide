@@ -107,9 +107,9 @@ export default function ShopSection() {
   };
 
   return (
-    <section className="w-full px-10">
-      {/* Category chips */}
-      <div className="flex flex-wrap items-center justify-center gap-4">
+    <section className="w-full px-3 sm:px-10">
+      {/* Category chips — swipeable row on mobile, centred wrap on desktop, fluid size like the reference */}
+      <div className="flex flex-nowrap items-center gap-[0.6875rem] overflow-x-auto pb-1 min-[1040px]:flex-wrap min-[1040px]:justify-center min-[1040px]:gap-[1.09375rem] min-[1040px]:overflow-visible">
         {CHIPS.map((chip) => (
           <button
             key={chip.key}
@@ -118,7 +118,7 @@ export default function ShopSection() {
               setFilter(chip.key);
               setVisibleCount(PAGE_SIZE);
             }}
-            className={`h-[58px] rounded-full border border-black px-7 text-xl font-medium uppercase transition-colors duration-300 ${
+            className={`whitespace-nowrap rounded-full border border-black px-[max(0.9375rem,1.38889vw)] py-[max(0.5rem,0.694444vw)] text-[max(0.75rem,1.22917vw)] font-normal uppercase leading-[1.2] transition-colors duration-300 ${
               filter === chip.key
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-black hover:text-white"
@@ -130,18 +130,18 @@ export default function ShopSection() {
       </div>
 
       {/* Sort + layout bar */}
-      <div className="relative mt-14 flex items-center justify-between">
+      <div className="relative mt-[clamp(1rem,0.62588rem+1.59624vw,2.25rem)] flex items-center justify-between text-[#67645e]">
         <div className="relative">
           <button
             type="button"
             onClick={() => setSortOpen((v) => !v)}
-            className="text-lg text-black"
+            className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]"
           >
-            Sort: <span className="underline underline-offset-4">{sortLabel}</span>{" "}
+            Sort: <span className="font-bold underline underline-offset-4">{sortLabel}</span>{" "}
             <span aria-hidden>▾</span>
           </button>
           {sortOpen && (
-            <div className="absolute left-0 top-full z-40 mt-3 w-[380px] max-w-[80vw] rounded-2xl bg-[#FAF8F0] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.15)]">
+            <div className="absolute left-0 top-full z-40 mt-3 w-[375px] max-w-[80vw] rounded-[10px] bg-[#f1f0ed]/90 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.15)] backdrop-blur-md">
               <div className="flex items-center justify-between px-2 pb-2">
                 <span className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
                   Sort by
@@ -175,7 +175,7 @@ export default function ShopSection() {
         </div>
 
         <div className="flex items-center gap-5">
-          <span className="text-lg text-black">{products.length} products</span>
+          <span className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]">{products.length} products</span>
           <button
             type="button"
             aria-label="2 column layout"
@@ -198,8 +198,8 @@ export default function ShopSection() {
         <p className="py-24 text-center text-lg text-neutral-400">no products found.</p>
       ) : (
         <div
-          className={`mt-6 grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 ${
-            cols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"
+          className={`mt-[clamp(1rem,0.62588rem+1.59624vw,2.25rem)] grid grid-cols-2 gap-x-[clamp(0.5rem,3.0047vw_-_0.204225rem,3.75rem)] gap-y-[clamp(0.5rem,0.12588rem_+_1.59624vw,2.8125rem)] ${
+            cols === 3 ? "min-[820px]:grid-cols-3" : ""
           }`}
         >
           {visible.map((p) => (
@@ -210,7 +210,7 @@ export default function ShopSection() {
 
       {/* Load more */}
       {visibleCount < products.length && (
-        <div className="mt-[60px] flex justify-center">
+        <div className="mt-[clamp(1.0625rem,0.68838rem_+_1.59624vw,3.4375rem)] flex justify-center">
           <button
             type="button"
             onClick={handleLoadMore}

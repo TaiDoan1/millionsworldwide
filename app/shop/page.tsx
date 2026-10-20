@@ -13,9 +13,9 @@ export default function ShopPage() {
       <CollectionHeader />
 
       <main className="w-full">
-        {/* Hero — ~5:4 editorial image with centred title, like the reference collection page */}
-        <div className="px-10 pt-[135px]">
-          <div className="relative aspect-[5/4] w-full overflow-hidden rounded-2xl">
+        {/* Hero — 16:9 banner (reference image is 1600×900), 12px radius, centred title */}
+        <div className="px-0 pt-[110px] sm:px-10 sm:pt-[135px]">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
             <Image
               src="/ig/banner.jpg"
               alt="Millions Worldwide collection"
@@ -24,13 +24,13 @@ export default function ShopPage() {
               sizes="100vw"
               className="object-cover"
             />
-            <h1 className="absolute left-1/2 top-[65%] -translate-x-1/2 text-[28px] font-medium text-white sm:text-[30px]">
+            <h1 className="absolute inset-0 flex items-center justify-center text-[24px] font-normal text-white lg:text-[27px]">
               Products
             </h1>
           </div>
         </div>
 
-        <div className="mt-14">
+        <div className="mt-[clamp(1rem,0.62588rem+1.59624vw,2.25rem)]">
           <ShopSection />
         </div>
       </main>

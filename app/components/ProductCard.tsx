@@ -29,18 +29,18 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group">
       {/* Category tag overlapping the top of the image */}
-      <div className="relative z-30 -mb-[34px] pl-1 text-[56px] font-extrabold lowercase leading-none tracking-tight text-black">
+      <div className="relative z-30 -mb-[20px] pl-1 text-4xl font-extrabold lowercase leading-none tracking-tight text-black sm:-mb-[34px] sm:text-[56px]">
         {tag}
       </div>
 
-      {/* Image frame — 2:3 portrait like the reference */}
+      {/* Image frame — 2:3 portrait, image fills the frame (object-fit: cover) like the reference */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-white">
         <Image
           src={firstImage}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 45vw, 30vw"
-          className="object-contain"
+          className="object-cover"
         />
         {/* Hover image crossfades over the first one */}
         <Image
@@ -54,7 +54,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Sold out badge — centred pink circle, covered on hover like the reference */}
         {product.soldOut && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <span className="flex h-[90px] w-[90px] items-center justify-center rounded-full bg-[#F5A8B8] text-center text-[13px] font-bold uppercase leading-tight text-white">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F5A8B8] text-center text-[10px] font-bold uppercase leading-tight tracking-[1px] text-white">
               Sold
               <br />
               Out
