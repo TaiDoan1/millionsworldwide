@@ -76,7 +76,7 @@ export default function ProductCard({
       </div>
 
       {/* Content — overlay on desktop, static block under the photo on mobile */}
-      <div className="flex flex-col justify-between max-[819px]:flex-1 max-[819px]:p-[0.5rem_0.625rem_0.625rem] min-[820px]:pointer-events-none min-[820px]:absolute min-[820px]:inset-0 min-[820px]:z-20 min-[820px]:p-[1.75rem]">
+      <div className="flex flex-col justify-between max-[819px]:flex-1 max-[819px]:p-[0.5rem_0.625rem_0.625rem] min-[820px]:pointer-events-none min-[820px]:absolute min-[820px]:inset-0 min-[820px]:z-20 min-[820px]:p-[1rem_0.75rem] min-[1200px]:p-[1.75rem]">
         {/* Category tag */}
         <div className="flex items-start justify-between gap-2">
           <span
@@ -100,10 +100,22 @@ export default function ProductCard({
           className={`transition-opacity duration-700 ${EASE} min-[820px]:group-hover:opacity-0`}
         >
           <div className="flex items-start justify-between gap-3">
-            <h3 className="font-semibold uppercase leading-[1.25] text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] min-[820px]:text-[max(1rem,1.25vw)]">
+            <h3
+              className={`font-semibold uppercase leading-[1.25] text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] ${
+                cols === 3
+                  ? "min-[820px]:text-[max(1rem,1.25vw)]"
+                  : "min-[820px]:text-[clamp(0.75rem,1.25vw,1.375rem)]"
+              }`}
+            >
               {product.name}
             </h3>
-            <span className="whitespace-nowrap font-bold text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] min-[820px]:text-[max(1rem,1.25vw)]">
+            <span
+              className={`whitespace-nowrap font-bold text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] ${
+                cols === 3
+                  ? "min-[820px]:text-[max(1rem,1.25vw)]"
+                  : "min-[820px]:text-[clamp(0.75rem,1.25vw,1.375rem)]"
+              }`}
+            >
               {product.compareAt && (
                 <span className="mr-2 font-medium text-neutral-400 line-through">
                   {formatPrice(product.compareAt)}

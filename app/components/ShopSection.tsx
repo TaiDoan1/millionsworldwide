@@ -224,7 +224,7 @@ export default function ShopSection() {
             type="button"
             onClick={handleLoadMore}
             disabled={loading}
-            className="h-[60px] w-[430px] max-w-full rounded-full border border-black bg-white text-lg uppercase tracking-[0.2em] text-black"
+            className="h-[60px] w-[430px] max-w-full rounded-full border border-black bg-white text-[max(0.875rem,0.925vw)] uppercase text-black"
           >
             {loading ? "LOADING..." : "LOAD MORE"}
           </button>

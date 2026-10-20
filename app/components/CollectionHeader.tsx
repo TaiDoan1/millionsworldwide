@@ -67,7 +67,7 @@ export default function CollectionHeader() {
                   setTab("all");
                   setShopOpen(true);
                 }}
-                className="text-xl font-bold uppercase tracking-normal text-black transition-opacity hover:opacity-60"
+                className="text-[max(1rem,1.125vw)] font-bold uppercase tracking-normal text-black transition-opacity hover:opacity-60"
               >
                 SHOP
               </button>
@@ -75,7 +75,7 @@ export default function CollectionHeader() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-xl font-bold uppercase tracking-normal text-black transition-opacity hover:opacity-60"
+                className="text-[max(1rem,1.125vw)] font-bold uppercase tracking-normal text-black transition-opacity hover:opacity-60"
               >
                 {item.label}
               </Link>
@@ -110,19 +110,19 @@ export default function CollectionHeader() {
         <div className="flex flex-1 items-center justify-end gap-12">
           <button
             type="button"
-            className="hidden text-xl font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
+            className="hidden text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
           >
             Search
           </button>
           <button
             type="button"
-            className="hidden text-xl font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
+            className="hidden text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
           >
             Account
           </button>
           <button
             type="button"
-            className="text-xl font-bold uppercase text-black transition-opacity hover:opacity-60"
+            className="text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60"
           >
             Cart (0)
           </button>

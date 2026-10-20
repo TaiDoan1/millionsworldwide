@@ -54,14 +54,14 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="text-sm font-bold uppercase tracking-wide text-black">{title}</h3>
+      <h3 className="text-lg font-bold uppercase tracking-wide text-black">{title}</h3>
       <div className="mt-4">{children}</div>
     </div>
   );
 }
 
 const linkCls =
-  "text-[15px] leading-[1.9] text-[#67645e] transition-colors hover:text-black";
+  "text-base leading-[1.9] text-[#67645e] transition-colors hover:text-black";
 
 /**
  * Reference footer: a white rounded panel (12px, soft shadow) inset by the page
@@ -83,7 +83,7 @@ export default function CollectionFooter() {
         <div className="overflow-hidden rounded-[12px] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
           {/* Giant logo */}
           <div className="border-b border-[#84827e] px-4 pb-7 pt-7">
-            <div className="select-none font-extrabold uppercase leading-[0.9] tracking-tighter text-black">
+            <div className="select-none font-black uppercase leading-[0.9] tracking-tighter text-black">
               <div className="text-[8vw]">Millions</div>
               <div className="text-[8vw]">
                 Worldwide<sup className="align-super text-[2.2vw]">™</sup>
@@ -93,7 +93,7 @@ export default function CollectionFooter() {
 
           {/* Newsletter row */}
           <div className="border-b border-[#84827e] px-4 py-7">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-black">
+            <h3 className="text-lg font-bold uppercase tracking-wide text-black">
               Newsletter
             </h3>
             <Newsletter />
@@ -155,7 +155,7 @@ export default function CollectionFooter() {
               </p>
               <Link
                 href="/shop"
-                className="mt-2 inline-block text-[15px] font-semibold text-black underline underline-offset-4"
+                className="mt-2 inline-block text-base font-semibold text-black underline underline-offset-4"
               >
                 Mua sắm ngay
               </Link>
