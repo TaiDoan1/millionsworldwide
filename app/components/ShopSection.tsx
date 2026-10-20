@@ -120,7 +120,7 @@ export default function ShopSection() {
             }}
             className={`whitespace-nowrap rounded-full border border-black px-[max(0.9375rem,1.38889vw)] py-[max(0.5rem,0.694444vw)] text-[max(0.75rem,1.22917vw)] font-normal uppercase leading-[1.2] transition-colors duration-300 ${
               filter === chip.key
-                ? "bg-black text-white"
+                ? "bg-[#67645e] text-white"
                 : "bg-white text-black hover:bg-black hover:text-white"
             }`}
           >
@@ -130,7 +130,7 @@ export default function ShopSection() {
       </div>
 
       {/* Sort + layout bar */}
-      <div className="relative mt-[clamp(1rem,0.62588rem+1.59624vw,2.25rem)] flex items-center justify-between text-[#67645e]">
+      <div className="relative mt-5 flex items-center justify-between text-[#67645e] sm:mt-[2.25vw]">
         <div className="relative">
           <button
             type="button"
@@ -140,8 +140,14 @@ export default function ShopSection() {
             Sort: <span className="font-bold underline underline-offset-4">{sortLabel}</span>{" "}
             <span aria-hidden>▾</span>
           </button>
-          {sortOpen && (
-            <div className="absolute left-0 top-full z-40 mt-3 w-[375px] max-w-[80vw] rounded-[10px] bg-[#f1f0ed]/90 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.15)] backdrop-blur-md">
+          <div
+            className={`absolute left-0 top-full z-40 mt-3 w-[375px] max-w-[80vw] overflow-hidden rounded-[10px] bg-[#f1f0ed]/90 shadow-[0_24px_60px_rgba(0,0,0,0.15)] backdrop-blur-md transition-[max-height,opacity,visibility] duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+              sortOpen
+                ? "visible max-h-[430px] opacity-100"
+                : "invisible max-h-0 opacity-0"
+            }`}
+          >
+            <div className="p-4">
               <div className="flex items-center justify-between px-2 pb-2">
                 <span className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
                   Sort by
@@ -171,7 +177,7 @@ export default function ShopSection() {
                 ))}
               </ul>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="flex items-center gap-5">
@@ -198,19 +204,22 @@ export default function ShopSection() {
         <p className="py-24 text-center text-lg text-neutral-400">no products found.</p>
       ) : (
         <div
-          className={`mt-[clamp(1rem,0.62588rem+1.59624vw,2.25rem)] grid grid-cols-2 gap-x-[clamp(0.5rem,3.0047vw_-_0.204225rem,3.75rem)] gap-y-[clamp(0.5rem,0.12588rem_+_1.59624vw,2.8125rem)] ${
+          className={`mt-5 grid auto-rows-fr grid-cols-2 gap-x-[clamp(0.5rem,3.0047vw_-_0.204225rem,3.75rem)] gap-y-[clamp(0.5rem,0.12588rem_+_1.59624vw,2.8125rem)] ${
             cols === 3 ? "min-[820px]:grid-cols-3" : ""
           }`}
         >
           {visible.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} cols={cols} />
           ))}
         </div>
       )}
 
       {/* Load more */}
       {visibleCount < products.length && (
-        <div className="mt-[clamp(1.0625rem,0.68838rem_+_1.59624vw,3.4375rem)] flex justify-center">
+        <div className="mt-[clamp(1.0625rem,0.68838rem_+_1.59624vw,3.4375rem)] flex flex-col items-center gap-4">
+          <p className="text-base text-[#67645e]">
+            Đang hiển thị {visible.length} trong {products.length} sản phẩm
+          </p>
           <button
             type="button"
             onClick={handleLoadMore}

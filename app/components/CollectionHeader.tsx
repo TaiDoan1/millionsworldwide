@@ -49,14 +49,14 @@ export default function CollectionHeader() {
 
   return (
     <div
-      className={`fixed left-10 right-10 top-3 z-[100] transition-transform duration-500 ease-out sm:left-[44px] sm:right-[44px] sm:top-[22px] ${
-        visible ? "translate-y-0" : "-translate-y-[140%]"
+      className={`fixed left-10 right-10 top-3 z-[100] transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] sm:left-[44px] sm:right-[44px] sm:top-[22px] ${
+        visible ? "translate-y-0" : "-translate-y-[150%]"
       }`}
       onMouseLeave={() => setShopOpen(false)}
     >
-      <header className="flex h-[92px] items-center justify-between rounded-2xl bg-white px-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)] sm:h-[73px] sm:rounded-[12px]">
+      <header className="flex h-[92px] items-center justify-between rounded-2xl bg-white px-8 shadow-[0_4px_20px_rgba(0,0,0,0.06)] sm:h-[73px] sm:rounded-[12px]">
         {/* Left nav */}
-        <nav className="hidden flex-1 items-center gap-8 lg:flex">
+        <nav className="hidden flex-1 items-center gap-12 lg:flex">
           {NAV_LINKS.map((item) =>
             item.label === "SHOP" ? (
               <button
@@ -103,7 +103,7 @@ export default function CollectionHeader() {
         </Link>
 
         {/* Right utils */}
-        <div className="flex flex-1 items-center justify-end gap-8">
+        <div className="flex flex-1 items-center justify-end gap-12">
           <button
             type="button"
             className="hidden text-xl font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
@@ -150,17 +150,23 @@ export default function CollectionHeader() {
         </nav>
       )}
 
-      {/* Mega menu */}
-      {shopOpen && (
-        <div className="mt-2 hidden rounded-2xl bg-white px-10 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.12)] lg:block">
+      {/* Mega menu — expands/collapses with the reference's 0.7s signature easing */}
+      <div
+        className={`mt-2 hidden overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_rgba(0,0,0,0.12)] transition-[max-height,opacity,visibility] duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] lg:block ${
+          shopOpen ? "visible max-h-[620px] opacity-100" : "invisible max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-10 py-8">
           <div className="flex items-center justify-center gap-9">
             {TABS.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 onMouseEnter={() => setTab(t.key)}
-                className={`text-xl font-bold uppercase transition-opacity hover:opacity-60 ${
-                  tab === t.key ? "text-black underline underline-offset-8" : "text-neutral-400"
+                className={`text-[max(0.8rem,1.125vw)] font-bold uppercase tracking-[0.02em] transition-colors duration-300 ${
+                  tab === t.key
+                    ? "text-[#6d6e70] underline underline-offset-8"
+                    : "text-[#acaaa5]"
                 }`}
               >
                 {t.label}
@@ -187,7 +193,7 @@ export default function CollectionHeader() {
             ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

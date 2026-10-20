@@ -1,7 +1,19 @@
 import Image from "next/image";
+import { Inter } from "next/font/google";
 import CollectionHeader from "../components/CollectionHeader";
 import ShopSection from "../components/ShopSection";
 import CollectionFooter from "../components/CollectionFooter";
+
+/**
+ * The reference shop renders everything in "Swiss" (a licensed Helvetica-style
+ * grotesque served from another store's CDN). Inter is its closest free metric
+ * match, so the shop page uses it instead of the site's Archivo.
+ */
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
 
 export const metadata = {
   title: "products — millions worldwide™",
@@ -9,7 +21,7 @@ export const metadata = {
 
 export default function ShopPage() {
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className={`min-h-screen bg-white text-black ${inter.className}`}>
       <CollectionHeader />
 
       <main className="w-full">
@@ -30,7 +42,7 @@ export default function ShopPage() {
           </div>
         </div>
 
-        <div className="mt-[clamp(1rem,0.62588rem+1.59624vw,2.25rem)]">
+        <div className="mt-[1.25rem] sm:mt-[2.25vw]">
           <ShopSection />
         </div>
       </main>

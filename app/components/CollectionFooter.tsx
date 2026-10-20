@@ -45,6 +45,29 @@ function YoutubeIcon() {
   );
 }
 
+function FooterColumn({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h3 className="text-sm font-bold uppercase tracking-wide text-black">{title}</h3>
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+const linkCls =
+  "text-[15px] leading-[1.9] text-[#67645e] transition-colors hover:text-black";
+
+/**
+ * Reference footer: a white rounded panel (12px, soft shadow) inset by the page
+ * margins — giant logo, divider, newsletter row, divider, 4-column info grid
+ * (1fr 1fr 0.7fr 1.3fr), then a centred copyright row with a top border.
+ */
 export default function CollectionFooter() {
   const [showFloating, setShowFloating] = useState(false);
 
@@ -56,94 +79,93 @@ export default function CollectionFooter() {
 
   return (
     <>
-      <footer className="mt-32 w-full px-10 pb-10 text-black">
-        {/* Giant logo */}
-        <div className="select-none font-extrabold uppercase leading-[0.9] tracking-tighter">
-          <div className="text-[11.5vw]">Millions</div>
-          <div className="text-[11.5vw]">
-            Worldwide<sup className="align-super text-[3vw]">™</sup>
+      <footer className="mx-3 mb-[1.25rem] mt-10 sm:mx-[44px] sm:mb-[2.25vw] sm:mt-[2.25vw]">
+        <div className="overflow-hidden rounded-[12px] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
+          {/* Giant logo */}
+          <div className="border-b border-[#84827e] px-4 pb-7 pt-7">
+            <div className="select-none font-extrabold uppercase leading-[0.9] tracking-tighter text-black">
+              <div className="text-[8vw]">Millions</div>
+              <div className="text-[8vw]">
+                Worldwide<sup className="align-super text-[2.2vw]">™</sup>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* 5-column grid with dividers */}
-        <div className="mt-16 grid grid-cols-1 gap-10 border-t border-neutral-300 pt-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-          <div className="lg:pr-8">
-            <h3 className="text-lg font-bold uppercase">Newsletter</h3>
-            <p className="mt-4 text-base text-neutral-600">Email Address</p>
+          {/* Newsletter row */}
+          <div className="border-b border-[#84827e] px-4 py-7">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-black">
+              Newsletter
+            </h3>
             <Newsletter />
-            <p className="mt-3 text-sm text-neutral-500">
-              By signing up, you agree to our Privacy Policy*.
-            </p>
           </div>
 
-          <div className="lg:border-l lg:border-neutral-300 lg:px-8">
-            <h3 className="text-lg font-bold uppercase">Navigate</h3>
-            <ul className="mt-4 space-y-1 text-xl leading-[2]">
-              {NAVIGATE.map((l) => (
-                <li key={l.label}>
-                  <Link href={l.href} className="transition-opacity hover:opacity-60">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Info grid — 1fr 1fr 0.7fr 1.3fr like the reference */}
+          <div className="grid grid-cols-2 gap-8 px-4 py-7 lg:grid-cols-[1fr_1fr_0.7fr_1.3fr]">
+            <FooterColumn title="Navigate">
+              <ul>
+                {NAVIGATE.map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className={linkCls}>
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </FooterColumn>
+
+            <FooterColumn title="Official">
+              <ul>
+                {OFFICIAL.map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className={linkCls}>
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </FooterColumn>
+
+            <FooterColumn title="Social">
+              <ul>
+                {SOCIAL.map((l) => (
+                  <li key={l.label}>
+                    <a
+                      href={l.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={linkCls}
+                    >
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </FooterColumn>
+
+            <FooterColumn title="Store">
+              <p className={linkCls}>
+                Millions Worldwide
+                <br />
+                Cửa hàng online
+              </p>
+              <p className={`${linkCls} mt-3`}>
+                SUPPORT
+                <br />
+                We&apos;re here Mon–Sun 10:00am – 9:30pm GMT+7.
+              </p>
+              <Link
+                href="/shop"
+                className="mt-2 inline-block text-[15px] font-semibold text-black underline underline-offset-4"
+              >
+                Mua sắm ngay
+              </Link>
+            </FooterColumn>
           </div>
 
-          <div className="lg:border-l lg:border-neutral-300 lg:px-8">
-            <h3 className="text-lg font-bold uppercase">Official</h3>
-            <ul className="mt-4 space-y-1 text-xl leading-[2]">
-              {OFFICIAL.map((l) => (
-                <li key={l.label}>
-                  <Link href={l.href} className="transition-opacity hover:opacity-60">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Copyright */}
+          <div className="mx-4 border-t border-[#84827e] py-6 text-center text-lg text-black sm:text-xl">
+            © Copyright Millions Worldwide 2026
           </div>
-
-          <div className="lg:border-l lg:border-neutral-300 lg:px-8">
-            <h3 className="text-lg font-bold uppercase">Social</h3>
-            <ul className="mt-4 space-y-1 text-xl leading-[2]">
-              {SOCIAL.map((l) => (
-                <li key={l.label}>
-                  <a
-                    href={l.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="transition-opacity hover:opacity-60"
-                  >
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="lg:border-l lg:border-neutral-300 lg:pl-8">
-            <h3 className="text-lg font-bold uppercase">Store</h3>
-            <p className="mt-4 text-xl leading-[2]">
-              Millions Worldwide
-              <br />
-              Cửa hàng online
-            </p>
-            <Link
-              href="/shop"
-              className="mt-2 inline-block text-xl font-semibold underline underline-offset-4"
-            >
-              Mua sắm ngay
-            </Link>
-            <p className="mt-4 text-base text-neutral-600">
-              SUPPORT
-              <br />
-              We&apos;re here Mon–Sun 10:00am – 9:30pm GMT+7.
-            </p>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="mt-16 border-t border-neutral-300 pt-6 text-center text-xl md:text-2xl">
-          © Copyright Millions Worldwide 2026
         </div>
       </footer>
 
