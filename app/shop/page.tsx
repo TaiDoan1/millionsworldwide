@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Inter } from "next/font/google";
 import CollectionHeader from "../components/CollectionHeader";
 import ShopSection from "../components/ShopSection";
@@ -25,16 +24,20 @@ export default function ShopPage() {
       <CollectionHeader />
 
       <main className="w-full">
-        {/* Hero — 5:4 banner (reference image file is 2560×2048), 12px radius, centred title */}
+        {/* Hero — 5:4 banner frame (reference image file is 2560×2048), 12px radius, centred title.
+            The frame now plays the Tokyo denim hero video (autoplay, muted, loop). */}
         <div className="px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
           <div className="relative aspect-[5/4] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
-            <Image
-              src="/ig/banner.jpg"
-              alt="Millions Worldwide collection"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
+            <video
+              src="/videos/desktop.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              poster="/ig/banner.jpg"
+              aria-label="Millions Worldwide collection"
+              className="absolute inset-0 h-full w-full object-cover"
             />
             <h1 className="absolute inset-0 flex items-center justify-center text-[24px] font-normal text-white lg:text-[27px]">
               Products
