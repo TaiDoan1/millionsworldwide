@@ -24,10 +24,11 @@ export default function ShopPage() {
       <CollectionHeader />
 
       <main className="w-full">
-        {/* Hero — the frame matches the hero video's native 16:9 so the video fits
-            exactly (no zoom/crop), 12px radius, centred title. Autoplay, muted, loop. */}
+        {/* Hero — sized with the reference homepage hero's own formula:
+            height calc(100vh - 2rem); from 760px up, calc(100vh - 5rem) capped at
+            calc(100vh - 4.5vw). 12px radius, centred title. Autoplay, muted, loop. */}
         <div className="px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
-          <div className="relative aspect-video w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
+          <div className="relative h-[calc(100vh-2rem)] min-[760px]:h-[calc(100vh-5rem)] min-[760px]:max-h-[calc(100vh-4.5vw)] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
             <video
               src="/videos/desktop.mp4"
               autoPlay
