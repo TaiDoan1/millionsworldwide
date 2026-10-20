@@ -8,7 +8,7 @@ export default function Header() {
   const pathname = usePathname();
 
   // The shop/collection pages use their own floating CollectionHeader instead.
-  if (pathname?.startsWith("/shop")) {
+  if (pathname?.startsWith("/trangchu")) {
     return null;
   }
 
@@ -26,7 +26,7 @@ export default function Header() {
 
       {/* Center - Nav */}
       <nav className="hidden md:flex gap-10 text-[10px] font-medium tracking-widest uppercase">
-        <Link href="/shop" className="hover:text-gray-500 transition-colors">Shop</Link>
+        <Link href="/trangchu" className="hover:text-gray-500 transition-colors">Shop</Link>
         <Link href="/about" className="hover:text-gray-500 transition-colors">About</Link>
         <Link href="/contact" className="hover:text-gray-500 transition-colors">Contact</Link>
       </nav>

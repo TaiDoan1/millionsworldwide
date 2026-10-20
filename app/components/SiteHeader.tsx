@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const NAV = [
-  { label: "shop", href: "/shop" },
+  { label: "shop", href: "/trangchu" },
   { label: "contact", href: "/contact" },
   { label: "return policy", href: "/return-policy" },
   { label: "lookbook", href: "/lookbook" },

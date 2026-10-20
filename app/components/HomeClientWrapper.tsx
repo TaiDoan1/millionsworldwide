@@ -83,7 +83,7 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
                 MILLIONS IS BUILT FOR THOSE WHO CHOOSE FORM OVER NOISE — AND LET THE WORK SPEAK WHERE WORDS DON&apos;T HAVE TO
               </p>
               <Link
-                href="/shop"
+                href="/trangchu"
                 className="bg-[#1C1C1C] text-white px-8 py-4 w-fit hover:bg-black transition-colors flex items-center gap-2"
               >
                 SHOP THE DROP <span className="text-lg leading-none">&rarr;</span>
@@ -182,7 +182,7 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
 
         <div className="w-full flex justify-end mt-16">
           <Link
-            href="/shop"
+            href="/trangchu"
             className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 hover:opacity-50 transition-opacity"
           >
             VIEW ALL <span>&rarr;</span>

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Newsletter from "./Newsletter";
 
 const NAVIGATE = [
-  { label: "Shop", href: "/shop" },
+  { label: "Shop", href: "/trangchu" },
   { label: "Giới thiệu", href: "/about" },
   { label: "Liên hệ", href: "/contact" },
   { label: "Theo dõi đơn hàng", href: "/track-order" },
@@ -154,7 +154,7 @@ export default function CollectionFooter() {
                 We&apos;re here Mon–Sun 10:00am – 9:30pm GMT+7.
               </p>
               <Link
-                href="/shop"
+                href="/trangchu"
                 className="mt-2 inline-block text-base font-semibold text-black underline underline-offset-4"
               >
                 Mua sắm ngay

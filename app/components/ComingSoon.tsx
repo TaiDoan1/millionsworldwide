@@ -299,7 +299,7 @@ export default function ComingSoon({
               </button>
             ) : (
               <Link
-                href="/shop"
+                href="/trangchu"
                 className="inline-block bg-white text-black px-5 py-2 text-[10px] font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all"
               >
                 ENTER STORE &rarr;

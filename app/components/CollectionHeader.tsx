@@ -7,7 +7,7 @@ import { PRODUCTS } from "../data/products";
 import Logo3D from "./Logo3D";
 
 const NAV_LINKS = [
-  { label: "SHOP", href: "/shop" },
+  { label: "SHOP", href: "/trangchu" },
   { label: "ABOUT", href: "/about" },
   { label: "MILLIONS CARE", href: "/millions-care" },
   { label: "FAQ", href: "/faq" },
@@ -179,7 +179,7 @@ export default function CollectionHeader() {
           </div>
           <div className="mt-8 grid grid-cols-4 gap-8">
             {tabProducts.map((p) => (
-              <Link key={p.id} href="/shop" className="group">
+              <Link key={p.id} href="/trangchu" className="group">
                 <div className="relative aspect-[2/3] w-full overflow-hidden bg-neutral-100">
                   <Image
                     src={p.images[0]}
