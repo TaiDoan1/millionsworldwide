@@ -13,9 +13,9 @@ export default function ShopPage() {
       <CollectionHeader />
 
       <main className="w-full">
-        {/* Hero — 16:9 banner (reference image is 1600×900), 12px radius, centred title */}
-        <div className="px-0 pt-[110px] sm:px-10 sm:pt-[135px]">
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
+        {/* Hero — 5:4 banner (reference image file is 2560×2048), 12px radius, centred title */}
+        <div className="px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
+          <div className="relative aspect-[5/4] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
             <Image
               src="/ig/banner.jpg"
               alt="Millions Worldwide collection"

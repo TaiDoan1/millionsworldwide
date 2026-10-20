@@ -107,7 +107,7 @@ export default function ShopSection() {
   };
 
   return (
-    <section className="w-full px-3 sm:px-10">
+    <section className="w-full px-3 sm:px-[44px]">
       {/* Category chips — swipeable row on mobile, centred wrap on desktop, fluid size like the reference */}
       <div className="flex flex-nowrap items-center gap-[0.6875rem] overflow-x-auto pb-1 min-[1040px]:flex-wrap min-[1040px]:justify-center min-[1040px]:gap-[1.09375rem] min-[1040px]:overflow-visible">
         {CHIPS.map((chip) => (

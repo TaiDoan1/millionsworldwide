@@ -54,7 +54,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Sold out badge — centred pink circle, covered on hover like the reference */}
         {product.soldOut && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F5A8B8] text-center text-[10px] font-bold uppercase leading-tight tracking-[1px] text-white">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full border-[1.5px] border-[#d46b78] bg-[#f0a0a9] text-center text-[10px] font-bold uppercase leading-tight tracking-[1px] text-white">
               Sold
               <br />
               Out

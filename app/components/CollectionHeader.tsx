@@ -49,12 +49,12 @@ export default function CollectionHeader() {
 
   return (
     <div
-      className={`fixed left-10 right-10 top-3 z-[100] transition-transform duration-500 ease-out ${
+      className={`fixed left-10 right-10 top-3 z-[100] transition-transform duration-500 ease-out sm:left-[44px] sm:right-[44px] sm:top-[22px] ${
         visible ? "translate-y-0" : "-translate-y-[140%]"
       }`}
       onMouseLeave={() => setShopOpen(false)}
     >
-      <header className="flex h-[92px] items-center justify-between rounded-2xl bg-white px-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+      <header className="flex h-[92px] items-center justify-between rounded-2xl bg-white px-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)] sm:h-[73px] sm:rounded-[12px]">
         {/* Left nav */}
         <nav className="hidden flex-1 items-center gap-8 lg:flex">
           {NAV_LINKS.map((item) =>
