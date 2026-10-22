@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import type { Product } from "../data/products";
+import { useCart } from "./CartContext";
 
 /** Stored prices are in thousands of VND (300 -> 300,000₫), grouped with commas like the reference shop. */
 function formatPrice(n: number) {
@@ -10,9 +11,11 @@ function formatPrice(n: number) {
 }
 
 const TAG_BY_CATEGORY: Record<Product["category"], string> = {
+  sets: "set",
   "t-shirts": "t-shirt",
-  sneakers: "sneakers",
-  sweatpants: "sweatpants",
+  shirts: "shirt",
+  jeans: "jeans",
+  shorts: "shorts",
 };
 
 /** The reference site's signature motion: 0.7s cubic-bezier(0.76, 0, 0.24, 1). */
@@ -34,11 +37,13 @@ export default function ProductCard({
   cols?: 2 | 3;
 }) {
   const [added, setAdded] = useState(false);
+  const { add } = useCart();
   const firstImage = product.images[0];
   const hoverImage = product.images[1] ?? product.images[0];
   const tag = TAG_BY_CATEGORY[product.category];
 
   const handleAdd = () => {
+    add(product.id);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1400);
   };

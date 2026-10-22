@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import Logo3D from "./Logo3D"
+import { subscribeEmail } from "../actions/subscribers"
 
 interface ComingSoonProps {
   launchDate?: string
@@ -128,10 +129,11 @@ export default function ComingSoon({
     setIsMuted((prev) => !prev)
   }
 
-  // Handle email submit
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  // Handle email submit — stores the signup via the subscribers server action
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
+    await subscribeEmail(email, "coming-soon").catch(() => null)
     setIsSubscribed(true)
   }
 

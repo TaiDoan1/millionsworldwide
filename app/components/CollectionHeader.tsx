@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PRODUCTS } from "../data/products";
+import { useCart } from "./CartContext";
 import Logo3D from "./Logo3D";
 
 const NAV_LINKS = [
@@ -15,21 +16,20 @@ const NAV_LINKS = [
 
 const TABS = [
   { key: "all", label: "ALL PRODUCTS" },
+  { key: "sets", label: "SETS" },
   { key: "t-shirts", label: "T-SHIRTS" },
-  { key: "sneakers", label: "SNEAKERS" },
-  { key: "sweatpants", label: "SWEATPANTS" },
-  { key: "best", label: "BEST SELLER" },
+  { key: "shirts", label: "SHIRTS" },
+  { key: "jeans", label: "JEANS" },
+  { key: "shorts", label: "SHORTS" },
 ] as const;
 
 function productsForTab(key: string) {
-  if (key === "t-shirts") return PRODUCTS.filter((p) => p.category === "t-shirts");
-  if (key === "sneakers") return PRODUCTS.filter((p) => p.category === "sneakers");
-  if (key === "sweatpants") return PRODUCTS.filter((p) => p.category === "sweatpants");
-  if (key === "best") return PRODUCTS.filter((p) => p.compareAt || p.preOrder);
-  return PRODUCTS;
+  if (key === "all") return PRODUCTS;
+  return PRODUCTS.filter((p) => p.category === key);
 }
 
 export default function CollectionHeader() {
+  const { count, openCart } = useCart();
   const [visible, setVisible] = useState(true);
   const [shopOpen, setShopOpen] = useState(false);
   const [tab, setTab] = useState<string>("all");
@@ -122,9 +122,10 @@ export default function CollectionHeader() {
           </button>
           <button
             type="button"
+            onClick={openCart}
             className="text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60"
           >
-            Cart (0)
+            Cart ({count})
           </button>
           <button
             type="button"

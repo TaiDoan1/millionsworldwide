@@ -12,37 +12,41 @@ const FAQS: Record<"returns" | "shipping", Faq[]> = {
     },
     {
       q: "how can i make a return?",
-      a: "log in to your account, open the order and select the items you wish to return to generate a prepaid label.",
+      a: "message us via the contact page with your order code and the reason for the return. we will confirm and guide you through sending the item back — no account needed.",
     },
     {
-      q: "i have lost the return label.",
-      a: "contact our support team with your order number and we will re-issue a return label for you.",
+      q: "when do i get my refund?",
+      a: "once we receive and check the returned item, refunds are made by bank transfer within 3–5 business days.",
     },
     {
-      q: "i have lost the return proforma invoice.",
-      a: "no problem — a copy of your invoice is always available in the order details of your account.",
+      q: "who pays for return shipping?",
+      a: "return shipping is free when the item is faulty or we sent the wrong item. for other cases we will confirm any cost with you before you send it back.",
     },
     {
-      q: "how do i create a return?",
-      a: "head to the track order page, enter your details and follow the guided return steps.",
+      q: "can i exchange for another size or item?",
+      a: "yes — mention it in your message with your order code and we will arrange the exchange if the item is in stock.",
     },
   ],
   shipping: [
     {
       q: "how long does shipping take?",
-      a: "standard shipping takes 3–5 business days. express options are shown at checkout.",
+      a: "orders are processed in 1–2 business days after confirmation, then delivered within 3–5 business days depending on your area.",
     },
     {
       q: "do you ship worldwide?",
-      a: "yes — we ship to most countries. duties and taxes are calculated at checkout.",
+      a: "we deliver nationwide across vietnam. for international orders, please contact us and we will assist you individually.",
     },
     {
       q: "how much is shipping?",
-      a: "shipping is free on all orders. express delivery is available for an additional fee.",
+      a: "shipping is free on all orders — no minimum spend.",
     },
     {
       q: "how do i track my order?",
-      a: "use the track order page with the tracking number sent to your email after dispatch.",
+      a: "use the track order page with your order code and the phone number you ordered with. you can also inspect the items before paying on cod orders.",
+    },
+    {
+      q: "how do i pay?",
+      a: "pay cash on delivery (cod), or by bank transfer — we send the transfer details when confirming your order. see the payment policy page for details.",
     },
   ],
 };

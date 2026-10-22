@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { subscribeEmail } from "../actions/subscribers";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
@@ -8,9 +9,11 @@ export default function Newsletter() {
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (email) setDone(true);
+        if (!email) return;
+        await subscribeEmail(email, "newsletter").catch(() => null);
+        setDone(true);
       }}
       className="mt-6 max-w-md"
     >

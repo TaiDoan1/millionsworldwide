@@ -119,15 +119,15 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
           <div className="col-span-1 pb-16">
             <div className="bg-[#F6F6F6] aspect-[4/5] relative mb-4 flex items-center justify-center p-8 group overflow-hidden">
               <Image
-                src="/products/prod-1.jpg"
-                alt="Cropped Zip Hoodie"
+                src="/products/set-hoodie-black-1.jpg"
+                alt="Black Hoodie Set"
                 fill
                 className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
             <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>CROPPED ZIP HOODIE</span>
-              <span>$88</span>
+              <span>BLACK HOODIE SET</span>
+              <span>890,000₫</span>
             </div>
           </div>
 
@@ -135,15 +135,15 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
           <div className="col-span-1 pb-40">
             <div className="bg-[#F6F6F6] aspect-square relative mb-4 flex items-center justify-center p-8 group overflow-hidden">
               <Image
-                src="/products/prod-2.jpg"
-                alt="Oversized Tee"
+                src="/products/tee-millions-1.jpg"
+                alt="Millions Worldwide Tee"
                 fill
                 className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
             <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>OVERSIZED TEE</span>
-              <span>$45</span>
+              <span>MILLIONS WORLDWIDE TEE</span>
+              <span>350,000₫</span>
             </div>
           </div>
 
@@ -151,15 +151,15 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
           <div className="col-span-1">
             <div className="bg-[#F6F6F6] aspect-[2/3] relative mb-4 flex items-center justify-center p-4 group overflow-hidden">
               <Image
-                src="/products/pants-1.jpg"
-                alt="LATCH-FRONT WIDE JEANS"
+                src="/products/jeans-wide-1.jpg"
+                alt="Wide Leg Jeans"
                 fill
                 className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
             <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>LATCH-FRONT WIDE JEANS</span>
-              <span>$92</span>
+              <span>WIDE LEG JEANS</span>
+              <span>590,000₫</span>
             </div>
           </div>
 
@@ -167,15 +167,15 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
           <div className="col-span-1 pb-20">
             <div className="bg-[#F6F6F6] aspect-[4/5] relative mb-4 flex items-center justify-center p-8 group overflow-hidden">
               <Image
-                src="/products/pants-2.jpg"
-                alt="WIDE CARGO PANTS"
+                src="/products/set-jeans-signature-1.jpg"
+                alt="Signature Denim Set"
                 fill
                 className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
             <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>WIDE CARGO PANTS</span>
-              <span>$78</span>
+              <span>SIGNATURE DENIM SET</span>
+              <span>1,190,000₫</span>
             </div>
           </div>
         </div>

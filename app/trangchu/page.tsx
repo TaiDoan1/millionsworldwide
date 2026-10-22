@@ -2,6 +2,8 @@ import { Inter } from "next/font/google";
 import CollectionHeader from "../components/CollectionHeader";
 import ShopSection from "../components/ShopSection";
 import CollectionFooter from "../components/CollectionFooter";
+import { CartProvider } from "../components/CartContext";
+import CartDrawer from "../components/CartDrawer";
 
 /**
  * The reference shop renders everything in "Swiss" (a licensed Helvetica-style
@@ -20,8 +22,10 @@ export const metadata = {
 
 export default function TrangChuPage() {
   return (
+    <CartProvider>
     <div className={`min-h-screen bg-white text-black ${inter.className}`}>
       <CollectionHeader />
+      <CartDrawer />
 
       <main className="w-full">
         {/* Hero — sized with the reference homepage hero's own formula:
@@ -50,5 +54,6 @@ export default function TrangChuPage() {
 
       <CollectionFooter />
     </div>
+    </CartProvider>
   );
 }

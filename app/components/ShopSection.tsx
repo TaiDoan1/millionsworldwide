@@ -4,14 +4,15 @@ import { useMemo, useState } from "react";
 import { PRODUCTS, type Category } from "../data/products";
 import ProductCard from "./ProductCard";
 
-type FilterKey = "all" | "best" | Category;
+type FilterKey = "all" | Category;
 
 const CHIPS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "ALL PRODUCTS" },
-  { key: "best", label: "BEST SELLER" },
+  { key: "sets", label: "SETS" },
   { key: "t-shirts", label: "T-SHIRTS" },
-  { key: "sneakers", label: "SNEAKERS" },
-  { key: "sweatpants", label: "SWEATPANTS" },
+  { key: "shirts", label: "SHIRTS" },
+  { key: "jeans", label: "JEANS" },
+  { key: "shorts", label: "SHORTS" },
 ];
 
 type SortKey =
@@ -60,9 +61,7 @@ export default function ShopSection() {
 
   const products = useMemo(() => {
     let list = [...PRODUCTS];
-    if (filter === "best") {
-      list = list.filter((p) => p.compareAt || p.preOrder);
-    } else if (filter !== "all") {
+    if (filter !== "all") {
       list = list.filter((p) => p.category === filter);
     }
     switch (sort) {
