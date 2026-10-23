@@ -1,6 +1,11 @@
 import Image from "next/image";
 
-const IG_IMAGES = ["/ig/ig-1.jpg", "/ig/ig-2.jpg", "/ig/ig-3.jpg", "/ig/ig-4.jpg"];
+const IG_IMAGES = [
+  "/products/set-jeans-signature-1.jpg",
+  "/products/tee-yellow-ls-1.jpg",
+  "/products/shirt-white-1.jpg",
+  "/products/set-hoodie-grey-1.jpg",
+];
 
 export default function InstagramSection() {
   return (
@@ -28,10 +33,10 @@ export default function InstagramSection() {
           >
             <Image
               src={src}
-              alt={`instagram post ${i + 1}`}
+              alt={`Millions Worldwide — instagram ${i + 1}`}
               fill
               sizes="(max-width: 640px) 45vw, 22vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
             />
           </a>
         ))}
