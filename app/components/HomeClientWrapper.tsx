@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import type { Settings } from "../actions/settings"
@@ -12,9 +12,19 @@ interface HomeClientWrapperProps {
 
 export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) {
   const [isPreviewing, setIsPreviewing] = useState(false)
+  // Auto-open the site once the configured launch moment ("Thời gian mở web"
+  // in /admin) has passed. Mount-guarded so the server render and the first
+  // client render stay identical (no hydration mismatch).
+  const [launched, setLaunched] = useState(false)
+  useEffect(() => {
+    if (!settings.launchDate) return
+    const target = new Date(settings.launchDate).getTime()
+    if (!Number.isNaN(target) && Date.now() >= target) setLaunched(true)
+  }, [settings.launchDate])
 
-  // If Coming Soon mode is active and not currently previewing, show the luxury Coming Soon screen
-  if (settings.comingSoonEnabled && !isPreviewing) {
+  // Coming Soon gate: shown only while Coming Soon mode is on, not previewing,
+  // and the launch moment has not arrived yet
+  if (settings.comingSoonEnabled && !isPreviewing && !launched) {
     return (
       <ComingSoon
         launchDate={settings.launchDate}
