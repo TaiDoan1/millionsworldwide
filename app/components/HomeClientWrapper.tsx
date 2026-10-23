@@ -144,7 +144,7 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
             <div className="flex flex-wrap items-end justify-between gap-6">
               <h1
                 aria-label="MILLIONS"
-                className="mix-blend-difference text-[15vw] font-black leading-[0.85] tracking-tighter text-white md:text-[11vw]"
+                className="mw-outline-text text-[15vw] font-black leading-[0.85] tracking-tighter [filter:drop-shadow(0_2px_14px_rgba(0,0,0,0.3))] md:text-[11vw]"
               >
                 {"MILLIONS".split("").map((ch, i) => (
                   <span

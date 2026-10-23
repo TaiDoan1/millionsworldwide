@@ -114,3 +114,14 @@ body {
     animation: none;
   }
 }
+
+/* Hero wordmark — transparent fill, white outline only (video shows through) */
+.mw-outline-text {
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.92);
+}
+@media (min-width: 768px) {
+  .mw-outline-text {
+    -webkit-text-stroke-width: 3px;
+  }
+}
