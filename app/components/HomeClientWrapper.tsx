@@ -123,10 +123,16 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
 
           {/* Top corners (below the floating global header) */}
           <div className="absolute inset-x-0 top-0 flex items-start justify-between px-6 pt-24 text-white md:px-10 md:pt-28">
-            <p className="max-w-[230px] text-[11px] font-semibold uppercase leading-relaxed tracking-widest drop-shadow-md">
+            <p
+              className="mw-fade-up max-w-[230px] text-[11px] font-semibold uppercase leading-relaxed tracking-widest drop-shadow-md"
+              style={{ animationDelay: "0.3s" }}
+            >
               Form over noise — designed in Vietnam
             </p>
-            <p className="text-right text-[11px] font-semibold uppercase leading-relaxed tracking-widest drop-shadow-md">
+            <p
+              className="mw-fade-up text-right text-[11px] font-semibold uppercase leading-relaxed tracking-widest drop-shadow-md"
+              style={{ animationDelay: "0.45s" }}
+            >
               The online launch
               <br />
               01.11.2026
@@ -136,17 +142,37 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
           {/* Bottom: wordmark + CTA */}
           <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
             <div className="flex flex-wrap items-end justify-between gap-6">
-              <h1 className="mix-blend-difference text-[15vw] font-black leading-[0.85] tracking-tighter text-white md:text-[11vw]">
-                MILLIONS
+              <h1
+                aria-label="MILLIONS"
+                className="mix-blend-difference text-[15vw] font-black leading-[0.85] tracking-tighter text-white md:text-[11vw]"
+              >
+                {"MILLIONS".split("").map((ch, i) => (
+                  <span
+                    key={i}
+                    aria-hidden
+                    className="-mt-[0.1em] inline-block overflow-hidden pt-[0.1em] align-bottom"
+                  >
+                    <span
+                      className="mw-letter inline-block"
+                      style={{ animationDelay: `${0.15 + i * 0.07}s` }}
+                    >
+                      {ch}
+                    </span>
+                  </span>
+                ))}
               </h1>
               <Link
                 href="/trangchu"
-                className="bg-white px-8 py-4 text-[12px] font-bold uppercase tracking-widest text-black transition-colors duration-500 hover:bg-black hover:text-white"
+                className="mw-fade-up bg-white px-8 py-4 text-[12px] font-bold uppercase tracking-widest text-black transition-colors duration-500 hover:bg-black hover:text-white"
+                style={{ animationDelay: "1s" }}
               >
                 Shop the drop <span aria-hidden>→</span>
               </Link>
             </div>
-            <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white drop-shadow-md">
+            <p
+              className="mw-fade-up mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white drop-shadow-md"
+              style={{ animationDelay: "1.15s" }}
+            >
               Millions Worldwide™ — Fashion without the shout
             </p>
           </div>
