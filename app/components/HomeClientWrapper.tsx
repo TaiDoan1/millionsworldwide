@@ -5,9 +5,40 @@ import Image from "next/image"
 import Link from "next/link"
 import type { Settings } from "../actions/settings"
 import ComingSoon from "./ComingSoon"
+import InstagramSection from "./InstagramSection"
+import SiteFooter from "./SiteFooter"
+import { PRODUCTS } from "../data/products"
 
 interface HomeClientWrapperProps {
   settings: Settings
+}
+
+const MARQUEE_PHRASES = [
+  "Millions Worldwide™",
+  "Form over noise",
+  "The online launch — 01.11.2026",
+  "Miễn phí vận chuyển toàn quốc",
+  "Designed in Vietnam",
+  "New drop — 17 pieces",
+]
+
+const COLLECTION_TILES = [
+  { label: "The Sets", img: "/products/set-hoodie-black-1.jpg", alt: "Millions black hoodie set" },
+  { label: "Signature Denim", img: "/products/set-jeans-signature-1.jpg", alt: "Millions signature denim set" },
+  { label: "Tees & Tanks", img: "/products/tee-millions-1.jpg", alt: "Millions worldwide tee" },
+]
+
+const FEATURED_IDS = ["set-hoodie-black", "tee-millions", "jeans-wide", "set-jeans-signature"]
+const FEATURED_ASPECTS = ["aspect-[4/5]", "aspect-square", "aspect-[2/3]", "aspect-[4/5]"]
+const FEATURED_OFFSETS = ["md:pb-16", "md:pb-40", "", "md:pb-20"]
+
+const featured = FEATURED_IDS.flatMap((id) => {
+  const p = PRODUCTS.find((x) => x.id === id)
+  return p ? [p] : []
+})
+
+function fmtPrice(thousands: number) {
+  return `${(thousands * 1000).toLocaleString("en-US")}₫`
 }
 
 export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) {
@@ -36,7 +67,7 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
   }
 
   return (
-    <main className="w-full min-h-screen relative">
+    <main className="w-full min-h-screen relative bg-white text-black">
       {/* PREVIEW BANNER (When Coming Soon is enabled but admin clicked Preview) */}
       {settings.comingSoonEnabled && isPreviewing && (
         <div className="fixed top-0 left-0 right-0 z-[120] bg-black/90 text-white px-4 py-2 text-xs flex items-center justify-between backdrop-blur-md border-b border-white/20">
@@ -60,145 +91,208 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
         </div>
       )}
 
-      {/* Hero Section */}
-      <section className="relative w-full h-screen bg-white flex flex-col justify-between overflow-hidden">
-        {/* Fullscreen Image */}
-        <div className="absolute inset-0 w-full h-full z-0">
-          <Image
-            src="/ig/banner.jpg"
-            alt="Millions Worldwide Hero"
-            fill
-            className="object-cover object-top"
-            priority
+      {/* Hero — brand film, sized with the Whenever homepage hero formula:
+          calc(100vh - 2rem); from 760px up calc(100vh - 5rem), capped at
+          calc(100vh - 4.5vw); 12px radius. Videos follow the ComingSoon pattern
+          (separate desktop / mobile elements). */}
+      <section className="px-3 pt-3 md:px-6 md:pt-5">
+        <div className="relative h-[calc(100vh-2rem)] min-[760px]:h-[calc(100vh-5rem)] min-[760px]:max-h-[calc(100vh-4.5vw)] w-full overflow-hidden rounded-[12px] bg-black">
+          <video
+            src="/videos/desktop.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            poster="/ig/banner.jpg"
+            aria-label="Millions Worldwide — Tokyo denim film"
+            className="absolute inset-0 hidden h-full w-full object-cover md:block"
           />
-          {/* Background Grid Effect on top of image */}
-          <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none mix-blend-difference opacity-30">
-            <div className="border-r border-b border-white"></div>
-            <div className="border-r border-b border-white"></div>
-            <div className="border-b border-white"></div>
-            <div className="border-r border-b border-white"></div>
-            <div className="border-r border-b border-white"></div>
-            <div className="border-b border-white"></div>
-            <div className="border-r border-white"></div>
-            <div className="border-r border-white"></div>
-            <div></div>
-          </div>
-        </div>
+          <video
+            src="/videos/mobile.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            poster="/ig/banner.jpg"
+            aria-label="Millions Worldwide — Tokyo denim film"
+            className="absolute inset-0 block h-full w-full object-cover md:hidden"
+          />
+          <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
-        {/* Overlay Text */}
-        <div className="relative z-20 flex-1 flex flex-col justify-between p-8 pt-32 pointer-events-none">
-          <div className="flex justify-between items-start text-[11px] font-semibold tracking-widest text-white drop-shadow-md">
-            <div className="flex flex-col gap-10 max-w-sm pointer-events-auto">
-              <p className="leading-loose">
-                MILLIONS IS BUILT FOR THOSE WHO CHOOSE FORM OVER NOISE — AND LET THE WORK SPEAK WHERE WORDS DON&apos;T HAVE TO
-              </p>
+          {/* Top corners (below the floating global header) */}
+          <div className="absolute inset-x-0 top-0 flex items-start justify-between px-6 pt-24 text-white md:px-10 md:pt-28">
+            <p className="max-w-[230px] text-[11px] font-semibold uppercase leading-relaxed tracking-widest drop-shadow-md">
+              Form over noise — designed in Vietnam
+            </p>
+            <p className="text-right text-[11px] font-semibold uppercase leading-relaxed tracking-widest drop-shadow-md">
+              The online launch
+              <br />
+              01.11.2026
+            </p>
+          </div>
+
+          {/* Bottom: wordmark + CTA */}
+          <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <h1 className="mix-blend-difference text-[15vw] font-black leading-[0.85] tracking-tighter text-white md:text-[11vw]">
+                MILLIONS
+              </h1>
               <Link
                 href="/trangchu"
-                className="bg-[#1C1C1C] text-white px-8 py-4 w-fit hover:bg-black transition-colors flex items-center gap-2"
+                className="bg-white px-8 py-4 text-[12px] font-bold uppercase tracking-widest text-black transition-colors duration-500 hover:bg-black hover:text-white"
               >
-                SHOP THE DROP <span className="text-lg leading-none">&rarr;</span>
+                Shop the drop <span aria-hidden>→</span>
               </Link>
             </div>
-            <div className="text-right pointer-events-auto">
-              <p className="leading-relaxed">
-                FASHION WITHOUT<br />THE SHOUT
-              </p>
-            </div>
-          </div>
-
-          {/* Big Text */}
-          <div className="mt-auto flex justify-center w-full relative z-30 pb-12 mix-blend-difference text-white">
-            <h1 className="text-[12vw] leading-none font-bold tracking-tighter">
-              MILLIONS
-            </h1>
+            <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white drop-shadow-md">
+              Millions Worldwide™ — Fashion without the shout
+            </p>
           </div>
         </div>
       </section>
 
-      {/* New Arrivals Section */}
-      <section className="px-8 py-32 bg-white text-black">
-        <div className="mb-20">
-          <span className="text-[10px] text-gray-500 font-semibold tracking-widest uppercase mb-2 block">
-            Selected Pieces
-          </span>
-          <h2 className="text-3xl font-medium tracking-tight">NEW ARRIVALS</h2>
+      {/* Marquee ticker */}
+      <section aria-hidden className="mt-4 overflow-hidden bg-black py-3 text-white md:mt-6">
+        <div className="mw-marquee flex w-max items-center whitespace-nowrap text-[12px] font-bold uppercase tracking-[0.25em]">
+          {[0, 1].map((half) => (
+            <div key={half} className="flex items-center">
+              {MARQUEE_PHRASES.map((phrase) => (
+                <span key={`${half}-${phrase}`} className="flex items-center">
+                  <span className="px-8">{phrase}</span>
+                  <span className="text-[10px]">✦</span>
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end">
-          {/* Item 1 */}
-          <div className="col-span-1 pb-16">
-            <div className="bg-[#F6F6F6] aspect-[4/5] relative mb-4 flex items-center justify-center p-8 group overflow-hidden">
-              <Image
-                src="/products/set-hoodie-black-1.jpg"
-                alt="Black Hoodie Set"
-                fill
-                className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-            </div>
-            <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>BLACK HOODIE SET</span>
-              <span>890,000₫</span>
-            </div>
+      {/* Collections */}
+      <section className="mx-auto mt-24 w-full max-w-[1400px] px-6 md:mt-32">
+        <div className="mb-10 flex items-end justify-between gap-6">
+          <div>
+            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+              Collections
+            </span>
+            <h2 className="text-3xl font-medium tracking-tight md:text-4xl">SHOP BY STORY</h2>
           </div>
-
-          {/* Item 2 */}
-          <div className="col-span-1 pb-40">
-            <div className="bg-[#F6F6F6] aspect-square relative mb-4 flex items-center justify-center p-8 group overflow-hidden">
-              <Image
-                src="/products/tee-millions-1.jpg"
-                alt="Millions Worldwide Tee"
-                fill
-                className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-            </div>
-            <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>MILLIONS WORLDWIDE TEE</span>
-              <span>350,000₫</span>
-            </div>
-          </div>
-
-          {/* Item 3 (Large central piece) */}
-          <div className="col-span-1">
-            <div className="bg-[#F6F6F6] aspect-[2/3] relative mb-4 flex items-center justify-center p-4 group overflow-hidden">
-              <Image
-                src="/products/jeans-wide-1.jpg"
-                alt="Wide Leg Jeans"
-                fill
-                className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-            </div>
-            <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>WIDE LEG JEANS</span>
-              <span>590,000₫</span>
-            </div>
-          </div>
-
-          {/* Item 4 */}
-          <div className="col-span-1 pb-20">
-            <div className="bg-[#F6F6F6] aspect-[4/5] relative mb-4 flex items-center justify-center p-8 group overflow-hidden">
-              <Image
-                src="/products/set-jeans-signature-1.jpg"
-                alt="Signature Denim Set"
-                fill
-                className="object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-            </div>
-            <div className="flex justify-between text-[11px] font-semibold tracking-wider">
-              <span>SIGNATURE DENIM SET</span>
-              <span>1,190,000₫</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="w-full flex justify-end mt-16">
           <Link
             href="/trangchu"
-            className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 hover:opacity-50 transition-opacity"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-50"
           >
-            VIEW ALL <span>&rarr;</span>
+            View all <span aria-hidden>→</span>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-6">
+          {COLLECTION_TILES.map((tile) => (
+            <Link
+              key={tile.label}
+              href="/trangchu"
+              className="group relative block aspect-[2/3] overflow-hidden rounded-[12px] bg-[#F6F6F6]"
+            >
+              <Image
+                src={tile.img}
+                alt={tile.alt}
+                fill
+                sizes="(max-width: 640px) 92vw, 31vw"
+                className="object-cover transition-transform duration-700 [transition-timing-function:cubic-bezier(0.76,0,0.24,1)] group-hover:scale-105"
+              />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/45 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between p-6 text-white">
+                <span className="text-lg font-bold uppercase tracking-wide md:text-xl">{tile.label}</span>
+                <span className="text-xl transition-transform duration-500 group-hover:translate-x-1" aria-hidden>
+                  →
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Editorial / brand statement */}
+      <section className="mx-auto mt-24 w-full max-w-[1400px] px-6 md:mt-36">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-16">
+          <div>
+            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+              The Millions story
+            </span>
+            <h2 className="text-4xl font-bold leading-[1.02] tracking-tight md:text-6xl">
+              FASHION
+              <br />
+              WITHOUT
+              <br />
+              THE SHOUT
+            </h2>
+            <p className="mt-8 max-w-md text-[15px] leading-relaxed text-neutral-600">
+              Millions is built for those who choose form over noise — and let the work speak where
+              words don&apos;t have to. Mỗi thiết kế bắt đầu từ phom dáng, chất liệu và chi tiết dập
+              nổi đặc trưng, được làm tại Việt Nam cho người mặc ở khắp nơi.
+            </p>
+            <Link
+              href="/about"
+              className="mt-10 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest transition-opacity hover:opacity-50"
+            >
+              Về Millions <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <div className="relative aspect-[2/3] overflow-hidden rounded-[12px] bg-[#F6F6F6]">
+            <Image
+              src="/products/jacket-black-1.jpg"
+              alt="Millions black stitch jacket"
+              fill
+              sizes="(max-width: 768px) 92vw, 45vw"
+              className="object-cover"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* New Arrivals — featured pieces, data-driven from the catalog */}
+      <section className="mx-auto mt-24 w-full max-w-[1400px] px-6 md:mt-36">
+        <div className="mb-14 md:mb-20">
+          <span className="mb-2 block text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+            Selected Pieces
+          </span>
+          <h2 className="text-3xl font-medium tracking-tight md:text-4xl">NEW ARRIVALS</h2>
+        </div>
+
+        <div className="grid grid-cols-2 items-end gap-4 md:grid-cols-4 md:gap-8">
+          {featured.map((p, i) => (
+            <Link key={p.id} href="/trangchu" className={`group col-span-1 ${FEATURED_OFFSETS[i] ?? ""}`}>
+              <div
+                className={`relative mb-4 overflow-hidden rounded-[12px] bg-[#F6F6F6] ${FEATURED_ASPECTS[i] ?? "aspect-[2/3]"}`}
+              >
+                <Image
+                  src={p.images[0]}
+                  alt={p.name}
+                  fill
+                  sizes="(max-width: 768px) 45vw, 22vw"
+                  className="object-cover transition-transform duration-700 [transition-timing-function:cubic-bezier(0.76,0,0.24,1)] group-hover:scale-105"
+                />
+              </div>
+              <div className="flex items-baseline justify-between gap-2 text-[11px] font-semibold uppercase tracking-wider">
+                <span>{p.name}</span>
+                <span className="whitespace-nowrap">{fmtPrice(p.price)}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-14 flex w-full justify-end md:mt-16">
+          <Link
+            href="/trangchu"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-50"
+          >
+            View all <span aria-hidden>→</span>
           </Link>
         </div>
       </section>
+
+      <InstagramSection />
+      <SiteFooter />
     </main>
   )
 }

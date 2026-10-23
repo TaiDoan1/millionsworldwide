@@ -63,3 +63,17 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Homepage marquee ticker */
+@keyframes mw-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.mw-marquee {
+  animation: mw-marquee 30s linear infinite;
+  will-change: transform;
+}
