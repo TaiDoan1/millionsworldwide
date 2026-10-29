@@ -114,9 +114,29 @@ body {
   animation: mw-fade-up 0.9s cubic-bezier(0.76, 0, 0.24, 1) both;
 }
 
+/* Page transition — every navigation remounts the root template, so this
+   fade + rise replays on each page change. Fill mode is `backwards` (not
+   `both`) on purpose: once the animation ends the transform is gone, so the
+   shop's `fixed` header keeps behaving as fixed instead of getting trapped
+   inside a transformed ancestor. */
+@keyframes mw-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mw-page-transition {
+  animation: mw-page-in 0.7s cubic-bezier(0.76, 0, 0.24, 1) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mw-letter,
   .mw-fade-up,
+  .mw-page-transition,
   .mw-marquee {
     animation: none;
   }
