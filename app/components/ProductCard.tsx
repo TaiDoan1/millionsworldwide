@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "../data/products";
 import { useCart } from "./CartContext";
 
 /** Stored prices are in thousands of VND (300 -> 300,000₫), grouped with commas like the reference shop. */
-function formatPrice(n: number) {
+export function formatPrice(n: number) {
   return `${(n * 1000).toLocaleString("en-US")}₫`;
 }
 
@@ -50,8 +51,13 @@ export default function ProductCard({
 
   return (
     <article className="group relative h-full overflow-hidden rounded-[12px] bg-[#f5f5f5] max-[819px]:flex max-[819px]:flex-col min-[820px]:aspect-[2/3]">
-      {/* Photo — fills the whole card on desktop, a 2:3 block on mobile */}
-      <div className="relative max-[819px]:aspect-[2/3] min-[820px]:absolute min-[820px]:inset-0">
+      {/* Photo — fills the whole card on desktop, a 2:3 block on mobile.
+          The whole photo links to the product detail page. */}
+      <Link
+        href={`/trangchu/${product.id}`}
+        aria-label={`Xem ${product.name}`}
+        className="relative block max-[819px]:aspect-[2/3] min-[820px]:absolute min-[820px]:inset-0"
+      >
         <Image
           src={firstImage}
           alt={product.name}
@@ -78,7 +84,7 @@ export default function ProductCard({
           sizes="30vw"
           className={`z-10 object-cover opacity-0 transition-opacity duration-700 ${EASE} group-hover:opacity-100 max-[819px]:hidden`}
         />
-      </div>
+      </Link>
 
       {/* Content — overlay on desktop, static block under the photo on mobile */}
       <div className="flex flex-col justify-between max-[819px]:flex-1 max-[819px]:p-[0.5rem_0.625rem_0.625rem] min-[820px]:pointer-events-none min-[820px]:absolute min-[820px]:inset-0 min-[820px]:z-20 min-[820px]:p-[1rem_0.75rem] min-[1200px]:p-[1.75rem]">
@@ -105,15 +111,20 @@ export default function ProductCard({
           className={`transition-opacity duration-700 ${EASE} min-[820px]:group-hover:opacity-0`}
         >
           <div className="flex items-start justify-between gap-3">
-            <h3
-              className={`font-semibold uppercase leading-[1.25] text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] ${
-                cols === 3
-                  ? "min-[820px]:text-[max(1rem,1.25vw)]"
-                  : "min-[820px]:text-[clamp(0.75rem,1.25vw,1.375rem)]"
-              }`}
+            <Link
+              href={`/trangchu/${product.id}`}
+              className="min-[820px]:pointer-events-auto"
             >
-              {product.name}
-            </h3>
+              <h3
+                className={`font-semibold uppercase leading-[1.25] text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] ${
+                  cols === 3
+                    ? "min-[820px]:text-[max(1rem,1.25vw)]"
+                    : "min-[820px]:text-[clamp(0.75rem,1.25vw,1.375rem)]"
+                }`}
+              >
+                {product.name}
+              </h3>
+            </Link>
             <span
               className={`whitespace-nowrap font-bold text-black max-[819px]:text-[clamp(0.75rem,3.2vw,1rem)] ${
                 cols === 3
@@ -145,10 +156,16 @@ export default function ProductCard({
         </div>
       </div>
 
-      {/* Desktop: add-to-cart pill slides up from below on hover */}
+      {/* Desktop: detail link + add-to-cart pill slide up from below on hover */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-30 hidden translate-y-[150%] p-[1rem_0.75rem] transition-transform duration-700 ${EASE} group-hover:translate-y-0 min-[820px]:block`}
+        className={`absolute inset-x-0 bottom-0 z-30 hidden translate-y-[150%] flex-col gap-2 p-[1rem_0.75rem] transition-transform duration-700 ${EASE} group-hover:translate-y-0 min-[820px]:flex`}
       >
+        <Link
+          href={`/trangchu/${product.id}`}
+          className="flex h-[50px] w-full items-center justify-center rounded-full bg-white text-[max(0.875rem,0.925vw)] uppercase text-black shadow"
+        >
+          Xem chi tiết
+        </Link>
         <button
           type="button"
           disabled={product.soldOut}
