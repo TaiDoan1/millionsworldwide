@@ -1,7 +1,7 @@
 {
   "bannerSize": "medium",
   "textColor": "white",
-  "comingSoonEnabled": true,
+  "comingSoonEnabled": false,
   "launchDate": "2026-11-01T00:00:00",
   "comingSoonTitle": "THE ONLINE LAUNCH",
   "comingSoonSubtitle": "MILLIONS IS BUILT FOR THOSE WHO CHOOSE FORM OVER NOISE"
