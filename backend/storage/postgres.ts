@@ -9,11 +9,17 @@
  *
  * Connection strings, in order:
  * - DATABASE_PRIVATE_URL — Railway's internal URL, preferred: same
- *   project network, no SSL needed, not exposed to the internet.
- * - DATABASE_URL — the public URL: SSL is required, and the certificate
- *   is not publicly verifiable, so rejectUnauthorized is off (the
- *   connection is still encrypted; this is the standard Railway/Heroku
- *   setup for hosted Postgres).
+ *   project network, not exposed to the internet.
+ * - DATABASE_URL — the public URL when the private one is not set.
+ *
+ * SSL follows the HOST, not the variable name, because Railway resolves
+ * a DATABASE_URL reference to the private internal URL at runtime: an
+ * internal host (*.railway.internal) does not speak SSL, so forcing SSL
+ * there fails with "The server does not support SSL connections" and
+ * every settings read falls back to the Coming Soon defaults — which
+ * re-hid the live shop after the 991bbe06 deploy. Public hosts do
+ * require SSL (certificate not publicly verifiable, hence
+ * rejectUnauthorized: false). Local hosts behave like private ones.
  *
  * If a connection string is set, Postgres is authoritative: a failed
  * init (wrong URL, database down) throws loudly on every storage call
@@ -78,13 +84,15 @@ function getPool(): Pool {
     if (!connectionString) {
       throw new Error("Postgres is not configured (no DATABASE_URL set)");
     }
-    const isPrivate =
-      process.env.DATABASE_PRIVATE_URL !== undefined &&
-      process.env.DATABASE_PRIVATE_URL !== "";
+    // SSL follows the host, not the variable name (see the header note:
+    // a DATABASE_URL reference can resolve to the private internal URL).
+    const isPrivateHost =
+      connectionString.includes(".railway.internal") ||
+      connectionString.includes("localhost") ||
+      connectionString.includes("127.0.0.1");
     pool = new Pool({
       connectionString,
-      // Private (internal) connections need no SSL; public ones do.
-      ssl: isPrivate ? false : { rejectUnauthorized: false },
+      ssl: isPrivateHost ? false : { rejectUnauthorized: false },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
@@ -162,10 +170,13 @@ async function migrate(client: PoolClient): Promise<void> {
     const fromFile = await fileStore
       .readObject<Settings>("settings.json")
       .catch(() => null);
-    const effective =
-      fromSqlite ??
-      fromFile ??
-      (await fileStore.readSeedObject<Settings>("settings.json"));
+    // A corrupt seed must never throw here: it would roll back the whole
+    // migration (orders and subscribers included) and leave settings
+    // unreadable, which used to re-hide the shop behind Coming Soon.
+    const seed = await fileStore
+      .readSeedObject<Settings>("settings.json")
+      .catch(() => null);
+    const effective = fromSqlite ?? fromFile ?? seed;
     if (effective) {
       await client.query(
         "INSERT INTO settings (id, data) VALUES (1, $1)",

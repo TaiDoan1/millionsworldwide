@@ -10,7 +10,11 @@ import type { Settings } from "../storage/types"
 const DEFAULTS: Settings = {
   bannerSize: "full",
   textColor: "white",
-  comingSoonEnabled: true,
+  // The shop is live and the repo seed already says false: a settings
+  // read failure must never re-hide the live shop behind Coming Soon.
+  // (Order writes still fail loudly without a database; only browsing
+  // stays open.)
+  comingSoonEnabled: false,
   launchDate: "2026-11-01T00:00:00",
   comingSoonTitle: "THE OFFICIAL LAUNCH",
   comingSoonSubtitle: "MILLIONS IS BUILT FOR THOSE WHO CHOOSE FORM OVER NOISE",

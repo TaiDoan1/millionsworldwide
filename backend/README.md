@@ -46,7 +46,9 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 
 - Đơn, email, cài đặt lưu trong **Postgres** khi đặt
   `DATABASE_PRIVATE_URL` (khuyến nghị, URL nội bộ Railway) hoặc
-  `DATABASE_URL` (URL công khai, tự bật SSL); nếu không có 2 biến này
+  `DATABASE_URL` (URL công khai, hoặc URL nội bộ mà Railway tự điền
+  khi tham chiếu); SSL tự theo host — nội bộ thì không SSL, công
+  khai thì bật SSL. Nếu không có 2 biến này
   thì rơi về **SQLite** (`shop.db` trên
   `DATA_DIR` — trên Railway là Volume `/data`), rồi file JSON nếu máy
   chủ không có node:sqlite. Code trong `backend/storage/` tự chọn theo
