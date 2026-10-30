@@ -48,18 +48,23 @@ export default function ComingSoon({
   // Track viewport to only play ONE video at a time (prevent overlapping sounds)
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)")
-    setIsDesktop(mq.matches)
+    // Deferred a tick so this is not a synchronous setState in the effect.
+    const timer = window.setTimeout(() => setIsDesktop(mq.matches), 0)
 
     const handler = (e: MediaQueryListEvent) => {
       setIsDesktop(e.matches)
     }
     mq.addEventListener("change", handler)
-    return () => mq.removeEventListener("change", handler)
+    return () => {
+      window.clearTimeout(timer)
+      mq.removeEventListener("change", handler)
+    }
   }, [])
 
   // Calculate remaining time
   useEffect(() => {
-    setMounted(true)
+    // Deferred a tick so this is not a synchronous setState in the effect.
+    const mountTimer = window.setTimeout(() => setMounted(true), 0)
 
     const calculateTime = () => {
       const targetTime = new Date(launchDate).getTime()
@@ -94,7 +99,10 @@ export default function ComingSoon({
     calculateTime()
     const timer = setInterval(calculateTime, 1000)
 
-    return () => clearInterval(timer)
+    return () => {
+      window.clearTimeout(mountTimer)
+      clearInterval(timer)
+    }
   }, [launchDate])
 
   // Synchronize playback and muting strictly to the ACTIVE video
@@ -370,7 +378,7 @@ export default function ComingSoon({
           {showSecretLinks && (
             <>
               <span className="text-white/20">|</span>
-              <Link href="/admin" className="hover:text-white transition-colors">
+              <Link href="/mw-office" className="hover:text-white transition-colors">
                 Admin
               </Link>
               {onPreviewClick && (

@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { getSettings } from "../actions/settings"
 import HomeClientWrapper from "../components/HomeClientWrapper"
 
@@ -29,18 +30,18 @@ export default async function PreviewSitePage() {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <a
-            href="/admin"
+          <Link
+            href="/mw-office"
             className="text-[10px] font-bold tracking-widest uppercase bg-white/10 hover:bg-white hover:text-black transition-colors px-3 py-1 rounded-sm"
           >
             Quản trị Admin &rarr;
-          </a>
-          <a
+          </Link>
+          <Link
             href="/"
             className="text-[10px] font-bold tracking-widest uppercase text-white/70 hover:text-white underline underline-offset-4"
           >
             Về Coming Soon
-          </a>
+          </Link>
         </div>
       </div>
 

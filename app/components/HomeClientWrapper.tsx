@@ -24,7 +24,7 @@ interface HomeClientWrapperProps {
 export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) {
   const [isPreviewing, setIsPreviewing] = useState(false)
   // Auto-open the site once the configured launch moment ("Thời gian mở web"
-  // in /admin) has passed. Mount-guarded so the server render and the first
+  // in /mw-office) has passed. Mount-guarded so the server render and the first
   // client render stay identical (no hydration mismatch).
   const [launched, setLaunched] = useState(false)
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="underline hover:text-gray-300 text-[11px] uppercase tracking-wider">
+            <Link href="/mw-office" className="underline hover:text-gray-300 text-[11px] uppercase tracking-wider">
               Cài đặt Admin
             </Link>
             <button

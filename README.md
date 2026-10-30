@@ -32,20 +32,23 @@ app/
 │   ├── product/          # gallery, buy box, accordions, phối cùng
 │   ├── cart/             # dòng giỏ, tổng tiền, form đặt hàng, màn thành công
 │   └── shop/             # chip danh mục, thanh sắp xếp, tùy chọn lọc/sắp xếp
-├── data/                 # dữ liệu: products.ts, settings.json
-├── actions/              # code chạy phía server: đặt hàng, đăng ký email
-└── lib/                  # hàm dùng chung + lớp lưu trữ (file hoặc KV)
-proxy.ts                 # cổng bảo vệ /admin (Basic Auth)
+├── data/                 # dữ liệu: products.ts, settings.json (seed)
+├── actions/              # LỚP MỎNG gọi vào backend (giữ nguyên đường import)
+└── lib/                  # format.ts (frontend) + con trỏ về backend/
+backend/                 # CODE MÁY CHỦ — xem backend/README.md để biết bản đồ
+├── services/             # nghiệp vụ: đơn hàng, đăng ký, cài đặt
+├── storage/              # lưu trữ: file hoặc Vercel KV
+├── auth/                 # kiểm tra tài khoản admin
+├── security/             # chống spam form
+└── config/               # domain chính
+proxy.ts                 # cổng bảo vệ /mw-office (Next.js bắt để ở root)
 public/                  # file tĩnh: ảnh, video, logo
 ```
 
 Quy tắc chia tầng: route chỉ lo "URL nào hiện cái gì", component chỉ lo
-hiển thị, dữ liệu tách riêng khỏi giao diện, việc nhạy cảm (tính tiền, lưu
-đơn) chạy phía server. Mỗi feature trong `features/` tự chứa UI của nó,
-trang trong `components/` chỉ còn là khung ráp + state chung — file nào
-cũng dưới ~120 dòng nên sửa 1 chỗ không sợ chạm chỗ khác. Logic lặp lại ở
-nhiều component thì tách thành hook riêng; trạng thái chia sẻ cả cây trang
-(giỏ hàng) thì dùng context.
+hiển thị, dữ liệu tách riêng khỏi giao diện. Ranh giới frontend/backend:
+frontend gọi backend **chỉ qua `app/actions/`**, backend không import giao
+diện, giá tiền và mã đơn chỉ được quyết trong `backend/services/`.
 
 ## Biến môi trường
 
@@ -54,7 +57,7 @@ trong Variables. Không commit file `.env` thật (`.gitignore` đã chặn).
 
 | Biến | Bắt buộc | Ý nghĩa |
 | --- | --- | --- |
-| `ADMIN_USER`, `ADMIN_PASS` | Trên production | Tài khoản trang quản trị `/admin`. Thiếu là `/admin` khóa hẳn (401). |
+| `ADMIN_USER`, `ADMIN_PASS` | Trên production | Tài khoản trang quản trị `/mw-office`. Thiếu là `/mw-office` khóa hẳn (401). |
 | `DATA_DIR` | Nên có | Thư mục lưu đơn, email, cài đặt. Trên Railway gắn Volume tại `/data` rồi đặt `DATA_DIR=/data` để dữ liệu không mất khi deploy lại. |
 | `NEXT_PUBLIC_SITE_URL` | Nên có | Domain chính, dùng cho sitemap và thẻ chia sẻ. |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Không | Chỉ khi deploy trên Vercel: dùng Vercel KV thay cho lưu file. |
@@ -68,10 +71,12 @@ Volume gắn tại `/data` + biến `DATA_DIR=/data`,
 
 ## Bảo mật — đã có
 
-- **Trang quản trị khóa 2 lớp**: `proxy.ts` chặn `/admin` bằng Basic Auth,
+- **Trang quản trị khóa 2 lớp**: `proxy.ts` chặn `/mw-office` bằng Basic Auth,
   và action đổi cài đặt kiểm tra lại tài khoản trong code
-  (`app/lib/admin-auth.ts`). Đơn hàng chứa họ tên, số điện thoại, địa chỉ
+  (`backend/auth/admin-auth.ts`). Đơn hàng chứa họ tên, số điện thoại, địa chỉ
   của khách — không chia sẻ tài khoản admin cho ai ngoài người quản lý shop.
+  Chống đoán mật khẩu: sai 10 lần từ 1 IP thì khóa IP đó 15 phút, nhưng
+  mật khẩu đúng luôn vào được nên chủ shop không tự khóa mình.
 - **Security headers** (`next.config.ts`): chống đoán kiểu file, chống nhúng
   iframe, giới hạn quyền trình duyệt, ép HTTPS (HSTS).
 - **Giá tính lại phía server**: giỏ hàng chỉ gửi id + số lượng, tiền được
@@ -80,7 +85,7 @@ Volume gắn tại `/data` + biến `DATA_DIR=/data`,
   phút / IP, 30 tra cứu đơn / 10 phút / IP; giới hạn độ dài họ tên, địa
   chỉ, ghi chú.
 - **Không secret trong code**: token, mật khẩu chỉ qua biến môi trường.
-- **Dữ liệu khách không lọt lên Google**: `/admin` trả kèm
+- **Dữ liệu khách không lọt lên Google**: `/mw-office` trả kèm
   `X-Robots-Tag: noindex`, trang 404 tự có `noindex`.
 
 Chưa bật CSP nghiêm ngặt vì logo 3D (Three.js) và analytics dùng
@@ -99,7 +104,7 @@ theo dõi lượt xem bằng analytics, ảnh sản phẩm tối ưu 1000×1333.
   gửi thông tin chuyển khoản — chưa gắn cổng thanh toán tự động.
 - **Size**: shop xác nhận size khi gọi xác nhận đơn, web không bắt khách
   chọn size.
-- **Sao lưu**: đơn hàng nằm trên Volume Railway. Nên vào `/admin` đối
+- **Sao lưu**: đơn hàng nằm trên Volume Railway. Nên vào `/mw-office` đối
   chiếu và xuất đơn định kỳ; Volume không tự thay thế việc sao lưu.
 
 ## Clone cho thương hiệu mới
@@ -116,5 +121,5 @@ theo dõi lượt xem bằng analytics, ảnh sản phẩm tối ưu 1000×1333.
 5. Tạo project Railway mới + Volume `/data` riêng, đặt lại toàn bộ biến
    môi trường, đặc biệt `ADMIN_USER` / `ADMIN_PASS` mới và
    `NEXT_PUBLIC_SITE_URL` mới.
-6. Kiểm tra: build đạt, `/admin` hỏi tài khoản mới, đặt thử 1 đơn rồi tra
+6. Kiểm tra: build đạt, `/mw-office` hỏi tài khoản mới, đặt thử 1 đơn rồi tra
    cứu bằng mã đơn, xem sitemap trỏ đúng domain mới.

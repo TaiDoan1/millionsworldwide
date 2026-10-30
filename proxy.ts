@@ -4,19 +4,22 @@ import type { NextRequest } from "next/server";
 /**
  * Admin gate — Next.js 16 "proxy" convention (middleware.ts is deprecated).
  *
- * /admin lists orders with customer names, phones and addresses, so it is
+ * /mw-office lists orders with customer names, phones and addresses, so it is
  * locked behind HTTP Basic Auth. Credentials come only from the
  * ADMIN_USER / ADMIN_PASS environment variables, never from code.
  *
  * Behaviour:
  * - Local dev without credentials stays open for convenience.
- * - Production without credentials is fail-closed: /admin answers 401
+ * - Production without credentials is fail-closed: /mw-office answers 401
  *   until ADMIN_USER / ADMIN_PASS are set on the host.
- * - Authenticated responses carry X-Robots-Tag so /admin is never indexed.
+ * - Authenticated responses carry X-Robots-Tag so /mw-office is never indexed.
+ * - /previewsite and /riviewsite are gated too: they bypass the Coming Soon
+ *   gate by design, so they must never be public.
  *
  * This is the outer gate only. The settings mutation double-checks the
- * same credentials inside its server action (app/lib/admin-auth.ts), so
- * a proxy misconfiguration alone cannot open the admin write path.
+ * same credentials inside its server action (backend/services/settings.ts
+ * via backend/auth), so a proxy misconfiguration alone cannot open the
+ * admin write path.
  */
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -26,6 +29,37 @@ function timingSafeEqual(a: string, b: string): boolean {
     diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return diff === 0;
+}
+
+/**
+ * Brute-force brake: 10 failed admin logins per IP per 15 minutes.
+ * A correct password always gets through (and clears the counter) so the
+ * shop owner can never lock themselves out by mistyping.
+ */
+const MAX_FAILURES = 10;
+const FAILURE_WINDOW_MS = 15 * 60 * 1000;
+
+const failures = new Map<string, { count: number; until: number }>();
+
+function clientIp(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for") || "";
+  return forwarded.split(",")[0]?.trim() || "unknown";
+}
+
+function recordFailure(ip: string): number {
+  const now = Date.now();
+  if (failures.size > 1000) {
+    for (const [k, v] of failures) {
+      if (now >= v.until) failures.delete(k);
+    }
+  }
+  const entry = failures.get(ip);
+  if (!entry || now >= entry.until) {
+    failures.set(ip, { count: 1, until: now + FAILURE_WINDOW_MS });
+    return 1;
+  }
+  entry.count += 1;
+  return entry.count;
 }
 
 function unauthorized(message: string): Response {
@@ -67,7 +101,16 @@ export function proxy(request: NextRequest) {
     sep >= 0 &&
     timingSafeEqual(decoded.slice(0, sep), user) &&
     timingSafeEqual(decoded.slice(sep + 1), pass);
-  if (!ok) {
+  if (ok) {
+    failures.delete(clientIp(request));
+  } else {
+    const count = recordFailure(clientIp(request));
+    if (count >= MAX_FAILURES) {
+      return new Response(
+        "Sai mật khẩu quá nhiều lần. Thử lại sau 15 phút.",
+        { status: 429 }
+      );
+    }
     return unauthorized("Sai tài khoản hoặc mật khẩu quản trị.");
   }
 
@@ -77,5 +120,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/mw-office/:path*", "/previewsite/:path*", "/riviewsite/:path*"],
 };
