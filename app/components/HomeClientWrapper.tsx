@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import type { Settings } from "../actions/settings"
 import ComingSoon from "./ComingSoon"
+import WelcomeIntro from "./WelcomeIntro"
 import InstagramSection from "./InstagramSection"
 import SiteFooter from "./SiteFooter"
 import { PRODUCTS } from "../data/products"
@@ -68,6 +69,8 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
 
   return (
     <main className="w-full min-h-screen relative bg-white text-black">
+      {/* Welcome screen — homepage only, once per session */}
+      <WelcomeIntro />
       {/* PREVIEW BANNER (When Coming Soon is enabled but admin clicked Preview) */}
       {settings.comingSoonEnabled && isPreviewing && (
         <div className="fixed top-0 left-0 right-0 z-[120] bg-black/90 text-white px-4 py-2 text-xs flex items-center justify-between backdrop-blur-md border-b border-white/20">
