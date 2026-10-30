@@ -133,19 +133,111 @@ body {
   animation: mw-page-in 0.7s cubic-bezier(0.76, 0, 0.24, 1) backwards;
 }
 
-/* Welcome screen — logo pops in, wordmark letters rise one by one */
-@keyframes mw-welcome-logo-in {
-  from {
+/* Welcome screen — pieces get sucked into the centre, then the logo pops.
+   Shards accelerate inward (ease-in = suction feel); the logo overshoots
+   slightly and glows at the moment of assembly. */
+@keyframes mw-welcome-shard {
+  0% {
     opacity: 0;
-    transform: scale(0.85);
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty))
+      rotate(var(--r)) scale(1.4);
+    filter: blur(4px);
   }
-  to {
+  15% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(calc(var(--tx) * 0.08), calc(var(--ty) * 0.08))
+      rotate(calc(var(--r) * 0.1)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0) rotate(0deg) scale(0.3);
+  }
+}
+.mw-welcome-shard {
+  animation: mw-welcome-shard 1.3s cubic-bezier(0.55, 0, 0.9, 0.4) both;
+}
+@keyframes mw-welcome-streak {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty))
+      rotate(var(--r));
+    filter: blur(3px);
+  }
+  20% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(calc(var(--tx) * 0.08), calc(var(--ty) * 0.08))
+      rotate(var(--r));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--r)) scaleX(0.2);
+  }
+}
+.mw-welcome-streak {
+  animation: mw-welcome-streak 1.3s cubic-bezier(0.55, 0, 0.9, 0.4) both;
+}
+@keyframes mw-welcome-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4);
+  }
+}
+.mw-welcome-burst {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.35) 40%,
+    transparent 70%
+  );
+  animation: mw-welcome-burst 0.9s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+@keyframes mw-welcome-ring {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.6);
+  }
+}
+.mw-welcome-ring {
+  animation: mw-welcome-ring 1s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+@keyframes mw-welcome-logo-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.8));
+  }
+  100% {
     opacity: 1;
     transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
   }
 }
 .mw-welcome-logo {
-  animation: mw-welcome-logo-in 1s cubic-bezier(0.76, 0, 0.24, 1) backwards;
+  animation: mw-welcome-logo-in 0.85s cubic-bezier(0.76, 0, 0.24, 1) backwards;
 }
 @keyframes mw-welcome-letter-in {
   from {
@@ -159,6 +251,19 @@ body {
   display: inline-block;
   animation: mw-welcome-letter-in 0.9s cubic-bezier(0.76, 0, 0.24, 1) backwards;
 }
+@keyframes mw-welcome-tagline-in {
+  from {
+    opacity: 0;
+    letter-spacing: 0.8em;
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.4em;
+  }
+}
+.mw-welcome-tagline {
+  animation: mw-welcome-tagline-in 1s cubic-bezier(0.76, 0, 0.24, 1) backwards;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mw-letter,
@@ -166,6 +271,11 @@ body {
   .mw-page-transition,
   .mw-welcome-logo,
   .mw-welcome-letter,
+  .mw-welcome-tagline,
+  .mw-welcome-shard,
+  .mw-welcome-streak,
+  .mw-welcome-burst,
+  .mw-welcome-ring,
   .mw-marquee {
     animation: none;
   }
