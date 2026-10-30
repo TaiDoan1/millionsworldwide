@@ -17,7 +17,9 @@ export default function Header() {
       {/* Left - Logo */}
       <div className="flex-1">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-fit">
-          <Logo3D className="w-8 h-8" priority />
+          <div data-mw-header-logo className="h-8 w-8">
+            <Logo3D className="w-8 h-8" priority />
+          </div>
           <span className="text-sm font-semibold tracking-widest uppercase">
             Millions
           </span>

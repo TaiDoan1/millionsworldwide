@@ -147,6 +147,10 @@ body {
 .mw-welcome-roll-in {
   animation: mw-welcome-roll-in 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+/* Welcome exit — the logo flies up and shrinks into the header logo. */
+.mw-welcome-exit {
+  transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mw-letter,
