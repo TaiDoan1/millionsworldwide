@@ -6,6 +6,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { useRouter } from "next/navigation";
 import Logo3D from "./Logo3D";
 
 /**
@@ -17,14 +18,26 @@ import Logo3D from "./Logo3D";
  * 2. At ~1.25s a flash burst + expanding rings fire as the pieces merge.
  * 3. The logo pops in with a slight overshoot and glow.
  * 4. MILLIONS letters rise one by one, then the tagline fades in.
- * 5. The whole screen fades out (~4.2s) and unmounts (~4.9s).
+ * 5. At ~3s a SHOP THE DROP button appears: it fades the screen out and
+ *    takes the visitor to the shop. Otherwise the screen fades out on its
+ *    own (~4.8s) and unmounts (~5.5s).
+ * 6. Extra effects: a light sweep glides across the logo after assembly;
+ *    the MILLIONS letters decode from random glyphs into place while they
+ *    rise; the exit is a zoom-out (scale down + fade) instead of a plain
+ *    fade, like a camera pulling back.
  *
  * Plays once per browser session (sessionStorage flag), skipped entirely
  * for prefers-reduced-motion, and has a Skip button. While it is up the
  * page behind it cannot scroll.
  */
-const SHOW_MS = 4200;
+const SHOW_MS = 4800;
 const FADE_MS = 700;
+const CTA_MS = 3000;
+const SCRAMBLE_START_MS = 1200;
+
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@%&";
+const pickGlyph = () =>
+  GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
 const LETTERS = "MILLIONS".split("");
 
 /** Deterministic pseudo-random so the shard layout never shifts mid-flight. */
@@ -84,7 +97,10 @@ function buildShards(): Shard[] {
 export default function WelcomeIntro() {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [ctaReady, setCtaReady] = useState(false);
+  const [displayLetters, setDisplayLetters] = useState<string[]>(LETTERS);
   const shards = useMemo(() => buildShards(), []);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -96,6 +112,7 @@ export default function WelcomeIntro() {
       return;
     }
     const showTimer = window.setTimeout(() => setVisible(true), 0);
+    const ctaTimer = window.setTimeout(() => setCtaReady(true), CTA_MS);
     const hideTimer = window.setTimeout(
       () => setVisible(false),
       SHOW_MS + FADE_MS
@@ -103,6 +120,7 @@ export default function WelcomeIntro() {
     const fadeTimer = window.setTimeout(() => setLeaving(true), SHOW_MS);
     return () => {
       window.clearTimeout(showTimer);
+      window.clearTimeout(ctaTimer);
       window.clearTimeout(hideTimer);
       window.clearTimeout(fadeTimer);
     };
@@ -117,9 +135,43 @@ export default function WelcomeIntro() {
     };
   }, [visible]);
 
+  // Scramble: once the logo has popped, each letter flickers through random
+  // glyphs and locks into place left to right, while the rise animation
+  // lifts it into view.
+  useEffect(() => {
+    if (!visible) return;
+    let interval: number | undefined;
+    const startTimer = window.setTimeout(() => {
+      const start = Date.now();
+      interval = window.setInterval(() => {
+        const elapsed = Date.now() - start;
+        setDisplayLetters(
+          LETTERS.map((ch, i) =>
+            elapsed >= 200 + i * 140 ? ch : pickGlyph()
+          )
+        );
+        if (elapsed >= 200 + 7 * 140 && interval !== undefined) {
+          window.clearInterval(interval);
+        }
+      }, 40);
+    }, SCRAMBLE_START_MS);
+    return () => {
+      window.clearTimeout(startTimer);
+      if (interval !== undefined) window.clearInterval(interval);
+    };
+  }, [visible]);
+
   const skip = () => {
     setLeaving(true);
     window.setTimeout(() => setVisible(false), FADE_MS);
+  };
+
+  // CTA: fade the welcome out, then take the visitor to the shop. The
+  // short delay lets the fade start before the page transition runs.
+  const shopDrop = () => {
+    if (leaving) return;
+    setLeaving(true);
+    window.setTimeout(() => router.push("/trangchu"), 350);
   };
 
   if (!visible) return null;
@@ -128,8 +180,8 @@ export default function WelcomeIntro() {
     <div
       role="dialog"
       aria-label="Màn hình chào mừng Millions Worldwide"
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black px-6 text-white transition-opacity duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
-        leaving ? "pointer-events-none opacity-0" : "opacity-100"
+      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black px-6 text-white transition-all duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+        leaving ? "pointer-events-none scale-[0.93] opacity-0" : "opacity-100"
       }`}
     >
       {/* Logo zone — shards, flash and rings are centred on the logo. */}
@@ -180,14 +232,21 @@ export default function WelcomeIntro() {
         >
           <Logo3D className="h-40 w-40 sm:h-52 sm:w-52" priority />
         </div>
+        {/* Light sweep gliding across the logo after assembly */}
+        <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden" aria-hidden>
+          <div
+            className="mw-welcome-sweep absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent"
+            style={{ animationDelay: "2100ms" }}
+          />
+        </div>
       </div>
 
       <div className="mt-8 flex overflow-hidden" aria-hidden>
-        {LETTERS.map((letter, i) => (
+        {displayLetters.map((letter, i) => (
           <span
             key={i}
             className="mw-welcome-letter text-4xl font-extrabold uppercase tracking-[0.12em] sm:text-6xl"
-            style={{ animationDelay: `${1950 + i * 70}ms` }}
+            style={{ animationDelay: `${1250 + i * 60}ms` }}
           >
             {letter}
           </span>
@@ -201,6 +260,16 @@ export default function WelcomeIntro() {
       >
         Form over noise
       </p>
+
+      {ctaReady && !leaving && (
+        <button
+          type="button"
+          onClick={shopDrop}
+          className="mw-fade-up mt-8 rounded-full bg-white px-7 py-3 text-sm font-bold uppercase tracking-widest text-black transition-colors hover:bg-neutral-200"
+        >
+          Shop the drop
+        </button>
+      )}
 
       <button
         type="button"

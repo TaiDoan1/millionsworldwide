@@ -264,6 +264,26 @@ body {
 .mw-welcome-tagline {
   animation: mw-welcome-tagline-in 1s cubic-bezier(0.76, 0, 0.24, 1) backwards;
 }
+/* Light sweep gliding across the assembled logo */
+@keyframes mw-welcome-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-160%) skewX(-20deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(320%) skewX(-20deg);
+  }
+}
+.mw-welcome-sweep {
+  animation: mw-welcome-sweep 0.9s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mw-letter,
@@ -276,6 +296,7 @@ body {
   .mw-welcome-streak,
   .mw-welcome-burst,
   .mw-welcome-ring,
+  .mw-welcome-sweep,
   .mw-marquee {
     animation: none;
   }
