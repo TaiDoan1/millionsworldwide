@@ -104,6 +104,11 @@ function getPool(): Pool {
   return pool;
 }
 
+/** Shared pool for other Postgres-backed stores (e.g. the product catalog). */
+export function getPostgresPool(): Pool {
+  return getPool();
+}
+
 let initPromise: Promise<void> | null = null;
 
 /** Create schema + migrate legacy data once per process. Loud on failure. */

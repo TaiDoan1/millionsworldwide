@@ -39,10 +39,21 @@ export type Subscriber = {
 };
 
 export type Settings = {
-  bannerSize: "full" | "large" | "medium";
-  textColor: "white" | "black";
   comingSoonEnabled: boolean;
   launchDate: string;
   comingSoonTitle?: string;
   comingSoonSubtitle?: string;
+  /** Promo strip at the top of the page, edited in /mw-office. */
+  promoEnabled?: boolean;
+  promoText?: string;
+  /** Optional internal link for the strip, e.g. "/trangchu". */
+  promoLink?: string;
+  /**
+   * Homepage copy, edited in /mw-office. Empty means "use the built-in
+   * defaults": marqueeText is one phrase per line; editorialHeading is
+   * one line per row of the big title; editorialText is the paragraph.
+   */
+  marqueeText?: string;
+  editorialHeading?: string;
+  editorialText?: string;
 };

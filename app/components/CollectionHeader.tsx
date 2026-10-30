@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PRODUCTS } from "../data/products";
+import type { Product } from "../data/products";
 import { useCart } from "./CartContext";
 import Logo3D from "./Logo3D";
 
@@ -23,12 +23,20 @@ const TABS = [
   { key: "shorts", label: "SHORTS" },
 ] as const;
 
-function productsForTab(key: string) {
-  if (key === "all") return PRODUCTS;
-  return PRODUCTS.filter((p) => p.category === key);
+function productsForTab(products: Product[], key: string) {
+  if (key === "all") return products;
+  return products.filter((p) => p.category === key);
 }
 
-export default function CollectionHeader() {
+export default function CollectionHeader({
+  products,
+  promoBar = false,
+}: {
+  /** Live catalog from the page. */
+  products: Product[];
+  /** True when the promo strip is showing above, pushing the floating header down. */
+  promoBar?: boolean;
+}) {
   const { count, openCart } = useCart();
   const [visible, setVisible] = useState(true);
   const [shopOpen, setShopOpen] = useState(false);
@@ -46,11 +54,11 @@ export default function CollectionHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const tabProducts = productsForTab(tab).slice(0, 4);
+  const tabProducts = productsForTab(products, tab).slice(0, 4);
 
   return (
     <div
-      className={`fixed left-10 right-10 top-3 z-[100] transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] sm:left-[44px] sm:right-[44px] sm:top-[22px] ${
+      className={`fixed left-10 right-10 ${promoBar ? "top-[42px] sm:top-[52px]" : "top-3 sm:top-[22px]"} z-[100] transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] sm:left-[44px] sm:right-[44px] ${
         visible ? "translate-y-0" : "-translate-y-[150%]"
       }`}
       onMouseLeave={() => setShopOpen(false)}

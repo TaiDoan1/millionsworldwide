@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PRODUCTS } from "../data/products";
+import type { Product } from "../data/products";
 import ProductCard from "./ProductCard";
 import CategoryChips from "../features/shop/CategoryChips";
 import ShopToolbar from "../features/shop/ShopToolbar";
@@ -16,7 +16,7 @@ import {
  * Shop grid assembly: filter + sort + layout state live here, the chips
  * row and the toolbar live in features/shop, the cards stay shared.
  */
-export default function ShopSection() {
+export default function ShopSection({ products: catalog }: { products: Product[] }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("best-selling");
   const [sortOpen, setSortOpen] = useState(false);
@@ -25,7 +25,7 @@ export default function ShopSection() {
   const [loading, setLoading] = useState(false);
 
   const products = useMemo(() => {
-    let list = [...PRODUCTS];
+    let list = [...catalog];
     if (filter !== "all") {
       list = list.filter((p) => p.category === filter);
     }
@@ -49,7 +49,7 @@ export default function ShopSection() {
         break;
     }
     return list;
-  }, [filter, sort]);
+  }, [catalog, filter, sort]);
 
   const visible = products.slice(0, visibleCount);
   const sortLabel = SORT_OPTIONS.find((o) => o.key === sort)?.label;

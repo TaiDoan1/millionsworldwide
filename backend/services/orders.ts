@@ -1,6 +1,7 @@
 /** Backend service: order rules (validation, server-side pricing, order codes). Called only via app/actions/orders.ts. */
 import { revalidatePath } from "next/cache";
-import { PRODUCTS, isSizeSoldOut } from "../../app/data/products";
+import { isSizeSoldOut } from "../../app/data/products";
+import { getProductsStrict } from "./products";
 import {
   appendOrder,
   listOrders,
@@ -91,8 +92,17 @@ export async function placeOrder(
   }
 
   const items: OrderItem[] = [];
+  // Strict catalog: a DB outage must fail the order loudly, never price
+  // it from the stale code seed while the live catalog is unreachable.
+  let catalog: Awaited<ReturnType<typeof getProductsStrict>>;
+  try {
+    catalog = await getProductsStrict();
+  } catch (error) {
+    console.error("Failed to read pricing catalog:", error);
+    return { success: false, error: "Không kết nối được kho dữ liệu, thử lại sau ít phút nhé." };
+  }
   for (const raw of input.items) {
-    const product = PRODUCTS.find((p) => p.id === raw.id);
+    const product = catalog.find((p) => p.id === raw.id);
     if (!product || product.soldOut) {
       return { success: false, error: "Có sản phẩm đã hết hàng trong giỏ." };
     }

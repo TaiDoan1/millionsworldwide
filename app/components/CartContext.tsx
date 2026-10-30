@@ -9,9 +9,9 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { PRODUCTS, type Product } from "../data/products";
+import type { Product } from "../data/products";
 
-export type CartLine = { product: Product; qty: number };
+export type CartLine = { product: Product; qty: number; size?: string };
 
 type CartContextValue = {
   lines: CartLine[];
@@ -21,9 +21,9 @@ type CartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  add: (id: string) => void;
-  remove: (id: string) => void;
-  setQty: (id: string, qty: number) => void;
+  add: (id: string, size?: string) => void;
+  remove: (id: string, size?: string) => void;
+  setQty: (id: string, qty: number, size?: string) => void;
   clear: () => void;
 };
 
@@ -79,14 +79,24 @@ function writeCart(items: Record<string, number>) {
   listeners.forEach((cb) => cb());
 }
 
-function parseCart(raw: string): Record<string, number> {
+/* Cart storage keys: "product-id" (no size chosen, old carts keep working)
+ * or "product-id::SIZE" (size picked on the detail page). */
+function cartKey(id: string, size?: string) {
+  return size ? `${id}::${size}` : id;
+}
+
+function parseCart(
+  products: Product[],
+  raw: string,
+): Record<string, number> {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return {};
     const clean: Record<string, number> = {};
-    for (const [id, qty] of Object.entries(parsed)) {
-      if (PRODUCTS.some((p) => p.id === id)) {
-        clean[id] = Math.max(1, Math.min(10, Number(qty) || 1));
+    for (const [key, qty] of Object.entries(parsed)) {
+      const [id] = key.split("::");
+      if (products.some((p) => p.id === id)) {
+        clean[key] = Math.max(1, Math.min(10, Number(qty) || 1));
       }
     }
     return clean;
@@ -95,34 +105,42 @@ function parseCart(raw: string): Record<string, number> {
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  children,
+  products,
+}: {
+  children: ReactNode;
+  /** Live catalog from the page (DB when configured, code seed otherwise). */
+  products: Product[];
+}) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const items = useMemo(() => parseCart(raw), [raw]);
+  const items = useMemo(() => parseCart(products, raw), [products, raw]);
   const [isOpen, setIsOpen] = useState(false);
 
   const add = useCallback(
-    (id: string) => {
-      writeCart({ ...items, [id]: Math.min(10, (items[id] ?? 0) + 1) });
+    (id: string, size?: string) => {
+      const key = cartKey(id, size);
+      writeCart({ ...items, [key]: Math.min(10, (items[key] ?? 0) + 1) });
     },
     [items]
   );
 
   const remove = useCallback(
-    (id: string) => {
+    (id: string, size?: string) => {
       const next = { ...items };
-      delete next[id];
+      delete next[cartKey(id, size)];
       writeCart(next);
     },
     [items]
   );
 
   const setQty = useCallback(
-    (id: string, qty: number) => {
+    (id: string, qty: number, size?: string) => {
       if (qty <= 0) {
-        remove(id);
+        remove(id, size);
         return;
       }
-      writeCart({ ...items, [id]: Math.min(10, qty) });
+      writeCart({ ...items, [cartKey(id, size)]: Math.min(10, qty) });
     },
     [items, remove]
   );
@@ -131,9 +149,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => {
     const lines: CartLine[] = Object.entries(items)
-      .map(([id, qty]) => {
-        const product = PRODUCTS.find((p) => p.id === id);
-        return product ? { product, qty } : null;
+      .map(([key, qty]): CartLine | null => {
+        const [id, size] = key.split("::");
+        const product = products.find((p) => p.id === id);
+        return product ? { product, qty, size: size || undefined } : null;
       })
       .filter((l): l is CartLine => l !== null);
     return {
@@ -148,7 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setQty,
       clear,
     };
-  }, [items, isOpen, add, remove, setQty, clear]);
+  }, [items, isOpen, add, remove, setQty, clear, products]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

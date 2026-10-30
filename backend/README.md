@@ -26,8 +26,11 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 2. Backend **không import giao diện** (không import component, CSS, ảnh).
 3. Giá tiền, mã đơn, trạng thái đơn chỉ được quyết ở
    `backend/services/` — frontend gửi id + số lượng, backend tính lại.
-4. Dữ liệu dùng chung (bảng sản phẩm) nằm ở `app/data/products.ts`:
-   backend sở hữu giá, frontend chỉ đọc để hiển thị.
+4. Dữ liệu dùng chung (bảng sản phẩm): khi có Postgres, bảng `products`
+   là catalogue đang chạy — `app/data/products.ts` chỉ còn là seed (lần
+   đầu chạy với bảng trống, code tự copy 17 sản phẩm vào) và bản dự phòng
+   khi đọc lỗi. Không có Postgres thì shop đọc thẳng từ file seed, và
+   sửa sản phẩm trong /mw-office bị từ chối thay vì ghi sang kho khác.
 
 ## Luồng chạy chính
 
@@ -60,6 +63,13 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   đầu chạy với database trống, code tự chuyển dữ liệu cũ sang: Postgres
   chuyển từ SQLite (nếu có) rồi từ file JSON, SQLite chuyển từ file
   JSON; file JSON giữ lại làm bản dự phòng.
+- **Sản phẩm** lưu ở bảng `products` trong Postgres (tên, giá, giá gốc,
+  danh mục, ảnh, hết hàng, đặt trước, ẩn/hiện, size theo từng size, thông
+  số, thứ tự) — sửa, thêm, xóa trong /mw-office có hiệu lực ngay, không
+  cần đẩy code. Ảnh mới vẫn cần file có sẵn trong web (lưu kiểm tra file
+  tồn tại trước khi cho thêm). Đọc hiển thị lỗi thì rơi về seed cho web
+  vẫn mở được, nhưng tính giá đơn thì báo lỗi to thay vì tính bằng giá
+  seed cũ.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
   hay đổi tên chúng**: `backend/storage/file.ts` đọc seed từ
   `app/data/settings.json` theo đường dẫn tuyệt đối từ root project, và

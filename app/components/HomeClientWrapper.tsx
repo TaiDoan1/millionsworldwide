@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import type { Settings } from "../actions/settings"
+import type { Product } from "../data/products"
 import ComingSoon from "./ComingSoon"
 import WelcomeIntro from "./WelcomeIntro"
 import InstagramSection from "./InstagramSection"
@@ -15,13 +16,14 @@ import ArrivalsSection from "../features/home/ArrivalsSection"
 
 interface HomeClientWrapperProps {
   settings: Settings
+  products: Product[]
 }
 
 /**
  * Homepage assembly: Coming Soon gate + preview banner + the home
  * sections (each lives in features/home so this file stays thin).
  */
-export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) {
+export default function HomeClientWrapper({ settings, products }: HomeClientWrapperProps) {
   const [isPreviewing, setIsPreviewing] = useState(false)
   // Auto-open the site once the configured launch moment ("Thời gian mở web"
   // in /mw-office) has passed. Mount-guarded so the server render and the first
@@ -77,10 +79,18 @@ export default function HomeClientWrapper({ settings }: HomeClientWrapperProps) 
       )}
 
       <HeroSection />
-      <MarqueeBar />
+      <MarqueeBar
+        phrases={(settings.marqueeText ?? "")
+          .split("\n")
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0)}
+      />
       <StoryTiles />
-      <EditorialSection />
-      <ArrivalsSection />
+      <EditorialSection
+        heading={settings.editorialHeading}
+        text={settings.editorialText}
+      />
+      <ArrivalsSection products={products} />
 
       <InstagramSection />
       <SiteFooter />

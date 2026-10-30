@@ -6,7 +6,8 @@ import CollectionFooter from "../../components/CollectionFooter";
 import { CartProvider } from "../../components/CartContext";
 import CartDrawer from "../../components/CartDrawer";
 import ProductDetail from "../../components/ProductDetail";
-import { PRODUCTS } from "../../data/products";
+import { getProductById, getProducts } from "../../actions/products";
+import { getSettings } from "../../actions/settings";
 
 /**
  * Same font as the shop page: the reference shop renders in "Swiss", and
@@ -18,11 +19,9 @@ const inter = Inter({
   display: "swap",
 });
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ id: p.id }));
-}
+// No generateStaticParams on purpose: the catalog lives in Postgres now,
+// so detail pages render from the live catalog (an admin price/name edit
+// shows up here without a rebuild).
 
 export async function generateMetadata({
   params,
@@ -30,7 +29,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const product = PRODUCTS.find((p) => p.id === id);
+  const product = await getProductById(id);
   if (!product) return { title: "Không tìm thấy — millions worldwide™" };
   return {
     title: `${product.name} — millions worldwide™`,
@@ -47,22 +46,32 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = PRODUCTS.find((p) => p.id === id);
+  const [product, products, settings] = await Promise.all([
+    getProductById(id),
+    getProducts(),
+    getSettings(),
+  ]);
   if (!product) notFound();
 
   // Style-with picks: same category first, then other categories, up to 4.
   const styleWith = [
-    ...PRODUCTS.filter((p) => p.id !== product.id && p.category === product.category),
-    ...PRODUCTS.filter((p) => p.id !== product.id && p.category !== product.category),
+    ...products.filter((p) => p.id !== product.id && p.category === product.category),
+    ...products.filter((p) => p.id !== product.id && p.category !== product.category),
   ].slice(0, 4);
 
+  // The promo strip is 30px tall; when it shows, the floating header and
+  // the content below it both shift down by exactly that much.
+  const promoBar =
+    settings.promoEnabled === true &&
+    (settings.promoText ?? "").trim().length > 0;
+
   return (
-    <CartProvider>
+    <CartProvider products={products}>
       <div className={`min-h-screen bg-white text-black ${inter.className}`}>
-        <CollectionHeader />
+        <CollectionHeader products={products} promoBar={promoBar} />
         <CartDrawer />
 
-        <main className="w-full px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
+        <main className={`w-full px-0 sm:px-[44px] ${promoBar ? "pt-[140px] sm:pt-[136px]" : "pt-[110px] sm:pt-[106px]"}`}>
           <ProductDetail product={product} styleWith={styleWith} />
         </main>
 

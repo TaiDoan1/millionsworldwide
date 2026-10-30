@@ -37,6 +37,12 @@ export type Product = {
   sizes?: SizeOption[];
   /** Spec facts for the detail page; omitted rows are simply not shown. */
   spec?: ProductSpec;
+  /**
+   * Hidden from the shop AND unbuyable (admin-only flag, stored in the
+   * Postgres catalog — the code seed never sets it). Sold-out products
+   * stay visible with a badge; hidden ones disappear entirely.
+   */
+  hidden?: boolean;
 };
 
 /** Effective size options for a product: its own list, or none. */
@@ -55,6 +61,12 @@ export const CATEGORIES: Category[] = ["sets", "t-shirts", "shirts", "jeans", "s
  * Catalog rebuilt 2026-10-22 from the "Tách Nền Millions" lookbook shoot
  * (background-removed model photos from Google Drive).
  * Prices are in thousands of VND and are drafts for the owner to confirm.
+ *
+ * This array is the SEED + read-only fallback, not the live catalog: when
+ * Postgres is configured, backend/storage/products.ts copies it into the
+ * products table on first run, and the shop reads the table from then on
+ * (so /mw-office edits apply without a code push). Keep the ids stable —
+ * they are the product URLs (/trangchu/<id>).
  */
 export const PRODUCTS: Product[] = [
   // sets

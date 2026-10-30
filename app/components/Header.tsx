@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 // 3D code as its own chunk instead of weighing down the first load.
 const Logo3D = dynamic(() => import("./Logo3D"));
 
-export default function Header() {
+export default function Header({ promoVisible = false }: { promoVisible?: boolean }) {
   const pathname = usePathname();
 
   // The shop/collection pages use their own floating CollectionHeader instead.
@@ -17,8 +17,12 @@ export default function Header() {
     return null;
   }
 
+  // The promo strip is 30px tall; when it shows (and not on admin pages),
+  // the header sits below it instead of overlapping it.
+  const shifted = promoVisible && !pathname?.startsWith("/mw-office");
+
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 text-white drop-shadow-md">
+    <header className={`absolute ${shifted ? "top-[30px]" : "top-0"} left-0 right-0 z-50 flex items-center justify-between px-8 py-6 text-white drop-shadow-md`}>
       {/* Left - Logo */}
       <div className="flex-1">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-fit">

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { getSettings } from "../actions/settings"
+import { getProducts } from "../actions/products"
 import HomeClientWrapper from "../components/HomeClientWrapper"
 
 export const metadata = {
@@ -8,7 +9,10 @@ export const metadata = {
 }
 
 export default async function PreviewSitePage() {
-  const settings = await getSettings()
+  const [settings, products] = await Promise.all([
+    getSettings(),
+    getProducts(),
+  ])
 
   // In preview mode, force comingSoonEnabled to false so the full website is rendered
   const previewSettings = {
@@ -46,7 +50,7 @@ export default async function PreviewSitePage() {
       </div>
 
       {/* Full Website Content */}
-      <HomeClientWrapper settings={previewSettings} />
+      <HomeClientWrapper settings={previewSettings} products={products} />
     </div>
   )
 }

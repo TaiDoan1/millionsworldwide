@@ -5,16 +5,7 @@
  */
 import type { Settings } from "../storage/types";
 
-const BANNER_SIZES = ["full", "large", "medium"];
-const TEXT_COLORS = ["white", "black"];
-
 export function validateSettings(s: Settings): string | null {
-  if (!BANNER_SIZES.includes(s.bannerSize)) {
-    return "Kích thước banner chưa đúng.";
-  }
-  if (!TEXT_COLORS.includes(s.textColor)) {
-    return "Màu chữ chưa đúng.";
-  }
   if (typeof s.comingSoonEnabled !== "boolean") {
     return "Trạng thái Coming Soon chưa đúng.";
   }
@@ -36,6 +27,41 @@ export function validateSettings(s: Settings): string | null {
       s.comingSoonSubtitle.length > 500)
   ) {
     return "Phụ đề quá dài.";
+  }
+  if (s.promoEnabled !== undefined && typeof s.promoEnabled !== "boolean") {
+    return "Trạng thái banner khuyến mãi chưa đúng.";
+  }
+  if (
+    s.promoText !== undefined &&
+    (typeof s.promoText !== "string" || s.promoText.length > 200)
+  ) {
+    return "Nội dung banner khuyến mãi quá dài.";
+  }
+  if (
+    s.promoLink !== undefined &&
+    s.promoLink !== "" &&
+    (typeof s.promoLink !== "string" || !s.promoLink.startsWith("/"))
+  ) {
+    return "Link banner khuyến mãi phải là đường dẫn trong web (bắt đầu bằng /).";
+  }
+  if (
+    s.marqueeText !== undefined &&
+    (typeof s.marqueeText !== "string" || s.marqueeText.length > 2000)
+  ) {
+    return "Chữ chạy trang chủ quá dài.";
+  }
+  if (
+    s.editorialHeading !== undefined &&
+    (typeof s.editorialHeading !== "string" ||
+      s.editorialHeading.length > 200)
+  ) {
+    return "Tiêu đề editorial quá dài.";
+  }
+  if (
+    s.editorialText !== undefined &&
+    (typeof s.editorialText !== "string" || s.editorialText.length > 1000)
+  ) {
+    return "Đoạn editorial quá dài.";
   }
   return null;
 }

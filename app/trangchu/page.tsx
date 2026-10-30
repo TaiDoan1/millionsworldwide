@@ -4,6 +4,8 @@ import ShopSection from "../components/ShopSection";
 import CollectionFooter from "../components/CollectionFooter";
 import { CartProvider } from "../components/CartContext";
 import CartDrawer from "../components/CartDrawer";
+import { getProducts } from "../actions/products";
+import { getSettings } from "../actions/settings";
 
 /**
  * The reference shop renders everything in "Swiss" (a licensed Helvetica-style
@@ -20,18 +22,28 @@ export const metadata = {
   title: "products — millions worldwide™",
 };
 
-export default function TrangChuPage() {
+export default async function TrangChuPage() {
+  const [products, settings] = await Promise.all([
+    getProducts(),
+    getSettings(),
+  ]);
+  // The promo strip is 30px tall; when it shows, the floating header and
+  // the content below it both shift down by exactly that much.
+  const promoBar =
+    settings.promoEnabled === true &&
+    (settings.promoText ?? "").trim().length > 0;
+
   return (
-    <CartProvider>
+    <CartProvider products={products}>
     <div className={`min-h-screen bg-white text-black ${inter.className}`}>
-      <CollectionHeader />
+      <CollectionHeader products={products} promoBar={promoBar} />
       <CartDrawer />
 
       <main className="w-full">
         {/* Hero — sized with the reference homepage hero's own formula:
             height calc(100vh - 2rem); from 760px up, calc(100vh - 5rem) capped at
             calc(100vh - 4.5vw). 12px radius, no overlay title. Autoplay, muted, loop. */}
-        <div className="px-0 pt-[110px] sm:px-[44px] sm:pt-[106px]">
+        <div className={`px-0 sm:px-[44px] ${promoBar ? "pt-[140px] sm:pt-[136px]" : "pt-[110px] sm:pt-[106px]"}`}>
           <div className="relative h-[calc(100vh-2rem)] min-[760px]:h-[calc(100vh-5rem)] min-[760px]:max-h-[calc(100vh-4.5vw)] w-full overflow-hidden rounded-b-[12px] sm:rounded-[12px]">
             <video
               src="/videos/desktop.mp4"
@@ -48,7 +60,7 @@ export default function TrangChuPage() {
         </div>
 
         <div className="mt-[1.25rem] sm:mt-[2.25vw]">
-          <ShopSection />
+          <ShopSection products={products} />
         </div>
       </main>
 

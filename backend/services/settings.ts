@@ -8,8 +8,6 @@ export type { Settings } from "../storage/types";
 import type { Settings } from "../storage/types"
 
 const DEFAULTS: Settings = {
-  bannerSize: "full",
-  textColor: "white",
   // The shop is live and the repo seed already says false: a settings
   // read failure must never re-hide the live shop behind Coming Soon.
   // (Order writes still fail loudly without a database; only browsing
@@ -18,6 +16,12 @@ const DEFAULTS: Settings = {
   launchDate: "2026-11-01T00:00:00",
   comingSoonTitle: "THE OFFICIAL LAUNCH",
   comingSoonSubtitle: "MILLIONS IS BUILT FOR THOSE WHO CHOOSE FORM OVER NOISE",
+  promoEnabled: false,
+  promoText: "",
+  promoLink: "",
+  marqueeText: "",
+  editorialHeading: "",
+  editorialText: "",
 }
 
 export async function getSettings(): Promise<Settings> {
@@ -25,12 +29,16 @@ export async function getSettings(): Promise<Settings> {
     const stored = await readSettings()
     if (!stored) return { ...DEFAULTS }
     return {
-      bannerSize: stored.bannerSize || DEFAULTS.bannerSize,
-      textColor: stored.textColor || DEFAULTS.textColor,
       comingSoonEnabled: stored.comingSoonEnabled ?? DEFAULTS.comingSoonEnabled,
       launchDate: stored.launchDate || DEFAULTS.launchDate,
       comingSoonTitle: stored.comingSoonTitle || DEFAULTS.comingSoonTitle,
       comingSoonSubtitle: stored.comingSoonSubtitle || DEFAULTS.comingSoonSubtitle,
+      promoEnabled: stored.promoEnabled ?? DEFAULTS.promoEnabled,
+      promoText: stored.promoText ?? DEFAULTS.promoText,
+      promoLink: stored.promoLink ?? DEFAULTS.promoLink,
+      marqueeText: stored.marqueeText ?? DEFAULTS.marqueeText,
+      editorialHeading: stored.editorialHeading ?? DEFAULTS.editorialHeading,
+      editorialText: stored.editorialText ?? DEFAULTS.editorialText,
     }
   } catch (error) {
     console.error("Failed to read settings:", error)

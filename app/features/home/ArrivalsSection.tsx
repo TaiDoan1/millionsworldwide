@@ -1,19 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PRODUCTS } from "../../data/products";
+import type { Product } from "../../data/products";
 import { formatPrice } from "../../lib/format";
 
 const FEATURED_IDS = ["set-hoodie-black", "tee-millions", "jeans-wide", "set-jeans-signature"];
 const FEATURED_ASPECTS = ["aspect-[4/5]", "aspect-square", "aspect-[2/3]", "aspect-[4/5]"];
 const FEATURED_OFFSETS = ["md:pb-16", "md:pb-40", "", "md:pb-20"];
 
-const featured = FEATURED_IDS.flatMap((id) => {
-  const p = PRODUCTS.find((x) => x.id === id);
-  return p ? [p] : [];
-});
-
 /** NEW ARRIVALS — featured pieces, data-driven from the catalog. */
-export default function ArrivalsSection() {
+export default function ArrivalsSection({ products }: { products: Product[] }) {
+  const featured = FEATURED_IDS.flatMap((id) => {
+    const p = products.find((x) => x.id === id);
+    return p ? [p] : [];
+  });
   return (
     <section className="mx-auto mt-24 w-full max-w-[1400px] px-6 md:mt-36">
       <div className="mb-14 md:mb-20">
