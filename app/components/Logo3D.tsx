@@ -6,6 +6,8 @@ import * as THREE from "three";
 interface Logo3DProps {
   className?: string;
   priority?: boolean;
+  /** When false, the logo stands still instead of slowly rotating. */
+  spin?: boolean;
 }
 
 // 86 contour boundary points extracted from the logo
@@ -32,6 +34,7 @@ const LOGO_POINTS: [number, number][] = [
 
 export default function Logo3D({
   className = "w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28",
+  spin = true,
 }: Logo3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -159,7 +162,7 @@ export default function Logo3D({
       const dt = Math.min((now - lastTimestamp) / 1000, 0.05);
       lastTimestamp = now;
 
-      if (!isDraggingRef.current) {
+      if (!isDraggingRef.current && spin) {
         // Fling inertia damping
         if (Math.abs(velocityRef.current.x) > 0.001) {
           rotationRef.current.y += velocityRef.current.x * dt;
@@ -209,9 +212,10 @@ export default function Logo3D({
       envTexture.dispose();
       renderer.dispose();
     };
-  }, []);
+  }, [spin]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!spin) return;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {}
@@ -264,13 +268,17 @@ export default function Logo3D({
     <div
       ref={containerRef}
       className={`relative select-none touch-none ${
-        isGrabbing ? "cursor-grabbing" : "cursor-grab"
+        !spin
+          ? "cursor-default"
+          : isGrabbing
+            ? "cursor-grabbing"
+            : "cursor-grab"
       } ${className}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      title="Nhấn và kéo để xoay logo 3D"
+      title={spin ? "Nhấn và kéo để xoay logo 3D" : undefined}
       aria-label="Interactive 3D Millions Logo"
     />
   );
