@@ -1,56 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PRODUCTS, type Category } from "../data/products";
+import { PRODUCTS } from "../data/products";
 import ProductCard from "./ProductCard";
+import CategoryChips from "../features/shop/CategoryChips";
+import ShopToolbar from "../features/shop/ShopToolbar";
+import {
+  PAGE_SIZE,
+  SORT_OPTIONS,
+  type FilterKey,
+  type SortKey,
+} from "../features/shop/shop-options";
 
-type FilterKey = "all" | Category;
-
-const CHIPS: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "ALL PRODUCTS" },
-  { key: "sets", label: "SETS" },
-  { key: "t-shirts", label: "T-SHIRTS" },
-  { key: "shirts", label: "SHIRTS" },
-  { key: "jeans", label: "JEANS" },
-  { key: "shorts", label: "SHORTS" },
-];
-
-type SortKey =
-  | "best-selling"
-  | "name-a-z"
-  | "name-z-a"
-  | "price-low-high"
-  | "price-high-low"
-  | "newest"
-  | "oldest";
-
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "best-selling", label: "best selling" },
-  { key: "name-a-z", label: "name a-z" },
-  { key: "name-z-a", label: "name z-a" },
-  { key: "price-low-high", label: "price low to high" },
-  { key: "price-high-low", label: "price high to low" },
-  { key: "newest", label: "newest first" },
-  { key: "oldest", label: "oldest first" },
-];
-
-const PAGE_SIZE = 12;
-
-function GridIcon({ cols, active }: { cols: 2 | 3; active: boolean }) {
-  const cells = cols === 2 ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  return (
-    <span
-      className={`grid gap-[3px] ${cols === 2 ? "grid-cols-2" : "grid-cols-3"} ${
-        active ? "opacity-100" : "opacity-30"
-      }`}
-    >
-      {cells.map((c) => (
-        <span key={c} className="h-[7px] w-[7px] bg-black" />
-      ))}
-    </span>
-  );
-}
-
+/**
+ * Shop grid assembly: filter + sort + layout state live here, the chips
+ * row and the toolbar live in features/shop, the cards stay shared.
+ */
 export default function ShopSection() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("best-selling");
@@ -107,96 +72,25 @@ export default function ShopSection() {
 
   return (
     <section className="w-full px-3 sm:px-[44px]">
-      {/* Category chips — swipeable row on mobile, centred wrap on desktop, fluid size like the reference */}
-      <div className="flex flex-nowrap items-center gap-[0.6875rem] overflow-x-auto pb-1 min-[1040px]:flex-wrap min-[1040px]:justify-center min-[1040px]:gap-[1.09375rem] min-[1040px]:overflow-visible">
-        {CHIPS.map((chip) => (
-          <button
-            key={chip.key}
-            type="button"
-            onClick={() => {
-              setFilter(chip.key);
-              setVisibleCount(PAGE_SIZE);
-            }}
-            className={`whitespace-nowrap rounded-full border border-black px-[max(0.9375rem,1.38889vw)] py-[max(0.5rem,0.694444vw)] text-[max(0.75rem,1.22917vw)] font-normal uppercase leading-[1.2] transition-colors duration-300 ${
-              filter === chip.key
-                ? "bg-[#67645e] text-white"
-                : "bg-white text-black hover:bg-black hover:text-white"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
-      </div>
+      <CategoryChips
+        filter={filter}
+        onFilter={(key) => {
+          setFilter(key);
+          setVisibleCount(PAGE_SIZE);
+        }}
+      />
 
-      {/* Sort + layout bar */}
-      <div className="relative mt-5 flex items-center justify-between text-[#67645e] sm:mt-[2.25vw]">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setSortOpen((v) => !v)}
-            className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]"
-          >
-            Sort: <span className="font-bold underline underline-offset-4">{sortLabel}</span>{" "}
-            <span aria-hidden>▾</span>
-          </button>
-          <div
-            className={`absolute left-0 top-full z-40 mt-3 w-[375px] max-w-[80vw] overflow-hidden rounded-[10px] bg-[#f1f0ed]/90 shadow-[0_24px_60px_rgba(0,0,0,0.15)] backdrop-blur-md transition-[max-height,opacity,visibility] duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
-              sortOpen
-                ? "visible max-h-[430px] opacity-100"
-                : "invisible max-h-0 opacity-0"
-            }`}
-          >
-            <div className="p-4">
-              <div className="flex items-center justify-between px-2 pb-2">
-                <span className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-                  Sort by
-                </span>
-                <button
-                  type="button"
-                  aria-label="Close sort"
-                  onClick={() => setSortOpen(false)}
-                  className="text-xl leading-none text-black"
-                >
-                  –
-                </button>
-              </div>
-              <ul className="max-h-[300px] overflow-y-auto">
-                {SORT_OPTIONS.map((o) => (
-                  <li key={o.key}>
-                    <button
-                      type="button"
-                      onClick={() => handleSort(o.key)}
-                      className={`w-full rounded-lg px-3 py-2.5 text-left text-lg lowercase transition-colors hover:bg-black/5 ${
-                        sort === o.key ? "font-bold" : ""
-                      }`}
-                    >
-                      {o.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-5">
-          <span className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]">{products.length} products</span>
-          <button
-            type="button"
-            aria-label="2 column layout"
-            onClick={() => setCols(2)}
-          >
-            <GridIcon cols={2} active={cols === 2} />
-          </button>
-          <button
-            type="button"
-            aria-label="3 column layout"
-            onClick={() => setCols(3)}
-          >
-            <GridIcon cols={3} active={cols === 3} />
-          </button>
-        </div>
-      </div>
+      <ShopToolbar
+        sort={sort}
+        sortLabel={sortLabel}
+        sortOpen={sortOpen}
+        onToggleSort={() => setSortOpen((v) => !v)}
+        onCloseSort={() => setSortOpen(false)}
+        onSelectSort={handleSort}
+        count={products.length}
+        cols={cols}
+        onCols={setCols}
+      />
 
       {/* Product grid */}
       {visible.length === 0 ? (

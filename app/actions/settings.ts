@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { readSettings, writeSettings } from "../lib/storage"
+import { isAdminRequest } from "../lib/admin-auth"
 
 export type { Settings } from "../lib/storage/types";
 import type { Settings } from "../lib/storage/types"
@@ -34,6 +35,11 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(newSettings: Settings) {
+  // Second gate behind the proxy: a proxy misconfiguration must never
+  // silently open the settings write path.
+  if (!(await isAdminRequest())) {
+    return { success: false, error: "Không có quyền thay đổi cài đặt." }
+  }
   try {
     await writeSettings(newSettings)
     revalidatePath("/")

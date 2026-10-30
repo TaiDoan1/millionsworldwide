@@ -2,6 +2,7 @@
 
 import { PRODUCTS } from "../data/products";
 import { appendOrder, listOrders } from "../lib/storage";
+import { checkRateLimit, clientKey } from "../lib/rate-limit";
 
 export type { Order, OrderItem } from "../lib/storage/types";
 import type { Order, OrderItem } from "../lib/storage/types";
@@ -33,11 +34,19 @@ function newOrderCode(existing: Order[]): string {
 export async function placeOrder(
   input: PlaceOrderInput
 ): Promise<{ success: boolean; code?: string; error?: string }> {
+  // Bots hammering the order form: 10 orders per 10 minutes per IP.
+  if (!checkRateLimit(await clientKey("order"), 10, 10 * 60 * 1000)) {
+    return { success: false, error: "Anh/chị gửi đơn quá nhanh, thử lại sau vài phút nhé." };
+  }
   const name = (input.customer?.name || "").trim();
   const phone = (input.customer?.phone || "").trim();
   const address = (input.customer?.address || "").trim();
+  const note = (input.customer?.note || "").trim();
   if (!name || !phone || !address) {
     return { success: false, error: "Thiếu họ tên, số điện thoại hoặc địa chỉ." };
+  }
+  if (name.length > 100 || address.length > 500 || note.length > 500) {
+    return { success: false, error: "Thông tin nhập vào quá dài." };
   }
   if (!/^[0-9+\s.()\-]{9,15}$/.test(phone)) {
     return { success: false, error: "Số điện thoại chưa đúng định dạng." };
@@ -70,7 +79,7 @@ export async function placeOrder(
         name,
         phone,
         address,
-        note: (input.customer.note || "").trim() || undefined,
+        note: note || undefined,
       },
       payment: input.payment === "transfer" ? "transfer" : "cod",
       status: "new",
@@ -92,6 +101,10 @@ export async function findOrder(
   found: boolean;
   order?: Pick<Order, "code" | "status" | "items" | "total" | "at" | "payment">;
 }> {
+  // Lookup abuse guard: 30 lookups per 10 minutes per IP.
+  if (!checkRateLimit(await clientKey("lookup"), 30, 10 * 60 * 1000)) {
+    return { found: false };
+  }
   const c = (code || "").trim().toUpperCase();
   const p = (phone || "").replace(/\s/g, "");
   if (!c || !p) return { found: false };

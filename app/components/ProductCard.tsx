@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "../data/products";
 import { useCart } from "./CartContext";
+import { formatPrice } from "../lib/format";
 
-/** Stored prices are in thousands of VND (300 -> 300,000₫), grouped with commas like the reference shop. */
-export function formatPrice(n: number) {
-  return `${(n * 1000).toLocaleString("en-US")}₫`;
-}
+// Re-exported so existing imports keep working; new code imports from lib/format.
+export { formatPrice };
 
 const TAG_BY_CATEGORY: Record<Product["category"], string> = {
   sets: "set",

@@ -1,6 +1,7 @@
 "use server";
 
 import { addSubscriber, listSubscribers } from "../lib/storage";
+import { checkRateLimit, clientKey } from "../lib/rate-limit";
 
 export type { Subscriber } from "../lib/storage/types";
 
@@ -17,6 +18,10 @@ export async function subscribeEmail(
   email: string,
   source: string
 ): Promise<{ success: boolean; duplicate?: boolean }> {
+  // Signup spam guard: 10 signups per 10 minutes per IP.
+  if (!checkRateLimit(await clientKey("subscribe"), 10, 10 * 60 * 1000)) {
+    return { success: false };
+  }
   const cleaned = (email || "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) {
     return { success: false };
