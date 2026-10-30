@@ -206,38 +206,48 @@ body {
   );
   animation: mw-welcome-burst 0.9s cubic-bezier(0.76, 0, 0.24, 1) both;
 }
-@keyframes mw-welcome-ring {
-  0% {
-    opacity: 0.9;
-    transform: translate(-50%, -50%) scale(0.4);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(2.6);
-  }
-}
-.mw-welcome-ring {
-  animation: mw-welcome-ring 1s cubic-bezier(0.76, 0, 0.24, 1) both;
-}
 @keyframes mw-welcome-logo-in {
   0% {
     opacity: 0;
-    transform: scale(0.4);
+    transform: translateY(-46%) scale(1.35);
     filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
   }
-  55% {
+  45% {
     opacity: 1;
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.8));
+    transform: translateY(0) scale(0.88);
+    filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.9));
+  }
+  62% {
+    transform: translateY(-6%) scale(1.08);
+  }
+  78% {
+    transform: translateY(0) scale(0.96);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
     filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
   }
 }
 .mw-welcome-logo {
   animation: mw-welcome-logo-in 0.85s cubic-bezier(0.76, 0, 0.24, 1) backwards;
+}
+/* Dust kicked up when the logo slams down */
+@keyframes mw-welcome-dust {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.4);
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1);
+  }
+}
+.mw-welcome-dust {
+  animation: mw-welcome-dust 1.15s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 @keyframes mw-welcome-letter-in {
   from {
@@ -295,7 +305,7 @@ body {
   .mw-welcome-shard,
   .mw-welcome-streak,
   .mw-welcome-burst,
-  .mw-welcome-ring,
+  .mw-welcome-dust,
   .mw-welcome-sweep,
   .mw-marquee {
     animation: none;

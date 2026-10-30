@@ -15,8 +15,8 @@ import Logo3D from "./Logo3D";
  * Sequence (all motion reuses the site's signature easing):
  * 1. Shards + light streaks fly in from every direction and get sucked into
  *    the centre, accelerating as they converge.
- * 2. At ~1.25s a flash burst + expanding rings fire as the pieces merge.
- * 3. The logo pops in with a slight overshoot and glow.
+ * 2. At ~1.25s a flash burst fires as the pieces merge.
+ * 3. The logo slams down with a bounce, kicking up dust around it.
  * 4. MILLIONS letters rise one by one, then the tagline fades in.
  * 5. At ~3s a SHOP THE DROP button appears: it fades the screen out and
  *    takes the visitor to the shop. Otherwise the screen fades out on its
@@ -94,12 +94,35 @@ function buildShards(): Shard[] {
   });
 }
 
+type Dust = {
+  tx: number;
+  ty: number;
+  size: number;
+  delay: number;
+};
+
+/** Dust kicked up when the logo slams down: same seeded RNG, new seed. */
+function buildDust(): Dust[] {
+  const rand = mulberry32(20261031);
+  return Array.from({ length: 20 }, (_, i) => {
+    const angle = rand() * Math.PI * 2;
+    const dist = 70 + rand() * 130;
+    return {
+      tx: Math.round(Math.cos(angle) * dist),
+      ty: Math.round(Math.sin(angle) * dist * 0.6),
+      size: Math.round(3 + rand() * 4),
+      delay: 1550 + i * 25,
+    };
+  });
+}
+
 export default function WelcomeIntro() {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [ctaReady, setCtaReady] = useState(false);
   const [displayLetters, setDisplayLetters] = useState<string[]>(LETTERS);
   const shards = useMemo(() => buildShards(), []);
+  const dust = useMemo(() => buildDust(), []);
   const router = useRouter();
 
   useEffect(() => {
@@ -184,7 +207,7 @@ export default function WelcomeIntro() {
         leaving ? "pointer-events-none scale-[0.93] opacity-0" : "opacity-100"
       }`}
     >
-      {/* Logo zone — shards, flash and rings are centred on the logo. */}
+      {/* Logo zone — shards, flash and dust are centred on the logo. */}
       <div className="relative">
         <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
           {shards.map((s, i) => (
@@ -217,20 +240,30 @@ export default function WelcomeIntro() {
             className="mw-welcome-burst absolute left-1/2 top-1/2 h-40 w-40"
             style={{ animationDelay: "1250ms" }}
           />
-          <div
-            className="mw-welcome-ring absolute left-1/2 top-1/2 h-40 w-40 rounded-full border border-white/70"
-            style={{ animationDelay: "1300ms" }}
-          />
-          <div
-            className="mw-welcome-ring absolute left-1/2 top-1/2 h-40 w-40 rounded-full border border-white/40"
-            style={{ animationDelay: "1480ms" }}
-          />
         </div>
         <div
           className="mw-welcome-logo relative"
           style={{ animationDelay: "1200ms" }}
         >
           <Logo3D className="h-40 w-40 sm:h-52 sm:w-52" priority />
+        </div>
+        {/* Dust kicked up by the logo slam */}
+        <div className="pointer-events-none absolute inset-0 z-20" aria-hidden>
+          {dust.map((d, i) => (
+            <span
+              key={i}
+              className="mw-welcome-dust absolute left-1/2 top-1/2 rounded-full bg-white/80"
+              style={
+                {
+                  "--tx": `${d.tx}px`,
+                  "--ty": `${d.ty}px`,
+                  width: d.size,
+                  height: d.size,
+                  animationDelay: `${d.delay}ms`,
+                } as CSSProperties
+              }
+            />
+          ))}
         </div>
         {/* Light sweep gliding across the logo after assembly */}
         <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden" aria-hidden>
