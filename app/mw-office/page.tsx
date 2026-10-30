@@ -1,5 +1,6 @@
 import AdminForm from "./AdminForm"
 import CsvButton from "./CsvButton"
+import LogoutButton from "./LogoutButton"
 import { csvRow } from "../lib/csv"
 import OrdersManager from "./OrdersManager"
 import ProductsSection from "./ProductsSection"
@@ -89,6 +90,9 @@ export default async function AdminPage() {
             </a>
           ))}
         </nav>
+        <div className="mt-4">
+          <LogoutButton />
+        </div>
       </div>
 
       <div id="tong-quan" className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 scroll-mt-32">
@@ -96,8 +100,8 @@ export default async function AdminPage() {
         <p className="text-xs text-gray-400 mb-8">Kho dữ liệu: {backendLabel}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map((s) => (
-            <div key={s.label} className="border border-neutral-200 p-4">
-              <p className="text-2xl font-black">{s.value}</p>
+            <div key={s.label} className="border border-neutral-200 p-4 min-w-0">
+              <p className="text-xl font-black break-all sm:text-2xl">{s.value}</p>
               <p className="text-xs text-gray-500 mt-1">{s.label}</p>
             </div>
           ))}
