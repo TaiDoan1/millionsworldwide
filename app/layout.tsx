@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${archivo.variable} h-full antialiased`}>
+    <html lang="vi" className={`${archivo.variable} h-full antialiased`}>
       <head>
         <link rel="icon" href="/favicon.png?v=3" type="image/png" />
         <link rel="shortcut icon" href="/favicon.png?v=3" type="image/png" />

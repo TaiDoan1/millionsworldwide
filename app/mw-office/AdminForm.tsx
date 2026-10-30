@@ -10,9 +10,9 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
-    await updateSettings(settings)
+    const result = await updateSettings(settings)
     setIsSaving(false)
-    alert("Settings saved successfully!")
+    alert(result.success ? "Settings saved successfully!" : (result.error ?? "Không lưu được cài đặt."))
   }
 
   return (

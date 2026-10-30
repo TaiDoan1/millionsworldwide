@@ -1,8 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import Logo3D from "./Logo3D";
+
+// Code-split: the Three.js logo used to ship inside every page's bundle.
+// Dynamic import keeps server rendering (no layout shift) but loads the
+// 3D code as its own chunk instead of weighing down the first load.
+const Logo3D = dynamic(() => import("./Logo3D"));
 
 export default function Header() {
   const pathname = usePathname();

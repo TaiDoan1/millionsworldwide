@@ -7,6 +7,7 @@ import {
   findOrder as findOrderService,
   getOrders as getOrdersService,
   placeOrder as placeOrderService,
+  updateOrderStatus as updateOrderStatusService,
 } from "../../backend/services/orders";
 import type {
   Order,
@@ -34,4 +35,11 @@ export async function findOrder(
   order?: Pick<Order, "code" | "status" | "items" | "total" | "at" | "payment">;
 }> {
   return findOrderService(code, phone);
+}
+
+export async function updateOrderStatus(
+  code: string,
+  status: Order["status"]
+): Promise<{ success: boolean; error?: string }> {
+  return updateOrderStatusService(code, status);
 }

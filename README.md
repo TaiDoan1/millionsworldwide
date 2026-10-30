@@ -37,7 +37,7 @@ app/
 └── lib/                  # format.ts (frontend) + con trỏ về backend/
 backend/                 # CODE MÁY CHỦ — xem backend/README.md để biết bản đồ
 ├── services/             # nghiệp vụ: đơn hàng, đăng ký, cài đặt
-├── storage/              # lưu trữ: file hoặc Vercel KV
+├── storage/              # lưu trữ: Postgres, SQLite hoặc file
 ├── auth/                 # kiểm tra tài khoản admin
 ├── security/             # chống spam form
 └── config/               # domain chính
@@ -59,15 +59,16 @@ trong Variables. Không commit file `.env` thật (`.gitignore` đã chặn).
 | --- | --- | --- |
 | `ADMIN_USER`, `ADMIN_PASS` | Trên production | Tài khoản trang quản trị `/mw-office`. Thiếu là `/mw-office` khóa hẳn (401). |
 | `DATA_DIR` | Nên có | Thư mục lưu đơn, email, cài đặt. Trên Railway gắn Volume tại `/data` rồi đặt `DATA_DIR=/data` để dữ liệu không mất khi deploy lại. |
+| `DATABASE_PRIVATE_URL` (khuyến nghị) hoặc `DATABASE_URL` | Nên có | Postgres trên Railway: database chính cho đơn, email, cài đặt. Không đặt thì web dùng SQLite rồi file JSON. |
 | `NEXT_PUBLIC_SITE_URL` | Nên có | Domain chính, dùng cho sitemap và thẻ chia sẻ. |
-| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Không | Chỉ khi deploy trên Vercel: dùng Vercel KV thay cho lưu file. |
 
 ## Deploy (Railway)
 
 Đẩy lên nhánh `main` là Railway tự deploy. Cần có sẵn trong project:
 Volume gắn tại `/data` + biến `DATA_DIR=/data`,
 `NEXT_PUBLIC_SITE_URL=https://millionsworldwide.com`,
-`ADMIN_USER` + `ADMIN_PASS` (tự đặt, không ghi vào code).
+`ADMIN_USER` + `ADMIN_PASS` (tự đặt, không ghi vào code),
+Postgres: New → Database → Postgres + biến `DATABASE_PRIVATE_URL`.
 
 ## Bảo mật — đã có
 

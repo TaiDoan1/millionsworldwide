@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache"
 import { readSettings, writeSettings } from "../storage"
 import { isAdminRequest } from "../auth/admin-auth"
+import { validateSettings } from "./settings-validation"
 
 export type { Settings } from "../storage/types";
 import type { Settings } from "../storage/types"
@@ -38,6 +39,12 @@ export async function updateSettings(newSettings: Settings) {
   // silently open the settings write path.
   if (!(await isAdminRequest())) {
     return { success: false, error: "Không có quyền thay đổi cài đặt." }
+  }
+  // Whitelist check: never persist a malformed settings object, or one bad
+  // admin save could break the homepage gate for every visitor.
+  const invalid = validateSettings(newSettings)
+  if (invalid) {
+    return { success: false, error: invalid }
   }
   try {
     await writeSettings(newSettings)

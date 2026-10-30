@@ -1,82 +1,139 @@
 /**
  * Storage backend selection for orders, email signups and site settings.
  *
- * The backend is picked automatically per environment, so the "Vercel or
- * Railway?" question no longer blocks the launch:
+ * Priority:
+ * - Postgres when DATABASE_PRIVATE_URL or DATABASE_URL is set (Railway
+ *   Postgres): the long-term backend. A configured Postgres is
+ *   authoritative — if it cannot be reached, storage calls fail loudly
+ *   instead of silently writing to another backend, because split data
+ *   across two databases is worse than a visible error.
+ * - SQLite (shop.db on the data directory) otherwise — a real database
+ *   with transactions, and no new service or cost. On Railway the data
+ *   directory is the persistent Volume (/data via DATA_DIR).
+ * - File JSON only when SQLite itself is unavailable (Node without
+ *   node:sqlite): the legacy path, kept as a safety net, not a choice.
  *
- * - Vercel: link a KV database to the project (dashboard -> Storage ->
- *   Create KV). Vercel injects KV_REST_API_URL + KV_REST_API_TOKEN and all
- *   writes below go to KV, surviving every redeploy and restart.
- * - Railway (or any host with a disk): attach a persistent volume at the
- *   data directory (default <project>/app/data, override with DATA_DIR)
- *   and the existing file storage keeps working across restarts.
- *
- * Default when neither is configured is the current file behaviour, so
- * local development is unchanged.
+ * The frontend never sees this choice: every function below keeps the
+ * same signature whichever backend is active.
  */
 import type { Order, Settings, Subscriber } from "./types";
 import * as fileStore from "./file";
-import * as kvStore from "./kv";
+import * as postgresStore from "./postgres";
+import * as sqliteStore from "./sqlite";
 
-export function storageBackend(): "kv" | "file" {
-  return kvStore.kvAvailable() ? "kv" : "file";
+type Backend = "postgres" | "sqlite" | "file";
+
+let backend: Backend | null = null;
+
+async function resolveBackend(): Promise<Backend> {
+  if (backend) return backend;
+  if (postgresStore.postgresConfigured()) backend = "postgres";
+  else if (await sqliteStore.sqliteAvailable()) backend = "sqlite";
+  else backend = "file";
+  return backend;
+}
+
+/** Human-readable backend name, shown on the admin page. */
+export async function storageBackendLabel(): Promise<string> {
+  const b = await resolveBackend();
+  if (b === "postgres") return "Postgres (Railway)";
+  if (b === "sqlite") return "SQLite (shop.db trên Volume)";
+  return "File JSON (Volume)";
 }
 
 /** Loud server-side warning when writes are known to be ephemeral. */
-function warnIfEphemeralWrites(): void {
-  if (storageBackend() === "file" && process.env.VERCEL === "1") {
+async function warnIfEphemeralWrites(): Promise<void> {
+  if ((await resolveBackend()) === "file" && process.env.VERCEL === "1") {
     console.warn(
-      "[storage] Running on Vercel without KV_REST_API_URL/KV_REST_API_TOKEN: " +
-        "orders and signups will NOT persist. Link a Vercel KV database to the project to fix this."
+      "[storage] Running on Vercel with file storage: " +
+        "orders and signups will NOT persist. Use Postgres (DATABASE_URL) for persistent storage."
     );
   }
 }
 
 export async function listOrders(): Promise<Order[]> {
-  return storageBackend() === "kv"
-    ? kvStore.kvListOrders()
-    : fileStore.readArray<Order>("orders.json");
+  const b = await resolveBackend();
+  if (b === "postgres") return postgresStore.listOrders();
+  if (b === "sqlite") return sqliteStore.listOrders();
+  return fileStore.readArray<Order>("orders.json");
 }
 
 export async function appendOrder(order: Order): Promise<void> {
-  warnIfEphemeralWrites();
-  if (storageBackend() === "kv") {
-    await kvStore.kvAppendOrder(order);
+  await warnIfEphemeralWrites();
+  const b = await resolveBackend();
+  if (b === "postgres") {
+    await postgresStore.appendOrder(order);
     return;
   }
-  const orders = await fileStore.readArray<Order>("orders.json");
-  orders.push(order);
-  await fileStore.writeArray("orders.json", orders);
+  if (b === "sqlite") {
+    await sqliteStore.appendOrder(order);
+    return;
+  }
+  // Locked: the read-append-write must not interleave with another checkout.
+  await fileStore.withFileLock("orders.json", async () => {
+    const orders = await fileStore.readArray<Order>("orders.json");
+    orders.push(order);
+    await fileStore.writeArray("orders.json", orders);
+  });
+}
+
+/** Change one order's status. Returns false when the code is not found. */
+export async function updateOrderStatus(
+  code: string,
+  status: Order["status"]
+): Promise<boolean> {
+  const b = await resolveBackend();
+  if (b === "postgres") return postgresStore.updateOrderStatus(code, status);
+  if (b === "sqlite") return sqliteStore.updateOrderStatus(code, status);
+  return fileStore.withFileLock("orders.json", async () => {
+    const orders = await fileStore.readArray<Order>("orders.json");
+    const order = orders.find((o) => o.code === code);
+    if (!order) return false;
+    order.status = status;
+    await fileStore.writeArray("orders.json", orders);
+    return true;
+  });
 }
 
 export async function listSubscribers(): Promise<Subscriber[]> {
-  return storageBackend() === "kv"
-    ? kvStore.kvListSubscribers()
-    : fileStore.readArray<Subscriber>("subscribers.json");
+  const b = await resolveBackend();
+  if (b === "postgres") return postgresStore.listSubscribers();
+  if (b === "sqlite") return sqliteStore.listSubscribers();
+  return fileStore.readArray<Subscriber>("subscribers.json");
 }
 
 export async function addSubscriber(
   sub: Subscriber
 ): Promise<"added" | "duplicate"> {
-  warnIfEphemeralWrites();
-  if (storageBackend() === "kv") {
-    return kvStore.kvAddSubscriber(sub);
-  }
-  const list = await fileStore.readArray<Subscriber>("subscribers.json");
-  if (list.some((s) => s.email === sub.email)) return "duplicate";
-  list.push(sub);
-  await fileStore.writeArray("subscribers.json", list);
-  return "added";
+  await warnIfEphemeralWrites();
+  const b = await resolveBackend();
+  if (b === "postgres") return postgresStore.addSubscriber(sub);
+  if (b === "sqlite") return sqliteStore.addSubscriber(sub);
+  // Locked: the dedup check and the write must not interleave, or the same
+  // email could be stored twice by two simultaneous signups.
+  return fileStore.withFileLock("subscribers.json", async () => {
+    const list = await fileStore.readArray<Subscriber>("subscribers.json");
+    if (list.some((s) => s.email === sub.email)) return "duplicate";
+    list.push(sub);
+    await fileStore.writeArray("subscribers.json", list);
+    return "added";
+  });
 }
 
 /**
  * Stored settings, or null when nothing was saved yet. Callers merge with
- * defaults. On KV the bundled repo seed is the fallback so the launch
- * configuration in app/data/settings.json is never silently dropped.
+ * defaults. On Postgres and SQLite the bundled repo seed is the fallback so the
+ * launch configuration in app/data/settings.json is never silently dropped.
  */
 export async function readSettings(): Promise<Settings | null> {
-  if (storageBackend() === "kv") {
-    const stored = await kvStore.kvReadSettings();
+  const b = await resolveBackend();
+  if (b === "postgres") {
+    const stored = await postgresStore.readSettings();
+    if (stored) return stored;
+    return fileStore.readSeedObject<Settings>("settings.json");
+  }
+  if (b === "sqlite") {
+    const stored = await sqliteStore.readSettings();
     if (stored) return stored;
     return fileStore.readSeedObject<Settings>("settings.json");
   }
@@ -88,10 +145,17 @@ export async function readSettings(): Promise<Settings | null> {
 }
 
 export async function writeSettings(s: Settings): Promise<void> {
-  warnIfEphemeralWrites();
-  if (storageBackend() === "kv") {
-    await kvStore.kvWriteSettings(s);
+  await warnIfEphemeralWrites();
+  const b = await resolveBackend();
+  if (b === "postgres") {
+    await postgresStore.writeSettings(s);
     return;
   }
-  await fileStore.writeObject("settings.json", s);
+  if (b === "sqlite") {
+    await sqliteStore.writeSettings(s);
+    return;
+  }
+  await fileStore.withFileLock("settings.json", async () => {
+    await fileStore.writeObject("settings.json", s);
+  });
 }

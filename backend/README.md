@@ -13,7 +13,7 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 | Frontend — hàm dùng chung | `app/lib/format.ts` | Định dạng giá tiền |
 | **Backend — cửa ngõ** | `app/actions/` (lớp mỏng) | Hàm server action frontend gọi vào |
 | **Backend — nghiệp vụ** | `backend/services/` | Quy tắc: tính giá, tạo mã đơn, kiểm tra đầu vào |
-| **Backend — lưu trữ** | `backend/storage/` | Đọc/ghi đơn, email, cài đặt (file hoặc Vercel KV) |
+| **Backend — lưu trữ** | `backend/storage/` | Đọc/ghi đơn, email, cài đặt (Postgres, SQLite hoặc file) |
 | **Backend — xác thực** | `backend/auth/` | Kiểm tra tài khoản admin |
 | **Backend — chống lạm dụng** | `backend/security/` | Giới hạn số lần gửi form theo IP |
 | **Backend — cấu hình** | `backend/config/` | Domain chính cho sitemap/metadata |
@@ -44,9 +44,20 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 
 ## Dữ liệu nằm ở đâu
 
-- Đơn, email, cài đặt lưu trong file JSON tại `DATA_DIR` (trên Railway là
-  Volume `/data`), hoặc Vercel KV nếu gắn KV. Code trong `backend/storage/`
-  tự chọn theo môi trường.
+- Đơn, email, cài đặt lưu trong **Postgres** khi đặt
+  `DATABASE_PRIVATE_URL` (khuyến nghị, URL nội bộ Railway) hoặc
+  `DATABASE_URL` (URL công khai, tự bật SSL); nếu không có 2 biến này
+  thì rơi về **SQLite** (`shop.db` trên
+  `DATA_DIR` — trên Railway là Volume `/data`), rồi file JSON nếu máy
+  chủ không có node:sqlite. Code trong `backend/storage/` tự chọn theo
+  thứ tự đó. Khi đã cấu hình Postgres mà Postgres không nối được, code
+  báo lỗi to thay vì lặng lẽ ghi sang kho khác (ghi tách 2 kho còn tệ
+  hơn lỗi hiện rõ). Ghi file qua khóa theo file (chống mất đơn khi đặt
+  trùng giờ), ghi ra file tạm rồi đổi tên + giữ bản `.bak` (đọc file
+  hỏng không bao giờ bị coi là rỗng rồi ghi đè mất dữ liệu cũ). Lần
+  đầu chạy với database trống, code tự chuyển dữ liệu cũ sang: Postgres
+  chuyển từ SQLite (nếu có) rồi từ file JSON, SQLite chuyển từ file
+  JSON; file JSON giữ lại làm bản dự phòng.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
   hay đổi tên chúng**: `backend/storage/file.ts` đọc seed từ
   `app/data/settings.json` theo đường dẫn tuyệt đối từ root project, và
@@ -54,6 +65,7 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 
 ## Backend chuẩn còn thiếu gì (để sau này)
 
-- Database thật (Postgres) thay cho file JSON khi đơn nhiều lên.
 - Cổng thanh toán tự động thay cho COD/chuyển khoản xác nhận tay.
-- Log có cấu trúc và sao lưu tự động (hiện chỉ có log console + Volume).
+- Log có cấu trúc và sao lưu tự động ra ngoài cho phần file (Postgres
+  trên Railway đã có sao lưu của Railway; Volume và bản `.bak` cạnh
+  mỗi file dữ liệu chỉ là dự phòng tại chỗ).

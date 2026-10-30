@@ -1,19 +1,55 @@
 /** Backend service: order rules (validation, server-side pricing, order codes). Called only via app/actions/orders.ts. */
-import { PRODUCTS } from "../../app/data/products";
-import { appendOrder, listOrders } from "../storage";
+import { revalidatePath } from "next/cache";
+import { PRODUCTS, isSizeSoldOut } from "../../app/data/products";
+import {
+  appendOrder,
+  listOrders,
+  updateOrderStatus as updateStoredOrderStatus,
+} from "../storage";
+import { isAdminRequest } from "../auth/admin-auth";
 import { checkRateLimit, clientKey } from "../security/rate-limit";
 
 export type { Order, OrderItem } from "../storage/types";
 import type { Order, OrderItem } from "../storage/types";
 
 export type PlaceOrderInput = {
-  items: { id: string; qty: number }[];
+  items: { id: string; qty: number; size?: string }[];
   customer: { name: string; phone: string; address: string; note?: string };
   payment: "cod" | "transfer";
 };
 
 export async function getOrders(): Promise<Order[]> {
   return listOrders();
+}
+
+/**
+ * Change one order's status (admin only). Without this, customers checking
+ * their order would see "Mới đặt" forever.
+ */
+export async function updateOrderStatus(
+  code: string,
+  status: Order["status"]
+): Promise<{ success: boolean; error?: string }> {
+  if (!(await isAdminRequest())) {
+    return { success: false, error: "Không có quyền thay đổi trạng thái đơn." };
+  }
+  const c = (code || "").trim().toUpperCase();
+  const valid: Order["status"][] = [
+    "new",
+    "confirmed",
+    "shipping",
+    "delivered",
+    "cancelled",
+  ];
+  if (!c || !valid.includes(status)) {
+    return { success: false, error: "Trạng thái đơn chưa đúng." };
+  }
+  const updated = await updateStoredOrderStatus(c, status);
+  if (!updated) {
+    return { success: false, error: "Không tìm thấy đơn này." };
+  }
+  revalidatePath("/mw-office");
+  return { success: true };
 }
 
 function newOrderCode(existing: Order[]): string {
@@ -60,10 +96,16 @@ export async function placeOrder(
     if (!product || product.soldOut) {
       return { success: false, error: "Có sản phẩm đã hết hàng trong giỏ." };
     }
+    // Per-size stock: only a size explicitly marked soldOut is rejected.
+    // No size chosen means the shop confirms size by phone, as before.
+    const size = typeof raw.size === "string" ? raw.size.trim().slice(0, 10) : undefined;
+    if (size && isSizeSoldOut(product, size)) {
+      return { success: false, error: `Size ${size} của ${product.name} đã hết hàng.` };
+    }
     const qty = Math.max(1, Math.min(10, Math.floor(raw.qty) || 1));
-    const existing = items.find((i) => i.id === product.id);
+    const existing = items.find((i) => i.id === product.id && i.size === size);
     if (existing) existing.qty = Math.min(10, existing.qty + qty);
-    else items.push({ id: product.id, name: product.name, price: product.price, qty });
+    else items.push({ id: product.id, name: product.name, price: product.price, qty, size });
   }
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -92,8 +134,7 @@ export async function placeOrder(
   }
 }
 
-/** Look up an order by its code + the phone number used to place it. */
-export async function findOrder(
+/** Look up an order by its code + the phone number used to place it. */export async function findOrder(
   code: string,
   phone: string
 ): Promise<{

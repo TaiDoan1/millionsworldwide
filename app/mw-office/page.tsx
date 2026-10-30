@@ -1,5 +1,7 @@
 import AdminForm from "./AdminForm"
+import OrderStatusControl from "./OrderStatusControl"
 import { getSettings } from "../actions/settings"
+import { storageBackendLabel } from "../../backend/storage"
 import { getOrders } from "../actions/orders"
 import { getSubscribers } from "../actions/subscribers"
 
@@ -22,6 +24,7 @@ export default async function AdminPage() {
   const currentSettings = await getSettings()
   const orders = (await getOrders().catch(() => [])).slice().reverse()
   const subscribers = (await getSubscribers().catch(() => [])).slice().reverse()
+  const backendLabel = await storageBackendLabel()
 
   return (
     <main className="min-h-screen bg-[#F8F8F8] text-black py-32 px-8">
@@ -33,7 +36,8 @@ export default async function AdminPage() {
 
       <div className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10">
         <h2 className="text-2xl font-bold tracking-tight mb-1">Đơn hàng ({orders.length})</h2>
-        <p className="text-sm text-gray-500 mb-8">Đơn mới nhất xếp trước. Khách tra cứu trạng thái bằng mã đơn + số điện thoại tại /track-order.</p>
+        <p className="text-sm text-gray-500 mb-2">Đơn mới nhất xếp trước. Khách tra cứu trạng thái bằng mã đơn + số điện thoại tại /track-order.</p>
+        <p className="text-xs text-gray-400 mb-8">Kho dữ liệu: {backendLabel}</p>
         {orders.length === 0 ? (
           <p className="text-sm text-gray-400">Chưa có đơn hàng nào.</p>
         ) : (
@@ -51,8 +55,8 @@ export default async function AdminPage() {
                 {o.customer.note && <p className="text-sm text-gray-500">Ghi chú: {o.customer.note}</p>}
                 <ul className="mt-2 text-sm text-gray-700">
                   {o.items.map((i) => (
-                    <li key={i.id} className="flex justify-between">
-                      <span className="uppercase">{i.name} × {i.qty}</span>
+                    <li key={`${i.id}::${i.size ?? ""}`} className="flex justify-between">
+                      <span className="uppercase">{i.name}{i.size ? ` · Size ${i.size}` : ""} × {i.qty}</span>
                       <span>{formatPrice(i.price * i.qty)}</span>
                     </li>
                   ))}
@@ -62,6 +66,10 @@ export default async function AdminPage() {
                     Tổng · {o.payment === "cod" ? "COD" : "Chuyển khoản"} · {STATUS_LABELS[o.status] ?? o.status}
                   </span>
                   <span>{formatPrice(o.total)}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-gray-500">Đổi trạng thái:</span>
+                  <OrderStatusControl code={o.code} status={o.status} />
                 </div>
               </div>
             ))}

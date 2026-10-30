@@ -3,15 +3,15 @@ import Link from "next/link";
 /**
  * Homepage hero — brand film, sized with the Whenever homepage hero
  * formula: calc(100vh - 2rem); from 760px up calc(100vh - 5rem), capped at
- * calc(100vh - 4.5vw); 12px radius. Videos follow the ComingSoon pattern
- * (separate desktop / mobile elements).
+ * calc(100vh - 4.5vw); 12px radius. One video element with two sources:
+ * the browser downloads only the source whose media query matches, so
+ * mobile visitors never pay for the desktop film (and vice versa).
  */
 export default function HeroSection() {
   return (
     <section className="px-3 pt-3 md:px-6 md:pt-5">
       <div className="relative h-[calc(100vh-2rem)] min-[760px]:h-[calc(100vh-5rem)] min-[760px]:max-h-[calc(100vh-4.5vw)] w-full overflow-hidden rounded-[12px] bg-black">
         <video
-          src="/videos/desktop.mp4"
           autoPlay
           muted
           loop
@@ -19,19 +19,11 @@ export default function HeroSection() {
           preload="auto"
           poster="/ig/banner.jpg"
           aria-label="Millions Worldwide — Tokyo denim film"
-          className="absolute inset-0 hidden h-full w-full object-cover md:block"
-        />
-        <video
-          src="/videos/mobile.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster="/ig/banner.jpg"
-          aria-label="Millions Worldwide — Tokyo denim film"
-          className="absolute inset-0 block h-full w-full object-cover md:hidden"
-        />
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          <source src="/videos/desktop.mp4" media="(min-width: 768px)" />
+          <source src="/videos/mobile.mp4" />
+        </video>
         <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
         {/* Top corners (below the floating global header) */}

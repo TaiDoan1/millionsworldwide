@@ -11,6 +11,9 @@ export type OrderItem = {
   /** Unit price in thousands of VND, as stored in products.ts */
   price: number;
   qty: number;
+  /** Size the customer picked on the detail page, if any. Absent means
+   *  the shop confirms size by phone, as before. */
+  size?: string;
 };
 
 export type Order = {

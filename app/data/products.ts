@@ -1,5 +1,24 @@
 export type Category = "sets" | "t-shirts" | "shirts" | "jeans" | "shorts";
 
+/** One size of a product. Only sizes listed here with soldOut: true are
+ *  locked — anything not listed is treated as available, never invented
+ *  as a stock number. */
+export type SizeOption = {
+  label: string;
+  soldOut?: boolean;
+};
+
+/** Short spec facts. Every field is optional on purpose: the detail page
+ *  only renders the rows that are actually filled in, so no material,
+ *  fit or model info is ever invented for a product that has none. */
+export type ProductSpec = {
+  material?: string;
+  fit?: string;
+  stretch?: string;
+  /** e.g. model height / weight / size worn — only when the shop supplies it. */
+  model?: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -11,7 +30,24 @@ export type Product = {
   preOrder?: boolean;
   /** Original price — set to show a "save" badge. */
   compareAt?: number;
+  /** Per-size availability, in one place (this file). When absent, no size
+   *  picker is shown at all — the shop confirms size by phone, as before.
+   *  Add the shop's real size list here and the detail page will show a
+   *  picker with sold-out sizes locked. Never invent a size list. */
+  sizes?: SizeOption[];
+  /** Spec facts for the detail page; omitted rows are simply not shown. */
+  spec?: ProductSpec;
 };
+
+/** Effective size options for a product: its own list, or none. */
+export function sizeOptionsFor(product: Product): SizeOption[] {
+  return product.sizes ?? [];
+}
+
+/** True when this size is locked for this product. */
+export function isSizeSoldOut(product: Product, label: string): boolean {
+  return product.sizes?.some((s) => s.label === label && s.soldOut) ?? false;
+}
 
 export const CATEGORIES: Category[] = ["sets", "t-shirts", "shirts", "jeans", "shorts"];
 
