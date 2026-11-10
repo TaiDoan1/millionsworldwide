@@ -47,6 +47,8 @@ export function validateProductPatch(p: ProductPatch): string | null {
   if (piecesError) return piecesError;
   const imagesError = validateImages(p.images ?? []);
   if (imagesError) return imagesError;
+  const sizeChartError = validateSizeChart(p.sizeChart ?? null);
+  if (sizeChartError) return sizeChartError;
   return null;
 }
 
@@ -110,6 +112,27 @@ export function validateImages(images: string[]): string | null {
     ) {
       return `Đường dẫn ảnh chưa đúng: ${src}`;
     }
+  }
+  return null;
+}
+
+/**
+ * Size-chart photo: empty (no chart) or a single image path inside the
+ * web ("/products/<file>" shipped with the code, or "/uploads/<file>"
+ * uploaded from /mw-office) with no parent-directory escape. Whether a
+ * file actually sits behind the path is checked in the service, which
+ * can read the disk.
+ */
+export function validateSizeChart(sizeChart: string | null): string | null {
+  if (sizeChart === null || sizeChart === undefined || sizeChart === "") {
+    return null;
+  }
+  if (
+    typeof sizeChart !== "string" ||
+    !sizeChart.startsWith("/") ||
+    sizeChart.includes("..")
+  ) {
+    return `Đường dẫn ảnh bảng size chưa đúng: ${sizeChart}`;
   }
   return null;
 }

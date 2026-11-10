@@ -60,6 +60,13 @@ export type Product = {
    */
   pieces?: ProductPiece[];
   /**
+   * Size-chart photo ("/uploads/..." or "/products/..."), uploaded from
+   * /mw-office. When set, the detail page shows a "Bảng size" button
+   * next to the size picker. Absent until the shop uploads one — never
+   * invented here.
+   */
+  sizeChart?: string;
+  /**
    * Hidden from the shop AND unbuyable (admin-only flag, stored in the
    * Postgres catalog — the code seed never sets it). Sold-out products
    * stay visible with a badge; hidden ones disappear entirely.

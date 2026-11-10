@@ -95,6 +95,7 @@ export async function updateProduct(
       .filter((s) => s.label.length > 0),
     spec: cleanSpec(patch.spec),
     pieces: cleanPieces(patch.pieces),
+    sizeChart: (patch.sizeChart ?? "").trim() || null,
     images: (patch.images ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
   };
   const invalid = validateProductPatch(clean);
@@ -113,6 +114,15 @@ export async function updateProduct(
       }
       if (!imageFileExists(src)) {
         return { success: false, error: `Không tìm thấy file ảnh trong web: ${src}` };
+      }
+    }
+    // Same rule for the size-chart photo.
+    if (clean.sizeChart) {
+      if (!/\.(jpe?g|png|webp)$/i.test(clean.sizeChart)) {
+        return { success: false, error: `Ảnh bảng size phải là file jpg, png hoặc webp: ${clean.sizeChart}` };
+      }
+      if (!imageFileExists(clean.sizeChart)) {
+        return { success: false, error: `Không tìm thấy file ảnh bảng size trong web: ${clean.sizeChart}` };
       }
     }
     const found = await updateStoredProduct(id, clean);
@@ -150,6 +160,7 @@ export async function addProduct(
       .filter((s) => s.label.length > 0),
     spec: cleanSpec(p.spec),
     pieces: cleanPieces(p.pieces),
+    sizeChart: (p.sizeChart ?? "").trim() || null,
   };
   const invalid = validateNewProduct(clean);
   if (invalid) return { success: false, error: invalid };
@@ -165,6 +176,15 @@ export async function addProduct(
     }
     if (!imageFileExists(src)) {
       return { success: false, error: `Không tìm thấy file ảnh trong web: ${src}` };
+    }
+  }
+  // Same rule for the size-chart photo.
+  if (clean.sizeChart) {
+    if (!/\.(jpe?g|png|webp)$/i.test(clean.sizeChart)) {
+      return { success: false, error: `Ảnh bảng size phải là file jpg, png hoặc webp: ${clean.sizeChart}` };
+    }
+    if (!imageFileExists(clean.sizeChart)) {
+      return { success: false, error: `Không tìm thấy file ảnh bảng size trong web: ${clean.sizeChart}` };
     }
   }
   try {

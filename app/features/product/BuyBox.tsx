@@ -1,8 +1,9 @@
-import type { Product } from "../../data/products";
+import { useState } from "react";
+import { sizeOptionsFor, type Product } from "../../data/products";
 import { formatPrice } from "../../lib/format";
 import { EASE, TAG_BY_CATEGORY } from "./constants";
 
-/** Sticky buy column: tag, name, price, size note, add button, shipping note. */
+/** Sticky buy column: tag, name, price, size picker/note, add button, shipping note. */
 export default function BuyBox({
   product,
   added,
@@ -10,8 +11,13 @@ export default function BuyBox({
 }: {
   product: Product;
   added: boolean;
-  onAdd: () => void;
+  onAdd: (size?: string) => void;
 }) {
+  const sizes = sizeOptionsFor(product);
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
+  const [showChart, setShowChart] = useState(false);
+  const sizeRequired = sizes.length > 0;
+  const canAdd = !product.soldOut && (!sizeRequired || !!selectedSize);
   return (
     <div>
       <span className="text-sm font-bold lowercase text-black">
@@ -34,22 +40,78 @@ export default function BuyBox({
         </p>
       )}
 
-      {/* Size note — the shop confirms size by phone, so no size
-          picker is invented here; the note keeps the flow honest. */}
-      <div className="mt-6 rounded-[12px] bg-[#f5f5f5] p-4">
-        <p className="text-sm font-semibold uppercase tracking-wider">
-          Size
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-[#67645e]">
-          Shop sẽ xác nhận size khi gọi xác nhận đơn. Bạn có thể ghi chú
-          size mình mặc ở bước đặt hàng.
-        </p>
-      </div>
+      {sizes.length > 0 ? (
+        /* Per-size picker — only shown when the shop has supplied a real
+           size list in products.ts. Sold-out sizes are locked. */
+        <div className="mt-6">
+          <p className="text-sm font-semibold uppercase tracking-wider">Size</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sizes.map((s) => {
+              const disabled = !!s.soldOut;
+              const active = selectedSize === s.label;
+              return (
+                <button
+                  key={s.label}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => setSelectedSize(s.label)}
+                  aria-pressed={active}
+                  className={`h-11 min-w-11 rounded-full border px-4 text-sm font-semibold transition-colors duration-700 ${EASE} ${
+                    disabled
+                      ? "cursor-not-allowed border-neutral-200 text-neutral-400 line-through"
+                      : active
+                        ? "border-black bg-black text-white"
+                        : "border-neutral-300 bg-white text-black hover:border-black"
+                  }`}
+                >
+                  {s.label}
+                  {disabled ? " · Hết" : ""}
+                </button>
+              );
+            })}
+          </div>
+          {!selectedSize && (
+            <p className="mt-2 text-sm text-[#67645e]">Chọn size trước khi thêm vào giỏ.</p>
+          )}
+        </div>
+      ) : (
+        /* Size note — the shop confirms size by phone, so no size
+           picker is invented here; the note keeps the flow honest. */
+        <div className="mt-6 rounded-[12px] bg-[#f5f5f5] p-4">
+          <p className="text-sm font-semibold uppercase tracking-wider">Size</p>
+          <p className="mt-1 text-sm leading-relaxed text-[#67645e]">
+            Shop sẽ xác nhận size khi gọi xác nhận đơn. Bạn có thể ghi chú
+            size mình mặc ở bước đặt hàng.
+          </p>
+        </div>
+      )}
+
+      {product.sizeChart && (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setShowChart((v) => !v)}
+            aria-expanded={showChart}
+            className="text-sm font-semibold underline underline-offset-4 hover:opacity-60"
+          >
+            {showChart ? "Ẩn bảng size" : "Xem bảng size"}
+          </button>
+          {showChart && (
+            /* Plain img on purpose: the chart is served by the /uploads
+               route, outside next/image's local set. */
+            <img
+              src={product.sizeChart}
+              alt={`Bảng size của ${product.name}`}
+              className="mt-3 w-full rounded-[12px] border border-neutral-200"
+            />
+          )}
+        </div>
+      )}
 
       <button
         type="button"
-        disabled={product.soldOut}
-        onClick={onAdd}
+        disabled={!canAdd}
+        onClick={() => onAdd(selectedSize)}
         className={`mt-6 h-[50px] w-full rounded-full bg-black text-[max(0.875rem,0.925vw)] uppercase text-white transition-opacity duration-700 ${EASE} hover:opacity-80 disabled:cursor-not-allowed disabled:bg-neutral-400`}
       >
         {product.soldOut ? "Sold Out" : added ? "Đã thêm ✓" : "Thêm vào giỏ"}

@@ -65,7 +65,7 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   JSON; file JSON giữ lại làm bản dự phòng.
 - **Sản phẩm** lưu ở bảng `products` trong Postgres (tên, giá, giá gốc,
   danh mục, ảnh, hết hàng, đặt trước, ẩn/hiện, size theo từng size, món
-  lẻ trong set (giá lẻ), thông số, thứ tự) — sửa, thêm, xóa trong
+  lẻ trong set (giá lẻ), ảnh bảng size, thông số, thứ tự) — sửa, thêm, xóa trong
   /mw-office có hiệu lực ngay, không cần đẩy code. Ảnh tải lên từ admin
   lưu vào Volume (`<DATA_DIR>/uploads`, phục vụ ở /uploads/ — xem
   backend/storage/uploads.ts) và chỉ lưu đường dẫn vào bảng; ảnh có sẵn

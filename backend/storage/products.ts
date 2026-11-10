@@ -35,6 +35,8 @@ export type ProductPatch = {
   spec: ProductSpec | null;
   /** Pieces of a set ("giá lẻ"), each buyable on its own from the set page. */
   pieces: ProductPiece[];
+  /** Size-chart photo path ("/uploads/..." or "/products/..."), or null. */
+  sizeChart: string | null;
   /**
    * Gallery paths: "/products/<file>" for photos shipped with the code,
    * "/uploads/<file>" for photos uploaded from /mw-office. Editing the
@@ -123,6 +125,7 @@ type ProductRow = {
   sizes: unknown;
   spec: unknown;
   pieces: unknown;
+  size_chart: string | null;
   hidden: boolean;
 };
 
@@ -143,6 +146,9 @@ function rowToProduct(row: ProductRow): Product {
   if (spec) product.spec = spec;
   const pieces = asPieces(row.pieces);
   if (pieces.length > 0) product.pieces = pieces;
+  if (typeof row.size_chart === "string" && row.size_chart.length > 0) {
+    product.sizeChart = row.size_chart;
+  }
   if (row.hidden) product.hidden = true;
   return product;
 }
@@ -167,6 +173,7 @@ export function ensureProductsInit(): Promise<void> {
           sizes JSONB NOT NULL DEFAULT '[]',
           spec JSONB,
           pieces JSONB NOT NULL DEFAULT '[]',
+          size_chart TEXT,
           hidden BOOLEAN NOT NULL DEFAULT FALSE,
           sort_order INTEGER NOT NULL DEFAULT 0
         )
@@ -177,6 +184,11 @@ export function ensureProductsInit(): Promise<void> {
       await pool.query(
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS pieces JSONB NOT NULL DEFAULT '[]'",
       );
+      // Same for the size-chart photo column (added later): the live
+      // table was created before it existed.
+      await pool.query(
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS size_chart TEXT",
+      );
       const count = await pool.query("SELECT COUNT(*) AS n FROM products");
       if (Number(count.rows[0]?.n ?? 0) === 0) {
         for (let i = 0; i < PRODUCTS.length; i++) {
@@ -184,8 +196,8 @@ export function ensureProductsInit(): Promise<void> {
           await pool.query(
             `INSERT INTO products
                (id, name, price, category, images, sold_out, pre_order,
-                compare_at, sizes, spec, pieces, hidden, sort_order)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                compare_at, sizes, spec, pieces, size_chart, hidden, sort_order)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
              ON CONFLICT (id) DO NOTHING`,
             [
               p.id,
@@ -199,6 +211,7 @@ export function ensureProductsInit(): Promise<void> {
               JSON.stringify(p.sizes ?? []),
               p.spec ? JSON.stringify(p.spec) : null,
               JSON.stringify(p.pieces ?? []),
+              p.sizeChart ?? null,
               false,
               i,
             ],
@@ -245,8 +258,8 @@ export async function updateProduct(
     `UPDATE products
      SET name = $1, price = $2, compare_at = $3, category = $4,
          sold_out = $5, pre_order = $6, hidden = $7, sizes = $8, spec = $9,
-         pieces = $10, images = $11
-     WHERE id = $12`,
+         pieces = $10, images = $11, size_chart = $12
+     WHERE id = $13`,
     [
       patch.name,
       patch.price,
@@ -259,6 +272,7 @@ export async function updateProduct(
       patch.spec ? JSON.stringify(patch.spec) : null,
       JSON.stringify(patch.pieces ?? []),
       JSON.stringify(patch.images ?? []),
+      patch.sizeChart ?? null,
       id,
     ],
   );
@@ -272,8 +286,8 @@ export async function insertProduct(p: NewProduct): Promise<boolean> {
   const { rowCount } = await pool.query(
     `INSERT INTO products
        (id, name, price, compare_at, category, images, sold_out, pre_order,
-        hidden, sizes, spec, pieces, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+        hidden, sizes, spec, pieces, size_chart, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
        (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM products))
      ON CONFLICT (id) DO NOTHING`,
     [
@@ -289,6 +303,7 @@ export async function insertProduct(p: NewProduct): Promise<boolean> {
       JSON.stringify(p.sizes ?? []),
       p.spec ? JSON.stringify(p.spec) : null,
       JSON.stringify(p.pieces ?? []),
+      p.sizeChart ?? null,
     ],
   );
   return (rowCount ?? 0) > 0;

@@ -34,6 +34,7 @@ export default function ProductAddForm() {
   const [hidden, setHidden] = useState(false);
   const [sizes, setSizes] = useState<SizeOption[]>([]);
   const [pieces, setPieces] = useState<ProductPiece[]>([]);
+  const [sizeChart, setSizeChart] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -68,6 +69,7 @@ export default function ProductAddForm() {
           price: pc.price,
         }))
         .filter((pc) => pc.name.length > 0),
+      sizeChart: sizeChart.trim() === "" ? null : sizeChart.trim(),
     };
     const result = await addProduct(payload);
     setSaving(false);
@@ -80,6 +82,7 @@ export default function ProductAddForm() {
       setImages("");
       setSizes([]);
       setPieces([]);
+      setSizeChart("");
       router.refresh();
     } else {
       setMessage(result.error ?? "Không thêm được.");
@@ -218,6 +221,17 @@ export default function ProductAddForm() {
       </div>
       <SizesEditor sizes={sizes} onChange={setSizes} />
       <PiecesEditor pieces={pieces} onChange={setPieces} />
+      <div>
+        <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
+          Bảng size (ảnh, không bắt buộc)
+        </label>
+        <ImageUpload onUploaded={(url) => setSizeChart(url)} />
+        {sizeChart && (
+          <p className="text-xs text-gray-500 mt-1">
+            Đã up: <span className="font-mono break-all">{sizeChart}</span>
+          </p>
+        )}
+      </div>
       <div className="flex items-center gap-3">
         <button
           type="submit"

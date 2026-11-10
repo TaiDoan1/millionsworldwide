@@ -80,9 +80,9 @@ export default function TrackOrderForm() {
           </p>
           <ul className="mt-3 space-y-1 text-sm text-neutral-600">
             {result.order.items.map((i) => (
-              <li key={i.id} className="flex justify-between gap-4">
+              <li key={`${i.id}::${i.size ?? ""}`} className="flex justify-between gap-4">
                 <span className="uppercase">
-                  {i.name} × {i.qty}
+                  {i.name}{i.size ? ` · Size ${i.size}` : ""} × {i.qty}
                 </span>
                 <span>{formatPrice(i.price * i.qty)}</span>
               </li>

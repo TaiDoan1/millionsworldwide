@@ -45,7 +45,7 @@ export default function CartDrawer() {
     setError("");
     setSubmitting(true);
     const res = await placeOrder({
-      items: lines.map((l) => ({ id: l.product.id, qty: l.qty })),
+      items: lines.map((l) => ({ id: l.product.id, qty: l.qty, size: l.size })),
       customer: { ...form },
       payment,
     }).catch(

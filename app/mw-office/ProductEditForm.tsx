@@ -35,6 +35,7 @@ export default function ProductEditForm({ product }: { product: Product }) {
   const [hidden, setHidden] = useState(product.hidden ?? false);
   const [sizes, setSizes] = useState<SizeOption[]>(product.sizes ?? []);
   const [pieces, setPieces] = useState<ProductPiece[]>(product.pieces ?? []);
+  const [sizeChart, setSizeChart] = useState(product.sizeChart ?? "");
   const [images, setImages] = useState<string[]>(product.images ?? []);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -87,6 +88,7 @@ export default function ProductEditForm({ product }: { product: Product }) {
           price: pc.price,
         }))
         .filter((pc) => pc.name.length > 0),
+      sizeChart: sizeChart.trim() === "" ? null : sizeChart.trim(),
       images,
     };
   }
@@ -307,6 +309,35 @@ export default function ProductEditForm({ product }: { product: Product }) {
           điện thoại dùng nút ‹ › dưới mỗi ảnh. Ảnh tải lên lưu vào Volume
           của web và hiện ngay sau khi bấm Lưu sản phẩm. Xóa ảnh ở đây chỉ
           gỡ khỏi sản phẩm, file vẫn còn trên web.
+        </p>
+      </div>
+      <div>
+        <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+          Bảng size (ảnh)
+        </label>
+        {sizeChart && (
+          <div className="relative mb-3 w-40">
+            {/* Plain img on purpose: the chart is served by the /uploads
+                route, outside next/image's local set. */}
+            <img
+              src={sizeChart}
+              alt={`Bảng size của ${product.name}`}
+              className="w-40 rounded-sm border border-gray-200"
+            />
+            <button
+              type="button"
+              onClick={() => setSizeChart("")}
+              aria-label="Xóa bảng size"
+              className="absolute right-0 top-0 bg-white/90 px-1 text-sm leading-none text-gray-500 hover:text-black"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <ImageUpload onUploaded={(url) => setSizeChart(url)} />
+        <p className="text-[11px] text-gray-400 mt-1">
+          Up ảnh bảng size (số đo từng size). Khách bấm “Xem bảng size” ở
+          trang chi tiết để xem ảnh này. Để trống nếu chưa có.
         </p>
       </div>
       <div>
