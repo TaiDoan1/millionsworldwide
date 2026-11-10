@@ -8,8 +8,9 @@ import {
   type Product,
   type ProductPatch,
 } from "../actions/products";
-import { CATEGORIES, type SizeOption } from "../data/products";
+import { CATEGORIES, type ProductPiece, type SizeOption } from "../data/products";
 import SizesEditor from "./SizesEditor";
+import PiecesEditor from "./PiecesEditor";
 
 const CATEGORY_LABELS: Record<Product["category"], string> = {
   sets: "Sets",
@@ -32,6 +33,7 @@ export default function ProductEditForm({ product }: { product: Product }) {
   const [preOrder, setPreOrder] = useState(product.preOrder ?? false);
   const [hidden, setHidden] = useState(product.hidden ?? false);
   const [sizes, setSizes] = useState<SizeOption[]>(product.sizes ?? []);
+  const [pieces, setPieces] = useState<ProductPiece[]>(product.pieces ?? []);
   const [material, setMaterial] = useState(product.spec?.material ?? "");
   const [fit, setFit] = useState(product.spec?.fit ?? "");
   const [stretch, setStretch] = useState(product.spec?.stretch ?? "");
@@ -63,6 +65,13 @@ export default function ProductEditForm({ product }: { product: Product }) {
               ...(model.trim() ? { model: model.trim() } : {}),
             }
           : null,
+      pieces: pieces
+        .map((pc) => ({
+          id: pc.id.trim().toLowerCase(),
+          name: pc.name.trim(),
+          price: pc.price,
+        }))
+        .filter((pc) => pc.name.length > 0),
     };
   }
 
@@ -197,6 +206,7 @@ export default function ProductEditForm({ product }: { product: Product }) {
         </label>
       </div>
       <SizesEditor sizes={sizes} onChange={setSizes} />
+      <PiecesEditor pieces={pieces} onChange={setPieces} />
       <div>
         <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
           Thông số (chỉ hiện dòng nào có ghi)

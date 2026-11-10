@@ -5,7 +5,11 @@
  */
 import { CATEGORIES } from "../../app/data/products";
 import type { ProductPatch, NewProduct } from "../storage/products";
-import type { ProductSpec, SizeOption } from "../../app/data/products";
+import type {
+  ProductPiece,
+  ProductSpec,
+  SizeOption,
+} from "../../app/data/products";
 
 export function validateProductPatch(p: ProductPatch): string | null {
   if (
@@ -39,6 +43,8 @@ export function validateProductPatch(p: ProductPatch): string | null {
   if (sizesError) return sizesError;
   const specError = validateSpec(p.spec);
   if (specError) return specError;
+  const piecesError = validatePieces(p.pieces ?? []);
+  if (piecesError) return piecesError;
   return null;
 }
 
@@ -79,6 +85,42 @@ export function validateSpec(spec: ProductSpec | null): string | null {
     ) {
       return "Mỗi mục thông số tối đa 200 ký tự.";
     }
+  }
+  return null;
+}
+
+/**
+ * Pieces of a set ("giá lẻ"). Ids are unique within the product here;
+ * uniqueness across the whole catalog (and against product ids) is
+ * checked in the service, which can read the catalog.
+ */
+export function validatePieces(pieces: ProductPiece[]): string | null {
+  if (!Array.isArray(pieces) || pieces.length > 10) {
+    return "Mỗi sản phẩm tối đa 10 món lẻ.";
+  }
+  const seen = new Set<string>();
+  for (const pc of pieces) {
+    if (
+      !pc ||
+      typeof pc.id !== "string" ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pc.id) ||
+      pc.id.length < 3 ||
+      pc.id.length > 50
+    ) {
+      return "Mã món lẻ chỉ gồm chữ thường, số và dấu gạch ngang, từ 3 đến 50 ký tự.";
+    }
+    if (
+      typeof pc.name !== "string" ||
+      pc.name.trim().length === 0 ||
+      pc.name.trim().length > 100
+    ) {
+      return "Tên món lẻ phải từ 1 đến 100 ký tự.";
+    }
+    if (!Number.isInteger(pc.price) || pc.price < 1 || pc.price > 100000) {
+      return "Giá lẻ phải là số nguyên từ 1 đến 100.000 (nghìn đồng).";
+    }
+    if (seen.has(pc.id)) return `Mã món lẻ ${pc.id} bị trùng.`;
+    seen.add(pc.id);
   }
   return null;
 }

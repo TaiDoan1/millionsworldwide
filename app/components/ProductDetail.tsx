@@ -6,6 +6,7 @@ import type { Product } from "../data/products";
 import { useCart } from "./CartContext";
 import ProductGallery from "../features/product/ProductGallery";
 import BuyBox from "../features/product/BuyBox";
+import PieceBuyList from "../features/product/PieceBuyList";
 import ProductAccordions from "../features/product/ProductAccordions";
 import RelatedProducts from "../features/product/RelatedProducts";
 
@@ -30,8 +31,8 @@ export default function ProductDetail({
   const prev = () => setSelected((s) => (s - 1 + count) % count);
   const next = () => setSelected((s) => (s + 1) % count);
 
-  const handleAdd = () => {
-    add(product.id);
+  const handleAdd = (size?: string) => {
+    add(product.id, size);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1400);
     openCart();
@@ -72,6 +73,7 @@ export default function ProductDetail({
           style={{ animationDelay: "160ms" }}
         >
           <BuyBox product={product} added={added} onAdd={handleAdd} />
+          <PieceBuyList product={product} />
           <ProductAccordions product={product} />
         </div>
       </div>

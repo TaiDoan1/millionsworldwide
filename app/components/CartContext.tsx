@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Product } from "../data/products";
+import { findPiece, pieceToProduct } from "../data/products";
 
 export type CartLine = { product: Product; qty: number; size?: string };
 
@@ -92,10 +93,16 @@ function parseCart(
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return {};
+    // A cart key is a product id — or a piece id ("giá lẻ" of a set).
+    const known = new Set<string>();
+    for (const p of products) {
+      known.add(p.id);
+      for (const pc of p.pieces ?? []) known.add(pc.id);
+    }
     const clean: Record<string, number> = {};
     for (const [key, qty] of Object.entries(parsed)) {
       const [id] = key.split("::");
-      if (products.some((p) => p.id === id)) {
+      if (known.has(id)) {
         clean[key] = Math.max(1, Math.min(10, Number(qty) || 1));
       }
     }
@@ -152,7 +159,16 @@ export function CartProvider({
       .map(([key, qty]): CartLine | null => {
         const [id, size] = key.split("::");
         const product = products.find((p) => p.id === id);
-        return product ? { product, qty, size: size || undefined } : null;
+        if (product) return { product, qty, size: size || undefined };
+        // A "giá lẻ" line: the id is a piece of a set, shown with the
+        // set's name/images and priced from the piece itself.
+        const found = findPiece(products, id);
+        if (!found) return null;
+        return {
+          product: pieceToProduct(found.set, found.piece),
+          qty,
+          size: size || undefined,
+        };
       })
       .filter((l): l is CartLine => l !== null);
     return {

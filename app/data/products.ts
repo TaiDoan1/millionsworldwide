@@ -19,6 +19,20 @@ export type ProductSpec = {
   model?: string;
 };
 
+/**
+ * One piece of a set, buyable on its own ("giá lẻ"). A set lists its
+ * pieces; a piece is never a standalone shop product — it has no page
+ * of its own and only appears in the set's "Mua lẻ từng món" section.
+ * Piece ids must be unique across the whole catalog (never equal to a
+ * product id either), so an order line can point at exactly one piece.
+ */
+export type ProductPiece = {
+  id: string;
+  name: string;
+  /** Price in thousands of VND, like every other price. */
+  price: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -38,6 +52,14 @@ export type Product = {
   /** Spec facts for the detail page; omitted rows are simply not shown. */
   spec?: ProductSpec;
   /**
+   * Pieces of a set, buyable one by one at their own ("lẻ") prices.
+   * When absent or empty, the detail page shows no "Mua lẻ" section —
+   * the set is only sold as a whole. Pieces inherit the set's sizes
+   * and its sold-out state; they are edited in /mw-office, never
+   * invented here.
+   */
+  pieces?: ProductPiece[];
+  /**
    * Hidden from the shop AND unbuyable (admin-only flag, stored in the
    * Postgres catalog — the code seed never sets it). Sold-out products
    * stay visible with a badge; hidden ones disappear entirely.
@@ -53,6 +75,37 @@ export function sizeOptionsFor(product: Product): SizeOption[] {
 /** True when this size is locked for this product. */
 export function isSizeSoldOut(product: Product, label: string): boolean {
   return product.sizes?.some((s) => s.label === label && s.soldOut) ?? false;
+}
+
+/** Find a piece anywhere in the catalog: its parent set + the piece. */
+export function findPiece(
+  catalog: Product[],
+  pieceId: string,
+): { set: Product; piece: ProductPiece } | null {
+  for (const set of catalog) {
+    const piece = (set.pieces ?? []).find((pc) => pc.id === pieceId);
+    if (piece) return { set, piece };
+  }
+  return null;
+}
+
+/**
+ * The cart/order view of a piece: a synthetic product carrying the
+ * piece's own id/name/price, the set's images/sizes/stock state, so
+ * the cart, the order form and the order lookup all treat it like any
+ * other line without knowing it came from a set.
+ */
+export function pieceToProduct(set: Product, piece: ProductPiece): Product {
+  return {
+    id: piece.id,
+    name: `${set.name} — ${piece.name}`,
+    price: piece.price,
+    category: set.category,
+    images: set.images,
+    soldOut: set.soldOut,
+    preOrder: set.preOrder,
+    ...(set.sizes ? { sizes: set.sizes } : {}),
+  };
 }
 
 export const CATEGORIES: Category[] = ["sets", "t-shirts", "shirts", "jeans", "shorts"];

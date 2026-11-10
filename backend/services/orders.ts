@@ -1,6 +1,10 @@
 /** Backend service: order rules (validation, server-side pricing, order codes). Called only via app/actions/orders.ts. */
 import { revalidatePath } from "next/cache";
-import { isSizeSoldOut } from "../../app/data/products";
+import {
+  findPiece,
+  isSizeSoldOut,
+  pieceToProduct,
+} from "../../app/data/products";
 import { getProductsStrict } from "./products";
 import {
   appendOrder,
@@ -102,20 +106,26 @@ export async function placeOrder(
     return { success: false, error: "Không kết nối được kho dữ liệu, thử lại sau ít phút nhé." };
   }
   for (const raw of input.items) {
+    // A line is a whole product — or one piece of a set ("giá lẻ").
+    // Pieces are priced from their own price, inherit the set's sizes
+    // and sold-out state, and are never confused with a product id.
     const product = catalog.find((p) => p.id === raw.id);
-    if (!product || product.soldOut) {
+    const found = product ? null : findPiece(catalog, raw.id);
+    const priced = product ?? (found ? pieceToProduct(found.set, found.piece) : null);
+    const parent = product ?? found?.set;
+    if (!priced || !parent || parent.soldOut) {
       return { success: false, error: "Có sản phẩm đã hết hàng trong giỏ." };
     }
     // Per-size stock: only a size explicitly marked soldOut is rejected.
     // No size chosen means the shop confirms size by phone, as before.
     const size = typeof raw.size === "string" ? raw.size.trim().slice(0, 10) : undefined;
-    if (size && isSizeSoldOut(product, size)) {
-      return { success: false, error: `Size ${size} của ${product.name} đã hết hàng.` };
+    if (size && isSizeSoldOut(parent, size)) {
+      return { success: false, error: `Size ${size} của ${priced.name} đã hết hàng.` };
     }
     const qty = Math.max(1, Math.min(10, Math.floor(raw.qty) || 1));
-    const existing = items.find((i) => i.id === product.id && i.size === size);
+    const existing = items.find((i) => i.id === priced.id && i.size === size);
     if (existing) existing.qty = Math.min(10, existing.qty + qty);
-    else items.push({ id: product.id, name: product.name, price: product.price, qty, size });
+    else items.push({ id: priced.id, name: priced.name, price: priced.price, qty, size });
   }
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);

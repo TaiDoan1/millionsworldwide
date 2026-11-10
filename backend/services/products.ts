@@ -95,6 +95,7 @@ export async function updateProduct(
       }))
       .filter((s) => s.label.length > 0),
     spec: cleanSpec(patch.spec),
+    pieces: cleanPieces(patch.pieces),
   };
   const invalid = validateProductPatch(clean);
   if (invalid) return { success: false, error: invalid };
@@ -102,6 +103,8 @@ export async function updateProduct(
     return { success: false, error: "Cần kết nối Postgres để sửa sản phẩm." };
   }
   try {
+    const clash = await findPieceIdClash(id, clean.pieces);
+    if (clash) return { success: false, error: clash };
     const found = await updateStoredProduct(id, clean);
     if (!found) return { success: false, error: "Không tìm thấy sản phẩm." };
     revalidateProductPages(id);
@@ -136,6 +139,7 @@ export async function addProduct(
       }))
       .filter((s) => s.label.length > 0),
     spec: cleanSpec(p.spec),
+    pieces: cleanPieces(p.pieces),
   };
   const invalid = validateNewProduct(clean);
   if (invalid) return { success: false, error: invalid };
@@ -153,6 +157,8 @@ export async function addProduct(
     }
   }
   try {
+    const clash = await findPieceIdClash(clean.id, clean.pieces);
+    if (clash) return { success: false, error: clash };
     const inserted = await insertStoredProduct(clean);
     if (!inserted) {
       return { success: false, error: "Mã sản phẩm đã tồn tại." };
@@ -198,6 +204,44 @@ function cleanSpec(
     }
   }
   return Object.keys(clean).length > 0 ? clean : null;
+}
+
+/** Drop blank-name piece rows; keep id/name/price trimmed and typed. */
+function cleanPieces(
+  pieces: ProductPatch["pieces"],
+): ProductPatch["pieces"] {
+  return (pieces ?? [])
+    .map((pc) => ({
+      id: pc.id.trim().toLowerCase(),
+      name: pc.name.trim(),
+      price: pc.price,
+    }))
+    .filter((pc) => pc.name.length > 0);
+}
+
+/**
+ * A piece id must be unique across the whole catalog — an order line
+ * points at exactly one piece — and must never equal a product id
+ * (the order flow looks products up first). `ownId` is the product
+ * being saved, whose own old pieces don't count as a clash.
+ */
+async function findPieceIdClash(
+  ownId: string,
+  pieces: ProductPatch["pieces"],
+): Promise<string | null> {
+  const all = await listStoredProducts(true);
+  const taken = new Set<string>();
+  for (const p of all) {
+    taken.add(p.id);
+    if (p.id === ownId) continue;
+    for (const pc of p.pieces ?? []) taken.add(pc.id);
+  }
+  for (const pc of pieces) {
+    if (taken.has(pc.id)) {
+      return `Mã món lẻ ${pc.id} đã dùng ở chỗ khác, đổi mã khác nhé.`;
+    }
+  }
+  return null;
 }
 
 function revalidateProductPages(id: string) {

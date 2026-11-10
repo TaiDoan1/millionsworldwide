@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addProduct, type NewProduct, type Product } from "../actions/products";
-import { CATEGORIES, type SizeOption } from "../data/products";
+import { CATEGORIES, type ProductPiece, type SizeOption } from "../data/products";
 import SizesEditor from "./SizesEditor";
+import PiecesEditor from "./PiecesEditor";
 
 const CATEGORY_LABELS: Record<Product["category"], string> = {
   sets: "Sets",
@@ -31,6 +32,7 @@ export default function ProductAddForm() {
   const [preOrder, setPreOrder] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [sizes, setSizes] = useState<SizeOption[]>([]);
+  const [pieces, setPieces] = useState<ProductPiece[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -58,6 +60,13 @@ export default function ProductAddForm() {
         }))
         .filter((s) => s.label.length > 0),
       spec: null,
+      pieces: pieces
+        .map((pc) => ({
+          id: pc.id.trim().toLowerCase(),
+          name: pc.name.trim(),
+          price: pc.price,
+        }))
+        .filter((pc) => pc.name.length > 0),
     };
     const result = await addProduct(payload);
     setSaving(false);
@@ -69,6 +78,7 @@ export default function ProductAddForm() {
       setCompareAt("");
       setImages("");
       setSizes([]);
+      setPieces([]);
       router.refresh();
     } else {
       setMessage(result.error ?? "Không thêm được.");
@@ -198,6 +208,7 @@ export default function ProductAddForm() {
         </label>
       </div>
       <SizesEditor sizes={sizes} onChange={setSizes} />
+      <PiecesEditor pieces={pieces} onChange={setPieces} />
       <div className="flex items-center gap-3">
         <button
           type="submit"

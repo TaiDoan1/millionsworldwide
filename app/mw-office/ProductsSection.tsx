@@ -24,10 +24,10 @@ export default async function ProductsSection() {
         Sản phẩm{products ? ` (${products.length})` : ""}
       </h2>
       <p className="text-sm text-gray-500 mb-8">
-        Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size
-        và thông số từng món — đổi có hiệu lực ngay trên web, không cần
-        đẩy code. Ảnh vẫn thay bằng code; thêm món mới thì ảnh phải là
-        đường dẫn file đã có sẵn trong web.
+        Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size,
+        món lẻ trong set (giá lẻ) và thông số từng món — đổi có hiệu lực
+        ngay trên web, không cần đẩy code. Ảnh vẫn thay bằng code; thêm món
+        mới thì ảnh phải là đường dẫn file đã có sẵn trong web.
       </p>
       {error || !products ? (
         <p className="text-sm text-gray-400">
