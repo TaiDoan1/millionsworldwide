@@ -6,6 +6,7 @@ import { addProduct, type NewProduct, type Product } from "../actions/products";
 import { CATEGORIES, type ProductPiece, type SizeOption } from "../data/products";
 import SizesEditor from "./SizesEditor";
 import PiecesEditor from "./PiecesEditor";
+import ImageUpload from "./ImageUpload";
 
 const CATEGORY_LABELS: Record<Product["category"], string> = {
   sets: "Sets",
@@ -166,16 +167,24 @@ export default function ProductAddForm() {
         <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
           Ảnh (mỗi dòng 1 đường dẫn, ảnh đầu là ảnh chính)
         </label>
+        <ImageUpload
+          onUploaded={(url) =>
+            setImages((prev) =>
+              prev.trim() ? `${prev.trim()}\n${url}` : url,
+            )
+          }
+        />
         <textarea
           value={images}
           onChange={(e) => setImages(e.target.value)}
           placeholder={"/products/set-hoodie-black-1.jpg"}
           rows={3}
-          className={`${inputClass} font-mono text-xs`}
+          className={`${inputClass} font-mono text-xs mt-2`}
         />
         <p className="text-[11px] text-gray-400 mt-1">
-          File ảnh phải có sẵn trong web — ghi sai đường dẫn thì không lưu
-          được. Ảnh mới vẫn cần đẩy qua code.
+          Ảnh tải lên ở trên sẽ tự thêm đường dẫn vào đây. Ảnh có sẵn
+          trong web thì ghi đường dẫn tay — ghi sai đường dẫn thì không
+          lưu được.
         </p>
       </div>
       <div className="flex flex-wrap gap-4">

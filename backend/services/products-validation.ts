@@ -45,6 +45,8 @@ export function validateProductPatch(p: ProductPatch): string | null {
   if (specError) return specError;
   const piecesError = validatePieces(p.pieces ?? []);
   if (piecesError) return piecesError;
+  const imagesError = validateImages(p.images ?? []);
+  if (imagesError) return imagesError;
   return null;
 }
 
@@ -84,6 +86,29 @@ export function validateSpec(spec: ProductSpec | null): string | null {
       (typeof value !== "string" || value.length > 200)
     ) {
       return "Mỗi mục thông số tối đa 200 ký tự.";
+    }
+  }
+  return null;
+}
+
+/**
+ * Gallery paths: each must be an absolute path inside the web
+ * ("/products/<file>" shipped with the code, or "/uploads/<file>"
+ * uploaded from /mw-office) with no parent-directory escape.
+ * Whether a file actually sits behind the path is checked in the
+ * service, which can read the disk.
+ */
+export function validateImages(images: string[]): string | null {
+  if (!Array.isArray(images) || images.length > 20) {
+    return "Mỗi sản phẩm tối đa 20 ảnh.";
+  }
+  for (const src of images) {
+    if (
+      typeof src !== "string" ||
+      !src.startsWith("/") ||
+      src.includes("..")
+    ) {
+      return `Đường dẫn ảnh chưa đúng: ${src}`;
     }
   }
   return null;

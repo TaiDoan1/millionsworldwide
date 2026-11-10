@@ -11,6 +11,7 @@ import {
 import { CATEGORIES, type ProductPiece, type SizeOption } from "../data/products";
 import SizesEditor from "./SizesEditor";
 import PiecesEditor from "./PiecesEditor";
+import ImageUpload from "./ImageUpload";
 
 const CATEGORY_LABELS: Record<Product["category"], string> = {
   sets: "Sets",
@@ -34,6 +35,7 @@ export default function ProductEditForm({ product }: { product: Product }) {
   const [hidden, setHidden] = useState(product.hidden ?? false);
   const [sizes, setSizes] = useState<SizeOption[]>(product.sizes ?? []);
   const [pieces, setPieces] = useState<ProductPiece[]>(product.pieces ?? []);
+  const [images, setImages] = useState<string[]>(product.images ?? []);
   const [material, setMaterial] = useState(product.spec?.material ?? "");
   const [fit, setFit] = useState(product.spec?.fit ?? "");
   const [stretch, setStretch] = useState(product.spec?.stretch ?? "");
@@ -72,6 +74,7 @@ export default function ProductEditForm({ product }: { product: Product }) {
           price: pc.price,
         }))
         .filter((pc) => pc.name.length > 0),
+      images,
     };
   }
 
@@ -207,6 +210,47 @@ export default function ProductEditForm({ product }: { product: Product }) {
       </div>
       <SizesEditor sizes={sizes} onChange={setSizes} />
       <PiecesEditor pieces={pieces} onChange={setPieces} />
+      <div>
+        <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+          Ảnh sản phẩm (ảnh đầu là ảnh chính)
+        </label>
+        {images.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {images.map((src, i) => (
+              <div key={`${src}-${i}`} className="relative w-20">
+                {/* Plain img on purpose: uploaded photos are served by
+                    the /uploads route, outside next/image's local set. */}
+                <img
+                  src={src}
+                  alt={`Ảnh ${i + 1} của ${product.name}`}
+                  className="h-24 w-20 rounded-sm border border-gray-200 object-cover"
+                />
+                {i === 0 && (
+                  <span className="absolute left-0 top-0 bg-black px-1 py-0.5 text-[9px] font-bold uppercase text-white">
+                    Chính
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setImages(images.filter((_, j) => j !== i))
+                  }
+                  aria-label={`Xóa ảnh ${i + 1}`}
+                  className="absolute right-0 top-0 bg-white/90 px-1 text-sm leading-none text-gray-500 hover:text-black"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <ImageUpload onUploaded={(url) => setImages([...images, url])} />
+        <p className="text-[11px] text-gray-400 mt-1">
+          Ảnh tải lên lưu vào Volume của web và hiện ngay sau khi bấm Lưu
+          sản phẩm. Xóa ảnh ở đây chỉ gỡ khỏi sản phẩm, file vẫn còn trên
+          web.
+        </p>
+      </div>
       <div>
         <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
           Thông số (chỉ hiện dòng nào có ghi)

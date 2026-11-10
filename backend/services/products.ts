@@ -13,10 +13,9 @@
  * reject them with the sold-out message instead of "not found".
  */
 import { revalidatePath } from "next/cache";
-import fs from "node:fs";
-import path from "node:path";
 import { PRODUCTS, type Product } from "../../app/data/products";
 import { postgresConfigured } from "../storage/postgres";
+import { imageFileExists } from "../storage/uploads";
 import {
   deleteProduct as deleteStoredProduct,
   getProduct as getStoredProduct,
@@ -96,6 +95,7 @@ export async function updateProduct(
       .filter((s) => s.label.length > 0),
     spec: cleanSpec(patch.spec),
     pieces: cleanPieces(patch.pieces),
+    images: (patch.images ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
   };
   const invalid = validateProductPatch(clean);
   if (invalid) return { success: false, error: invalid };
@@ -105,6 +105,16 @@ export async function updateProduct(
   try {
     const clash = await findPieceIdClash(id, clean.pieces);
     if (clash) return { success: false, error: clash };
+    // Every image path must have a file behind it — under public/ or
+    // on the uploads volume — or the shop would render a broken card.
+    for (const src of clean.images) {
+      if (!/\.(jpe?g|png|webp)$/i.test(src)) {
+        return { success: false, error: `Ảnh phải là file jpg, png hoặc webp: ${src}` };
+      }
+      if (!imageFileExists(src)) {
+        return { success: false, error: `Không tìm thấy file ảnh trong web: ${src}` };
+      }
+    }
     const found = await updateStoredProduct(id, clean);
     if (!found) return { success: false, error: "Không tìm thấy sản phẩm." };
     revalidateProductPages(id);
@@ -146,13 +156,14 @@ export async function addProduct(
   if (!postgresConfigured()) {
     return { success: false, error: "Cần kết nối Postgres để thêm sản phẩm." };
   }
-  // Images are served from public/ — a path with no file behind it would
-  // render a broken card, so the save is refused up front.
+  // Images are served from public/ or the uploads volume — a path with
+  // no file behind it would render a broken card, so the save is
+  // refused up front.
   for (const src of clean.images) {
     if (!/\.(jpe?g|png|webp)$/i.test(src)) {
       return { success: false, error: `Ảnh phải là file jpg, png hoặc webp: ${src}` };
     }
-    if (!fs.existsSync(path.join(process.cwd(), "public", src))) {
+    if (!imageFileExists(src)) {
       return { success: false, error: `Không tìm thấy file ảnh trong web: ${src}` };
     }
   }

@@ -26,8 +26,9 @@ export default async function ProductsSection() {
       <p className="text-sm text-gray-500 mb-8">
         Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size,
         món lẻ trong set (giá lẻ) và thông số từng món — đổi có hiệu lực
-        ngay trên web, không cần đẩy code. Ảnh vẫn thay bằng code; thêm món
-        mới thì ảnh phải là đường dẫn file đã có sẵn trong web.
+        ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong
+        form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có sẵn
+        trong web thì ghi đường dẫn tay.
       </p>
       {error || !products ? (
         <p className="text-sm text-gray-400">

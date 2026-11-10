@@ -20,8 +20,9 @@ import {
 } from "../../app/data/products";
 import { getPostgresPool } from "./postgres";
 
-/** Fields /mw-office may change. Images stay code-owned on edit; the add
- *  form supplies them as text paths that must already exist in public/. */
+/** Fields /mw-office may change, including the gallery: the edit form
+ *  uploads new photos (stored on the volume, "/uploads/...") or keeps
+ *  the code-shipped ones ("/products/..."). */
 export type ProductPatch = {
   name: string;
   price: number;
@@ -34,6 +35,12 @@ export type ProductPatch = {
   spec: ProductSpec | null;
   /** Pieces of a set ("giá lẻ"), each buyable on its own from the set page. */
   pieces: ProductPiece[];
+  /**
+   * Gallery paths: "/products/<file>" for photos shipped with the code,
+   * "/uploads/<file>" for photos uploaded from /mw-office. Editing the
+   * list here is how the admin adds/removes photos.
+   */
+  images: string[];
 };
 
 /** Full row for a brand-new product (id chosen in /mw-office). */
@@ -238,8 +245,8 @@ export async function updateProduct(
     `UPDATE products
      SET name = $1, price = $2, compare_at = $3, category = $4,
          sold_out = $5, pre_order = $6, hidden = $7, sizes = $8, spec = $9,
-         pieces = $10
-     WHERE id = $11`,
+         pieces = $10, images = $11
+     WHERE id = $12`,
     [
       patch.name,
       patch.price,
@@ -251,6 +258,7 @@ export async function updateProduct(
       JSON.stringify(patch.sizes ?? []),
       patch.spec ? JSON.stringify(patch.spec) : null,
       JSON.stringify(patch.pieces ?? []),
+      JSON.stringify(patch.images ?? []),
       id,
     ],
   );

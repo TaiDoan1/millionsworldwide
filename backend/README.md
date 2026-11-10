@@ -66,8 +66,10 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 - **Sản phẩm** lưu ở bảng `products` trong Postgres (tên, giá, giá gốc,
   danh mục, ảnh, hết hàng, đặt trước, ẩn/hiện, size theo từng size, món
   lẻ trong set (giá lẻ), thông số, thứ tự) — sửa, thêm, xóa trong
-  /mw-office có hiệu lực ngay, không cần đẩy code. Ảnh mới vẫn cần file có
-  sẵn trong web (lưu kiểm tra file tồn tại trước khi cho thêm). Đọc hiển thị
+  /mw-office có hiệu lực ngay, không cần đẩy code. Ảnh tải lên từ admin
+  lưu vào Volume (`<DATA_DIR>/uploads`, phục vụ ở /uploads/ — xem
+  backend/storage/uploads.ts) và chỉ lưu đường dẫn vào bảng; ảnh có sẵn
+  trong web vẫn kiểm tra file tồn tại trước khi cho lưu. Đọc hiển thị
   lỗi thì rơi về seed cho web vẫn mở được, nhưng tính giá đơn thì báo lỗi
   to thay vì tính bằng giá seed cũ.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
