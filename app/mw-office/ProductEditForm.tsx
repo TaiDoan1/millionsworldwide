@@ -36,6 +36,19 @@ export default function ProductEditForm({ product }: { product: Product }) {
   const [sizes, setSizes] = useState<SizeOption[]>(product.sizes ?? []);
   const [pieces, setPieces] = useState<ProductPiece[]>(product.pieces ?? []);
   const [images, setImages] = useState<string[]>(product.images ?? []);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  /** Move one photo to another position — the gallery shows the list
+   *  in this order, first photo first. Shared by drag-and-drop and
+   *  the ‹ › buttons (drag does not work on touch screens). */
+  function moveImage(from: number, to: number) {
+    if (to < 0 || to >= images.length || from === to) return;
+    const next = [...images];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setImages(next);
+  }
   const [material, setMaterial] = useState(product.spec?.material ?? "");
   const [fit, setFit] = useState(product.spec?.fit ?? "");
   const [stretch, setStretch] = useState(product.spec?.stretch ?? "");
@@ -217,7 +230,31 @@ export default function ProductEditForm({ product }: { product: Product }) {
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {images.map((src, i) => (
-              <div key={`${src}-${i}`} className="relative w-20">
+              <div
+                key={`${src}-${i}`}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setOverIndex(i);
+                }}
+                onDrop={() => {
+                  if (dragIndex !== null) moveImage(dragIndex, i);
+                  setDragIndex(null);
+                  setOverIndex(null);
+                }}
+                onDragEnd={() => {
+                  setDragIndex(null);
+                  setOverIndex(null);
+                }}
+                className={`relative w-20 cursor-grab active:cursor-grabbing ${
+                  dragIndex === i ? "opacity-40" : ""
+                } ${
+                  overIndex === i && dragIndex !== null && dragIndex !== i
+                    ? "ring-2 ring-black rounded-sm"
+                    : ""
+                }`}
+              >
                 {/* Plain img on purpose: uploaded photos are served by
                     the /uploads route, outside next/image's local set. */}
                 <img
@@ -240,15 +277,36 @@ export default function ProductEditForm({ product }: { product: Product }) {
                 >
                   ×
                 </button>
+                <span className="absolute bottom-0 left-0 right-0 flex justify-between bg-white/85 px-0.5">
+                  <button
+                    type="button"
+                    disabled={i === 0}
+                    onClick={() => moveImage(i, i - 1)}
+                    aria-label={`Đưa ảnh ${i + 1} lên trước`}
+                    className="px-1 text-sm font-bold leading-none text-gray-600 hover:text-black disabled:opacity-30"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    disabled={i === images.length - 1}
+                    onClick={() => moveImage(i, i + 1)}
+                    aria-label={`Đưa ảnh ${i + 1} ra sau`}
+                    className="px-1 text-sm font-bold leading-none text-gray-600 hover:text-black disabled:opacity-30"
+                  >
+                    ›
+                  </button>
+                </span>
               </div>
             ))}
           </div>
         )}
         <ImageUpload onUploaded={(url) => setImages([...images, url])} />
         <p className="text-[11px] text-gray-400 mt-1">
-          Ảnh tải lên lưu vào Volume của web và hiện ngay sau khi bấm Lưu
-          sản phẩm. Xóa ảnh ở đây chỉ gỡ khỏi sản phẩm, file vẫn còn trên
-          web.
+          Kéo thả ảnh để xếp thứ tự hiển thị (ảnh đầu là ảnh chính); trên
+          điện thoại dùng nút ‹ › dưới mỗi ảnh. Ảnh tải lên lưu vào Volume
+          của web và hiện ngay sau khi bấm Lưu sản phẩm. Xóa ảnh ở đây chỉ
+          gỡ khỏi sản phẩm, file vẫn còn trên web.
         </p>
       </div>
       <div>
