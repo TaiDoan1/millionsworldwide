@@ -10,7 +10,7 @@ import { formatPrice } from "../lib/format";
 // Re-exported so existing imports keep working; new code imports from lib/format.
 export { formatPrice };
 
-const TAG_BY_CATEGORY: Record<Product["category"], string> = {
+const TAG_BY_CATEGORY: Record<string, string> = {
   sets: "set",
   "t-shirts": "t-shirt",
   shirts: "shirt",
@@ -40,7 +40,7 @@ export default function ProductCard({
   const { add } = useCart();
   const firstImage = product.images[0];
   const hoverImage = product.images[1] ?? product.images[0];
-  const tag = TAG_BY_CATEGORY[product.category];
+  const tag = TAG_BY_CATEGORY[product.category] ?? product.category;
 
   const handleAdd = () => {
     add(product.id);

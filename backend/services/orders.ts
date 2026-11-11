@@ -107,11 +107,12 @@ export async function placeOrder(
   }
   for (const raw of input.items) {
     // A line is a whole product — or one piece of a set ("giá lẻ").
-    // Pieces are priced from their own price, inherit the set's sizes
-    // and sold-out state, and are never confused with a product id.
+    // A linked piece's id IS its standalone product's id, so it is
+    // found above as a product. A legacy inline piece is priced from
+    // its own price and inherits the set's sizes and sold-out state.
     const product = catalog.find((p) => p.id === raw.id);
     const found = product ? null : findPiece(catalog, raw.id);
-    const priced = product ?? (found ? pieceToProduct(found.set, found.piece) : null);
+    const priced = product ?? (found ? pieceToProduct(found.set, found.piece, catalog) : null);
     const parent = product ?? found?.set;
     if (!priced || !parent || parent.soldOut) {
       return { success: false, error: "Có sản phẩm đã hết hàng trong giỏ." };

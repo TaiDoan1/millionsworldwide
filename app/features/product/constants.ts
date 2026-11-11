@@ -1,9 +1,7 @@
-import type { Product } from "../../data/products";
-
 /** The reference site's signature motion: 0.7s cubic-bezier(0.76, 0, 0.24, 1). */
 export const EASE = "ease-[cubic-bezier(0.76,0,0.24,1)]";
 
-export const TAG_BY_CATEGORY: Record<Product["category"], string> = {
+export const TAG_BY_CATEGORY: Record<string, string> = {
   sets: "set",
   "t-shirts": "t-shirt",
   shirts: "shirt",
@@ -11,7 +9,11 @@ export const TAG_BY_CATEGORY: Record<Product["category"], string> = {
   shorts: "shorts",
 };
 
-export const DESCRIPTION_BY_CATEGORY: Record<Product["category"], string> = {
+/** Generic description for a category without a custom one. */
+export const DEFAULT_DESCRIPTION =
+  "Sản phẩm trong bộ lookbook của Millions. Ảnh sản phẩm là ảnh thật từ buổi chụp của shop.";
+
+export const DESCRIPTION_BY_CATEGORY: Record<string, string> = {
   sets: "Set phối sẵn gồm áo và quần — mặc nguyên bộ là đủ outfit. Ảnh sản phẩm chụp từ bộ lookbook của Millions.",
   "t-shirts":
     "Áo thun trong bộ lookbook của Millions. Ảnh sản phẩm là ảnh thật từ buổi chụp của shop.",

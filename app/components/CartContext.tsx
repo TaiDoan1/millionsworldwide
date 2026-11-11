@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Product } from "../data/products";
-import { findPiece, pieceToProduct } from "../data/products";
+import { findPiece, isLinkedPiece, pieceToProduct } from "../data/products";
 
 export type CartLine = { product: Product; qty: number; size?: string };
 
@@ -93,11 +93,16 @@ function parseCart(
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return {};
-    // A cart key is a product id — or a piece id ("giá lẻ" of a set).
+    // A cart key is a product id — or a legacy piece id ("giá lẻ" of a
+    // set, saved before pieces became links). A linked piece's key IS
+    // its standalone product's id, already known as a product.
     const known = new Set<string>();
     for (const p of products) {
       known.add(p.id);
-      for (const pc of p.pieces ?? []) known.add(pc.id);
+      for (const pc of p.pieces ?? []) {
+        const id = isLinkedPiece(pc) ? pc.productId : pc.id;
+        if (id) known.add(id);
+      }
     }
     const clean: Record<string, number> = {};
     for (const [key, qty] of Object.entries(parsed)) {
@@ -160,12 +165,15 @@ export function CartProvider({
         const [id, size] = key.split("::");
         const product = products.find((p) => p.id === id);
         if (product) return { product, qty, size: size || undefined };
-        // A "giá lẻ" line: the id is a piece of a set, shown with the
-        // set's name/images and priced from the piece itself.
+        // A "giá lẻ" line: the id is a legacy piece of a set, shown with
+        // the set's name/images and priced from the piece itself.
+        // (A linked piece's id IS its product id, found above.)
         const found = findPiece(products, id);
         if (!found) return null;
+        const pieceProduct = pieceToProduct(found.set, found.piece, products);
+        if (!pieceProduct) return null;
         return {
-          product: pieceToProduct(found.set, found.piece),
+          product: pieceProduct,
           qty,
           size: size || undefined,
         };

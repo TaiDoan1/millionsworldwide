@@ -18,9 +18,12 @@ import RelatedProducts from "../features/product/RelatedProducts";
 export default function ProductDetail({
   product,
   styleWith,
+  catalog,
 }: {
   product: Product;
   styleWith: Product[];
+  /** Live catalog, so linked "món lẻ" resolve to their products. */
+  catalog: Product[];
 }) {
   const [selected, setSelected] = useState(0);
   const [added, setAdded] = useState(false);
@@ -73,7 +76,7 @@ export default function ProductDetail({
           style={{ animationDelay: "160ms" }}
         >
           <BuyBox product={product} added={added} onAdd={handleAdd} />
-          <PieceBuyList product={product} />
+          <PieceBuyList product={product} catalog={catalog} />
           <ProductAccordions product={product} />
         </div>
       </div>

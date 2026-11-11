@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { Product } from "../../data/products";
-import { DESCRIPTION_BY_CATEGORY, EASE } from "./constants";
+import { DEFAULT_DESCRIPTION, DESCRIPTION_BY_CATEGORY, EASE } from "./constants";
 
 function Accordion({
   title,
@@ -55,7 +55,7 @@ export default function ProductAccordions({ product }: { product: Product }) {
   return (
     <div className="mt-8 border-t border-neutral-200">
       <Accordion title="Mô tả" open={openSection === 0} onToggle={() => toggle(0)}>
-        <p>{DESCRIPTION_BY_CATEGORY[product.category]}</p>
+        <p>{DESCRIPTION_BY_CATEGORY[product.category] ?? DEFAULT_DESCRIPTION}</p>
       </Accordion>
       <Accordion title="Size & Fit" open={openSection === 1} onToggle={() => toggle(1)}>
         <p>

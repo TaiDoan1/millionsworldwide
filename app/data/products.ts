@@ -1,4 +1,13 @@
-export type Category = "sets" | "t-shirts" | "shirts" | "jeans" | "shorts";
+/**
+ * A product category: a URL-safe slug + the display label. The shop
+ * ships with 5 (SEED_CATEGORIES below); the owner manages the live list
+ * in /mw-office, stored in the Postgres `categories` table. A product
+ * stores only the slug (Product.category is a plain string).
+ */
+export type ProductCategory = {
+  slug: string;
+  label: string;
+};
 
 /** One size of a product. Only sizes listed here with soldOut: true are
  *  locked — anything not listed is treated as available, never invented
@@ -20,24 +29,34 @@ export type ProductSpec = {
 };
 
 /**
- * One piece of a set, buyable on its own ("giá lẻ"). A set lists its
- * pieces; a piece is never a standalone shop product — it has no page
- * of its own and only appears in the set's "Mua lẻ từng món" section.
- * Piece ids must be unique across the whole catalog (never equal to a
- * product id either), so an order line can point at exactly one piece.
+ * One piece of a set. Since 2026-11-10 a piece is a LINK to a standalone
+ * product: its name/price/sizes/stock all come from that product, so the
+ * set page and the product's own page never disagree. The older inline
+ * shape {id, name, price} is still read (sets saved before linking
+ * existed) but the admin only writes links now.
  */
 export type ProductPiece = {
-  id: string;
-  name: string;
-  /** Price in thousands of VND, like every other price. */
-  price: number;
+  /** Link to a standalone product (the normal case). */
+  productId?: string;
+  /** Legacy inline piece: its own id/name/price. */
+  id?: string;
+  name?: string;
+  price?: number;
 };
+
+/** True when the piece links to a standalone product. */
+export function isLinkedPiece(
+  pc: ProductPiece,
+): pc is ProductPiece & { productId: string } {
+  return typeof pc.productId === "string" && pc.productId.length > 0;
+}
 
 export type Product = {
   id: string;
   name: string;
   price: number;
-  category: Category;
+  /** Category slug — must exist in the live categories list. */
+  category: string;
   /** Gallery — the arrows on a product card cycle through these images. */
   images: string[];
   soldOut?: boolean;
@@ -84,25 +103,44 @@ export function isSizeSoldOut(product: Product, label: string): boolean {
   return product.sizes?.some((s) => s.label === label && s.soldOut) ?? false;
 }
 
-/** Find a piece anywhere in the catalog: its parent set + the piece. */
+/** Find a piece anywhere in the catalog: its parent set + the piece.
+ *  A linked piece is found by the standalone product's id; a legacy
+ *  inline piece by its own id. */
 export function findPiece(
   catalog: Product[],
   pieceId: string,
 ): { set: Product; piece: ProductPiece } | null {
   for (const set of catalog) {
-    const piece = (set.pieces ?? []).find((pc) => pc.id === pieceId);
+    const piece = (set.pieces ?? []).find((pc) =>
+      isLinkedPiece(pc) ? pc.productId === pieceId : pc.id === pieceId,
+    );
     if (piece) return { set, piece };
   }
   return null;
 }
 
 /**
- * The cart/order view of a piece: a synthetic product carrying the
- * piece's own id/name/price, the set's images/sizes/stock state, so
- * the cart, the order form and the order lookup all treat it like any
- * other line without knowing it came from a set.
+ * The cart/order view of a piece. A linked piece IS its standalone
+ * product (same name/price/sizes/stock — one source of truth). A legacy
+ * inline piece becomes a synthetic product carrying its own id/name/
+ * price with the set's images/sizes/stock. Returns null when a linked
+ * product is gone from the catalog, or a legacy piece is malformed.
  */
-export function pieceToProduct(set: Product, piece: ProductPiece): Product {
+export function pieceToProduct(
+  set: Product,
+  piece: ProductPiece,
+  catalog: Product[],
+): Product | null {
+  if (isLinkedPiece(piece)) {
+    return catalog.find((p) => p.id === piece.productId) ?? null;
+  }
+  if (
+    typeof piece.id !== "string" ||
+    typeof piece.name !== "string" ||
+    typeof piece.price !== "number"
+  ) {
+    return null;
+  }
   return {
     id: piece.id,
     name: `${set.name} — ${piece.name}`,
@@ -115,7 +153,16 @@ export function pieceToProduct(set: Product, piece: ProductPiece): Product {
   };
 }
 
-export const CATEGORIES: Category[] = ["sets", "t-shirts", "shirts", "jeans", "shorts"];
+/** Seed categories: the starting list, copied into the `categories`
+ *  table on first run and used as the read-only fallback without
+ *  Postgres. The live list is managed in /mw-office. */
+export const SEED_CATEGORIES: ProductCategory[] = [
+  { slug: "sets", label: "Sets" },
+  { slug: "t-shirts", label: "T-Shirts" },
+  { slug: "shirts", label: "Shirts" },
+  { slug: "jeans", label: "Jeans" },
+  { slug: "shorts", label: "Shorts" },
+];
 
 /**
  * Catalog rebuilt 2026-10-22 from the "Tách Nền Millions" lookbook shoot

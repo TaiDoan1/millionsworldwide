@@ -3,7 +3,7 @@
  * outside the app. Returns an error message, or null when the data is
  * safe to persist. Prices are in thousands of VND, as everywhere.
  */
-import { CATEGORIES } from "../../app/data/products";
+import { isLinkedPiece } from "../../app/data/products";
 import type { ProductPatch, NewProduct } from "../storage/products";
 import type {
   ProductPiece,
@@ -29,7 +29,14 @@ export function validateProductPatch(p: ProductPatch): string | null {
   ) {
     return "Giá gốc phải là số nguyên từ 1 đến 100.000 (nghìn đồng), hoặc để trống.";
   }
-  if (!CATEGORIES.includes(p.category)) {
+  // The category must be a well-formed slug; whether it exists in the
+  // live category list is checked in the service, which can read the DB.
+  if (
+    typeof p.category !== "string" ||
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.category) ||
+    p.category.length === 0 ||
+    p.category.length > 50
+  ) {
     return "Danh mục chưa đúng.";
   }
   if (
@@ -138,18 +145,29 @@ export function validateSizeChart(sizeChart: string | null): string | null {
 }
 
 /**
- * Pieces of a set ("giá lẻ"). Ids are unique within the product here;
- * uniqueness across the whole catalog (and against product ids) is
- * checked in the service, which can read the catalog.
+ * Pieces of a set ("giá lẻ"). A piece is normally a LINK to a
+ * standalone product ({productId}) — its name/price/sizes/stock come
+ * from that product. Legacy inline pieces ({id, name, price}) are
+ * still validated by the old rules. Whether a linked product exists
+ * (and isn't the set itself) is checked in the service, which can
+ * read the catalog.
  */
 export function validatePieces(pieces: ProductPiece[]): string | null {
   if (!Array.isArray(pieces) || pieces.length > 10) {
     return "Mỗi sản phẩm tối đa 10 món lẻ.";
   }
-  const seen = new Set<string>();
+  const seenIds = new Set<string>();
+  const seenLinks = new Set<string>();
   for (const pc of pieces) {
+    if (!pc || typeof pc !== "object") return "Món lẻ chưa đúng.";
+    if (isLinkedPiece(pc)) {
+      if (seenLinks.has(pc.productId)) {
+        return "Một sản phẩm chỉ link một lần trong set.";
+      }
+      seenLinks.add(pc.productId);
+      continue;
+    }
     if (
-      !pc ||
       typeof pc.id !== "string" ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pc.id) ||
       pc.id.length < 3 ||
@@ -164,11 +182,17 @@ export function validatePieces(pieces: ProductPiece[]): string | null {
     ) {
       return "Tên món lẻ phải từ 1 đến 100 ký tự.";
     }
-    if (!Number.isInteger(pc.price) || pc.price < 1 || pc.price > 100000) {
+    const price = pc.price;
+    if (
+      typeof price !== "number" ||
+      !Number.isInteger(price) ||
+      price < 1 ||
+      price > 100000
+    ) {
       return "Giá lẻ phải là số nguyên từ 1 đến 100.000 (nghìn đồng).";
     }
-    if (seen.has(pc.id)) return `Mã món lẻ ${pc.id} bị trùng.`;
-    seen.add(pc.id);
+    if (seenIds.has(pc.id)) return `Mã món lẻ ${pc.id} bị trùng.`;
+    seenIds.add(pc.id);
   }
   return null;
 }

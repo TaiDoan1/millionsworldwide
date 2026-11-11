@@ -3,31 +3,38 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addProduct, type NewProduct, type Product } from "../actions/products";
-import { CATEGORIES, type ProductPiece, type SizeOption } from "../data/products";
+import {
+  isLinkedPiece,
+  type ProductCategory,
+  type ProductPiece,
+  type SizeOption,
+} from "../data/products";
 import SizesEditor from "./SizesEditor";
 import PiecesEditor from "./PiecesEditor";
 import ImageUpload from "./ImageUpload";
-
-const CATEGORY_LABELS: Record<Product["category"], string> = {
-  sets: "Sets",
-  "t-shirts": "T-Shirts",
-  shirts: "Shirts",
-  jeans: "Jeans",
-  shorts: "Shorts",
-};
 
 /**
  * Add-product form on the admin page. Images are text paths that must
  * already exist in public/ (the server refuses the save otherwise) —
  * uploading brand-new image files still happens through code.
  */
-export default function ProductAddForm() {
+export default function ProductAddForm({
+  products,
+  categories,
+}: {
+  /** All products, for the "món lẻ" link dropdown. */
+  products: Product[];
+  /** Live categories, for the category dropdown. */
+  categories: ProductCategory[];
+}) {
   const router = useRouter();
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [compareAt, setCompareAt] = useState("");
-  const [category, setCategory] = useState<Product["category"]>("sets");
+  const [category, setCategory] = useState<string>(
+    categories[0]?.slug ?? "sets",
+  );
   const [images, setImages] = useState("");
   const [soldOut, setSoldOut] = useState(false);
   const [preOrder, setPreOrder] = useState(false);
@@ -63,12 +70,20 @@ export default function ProductAddForm() {
         .filter((s) => s.label.length > 0),
       spec: null,
       pieces: pieces
-        .map((pc) => ({
-          id: pc.id.trim().toLowerCase(),
-          name: pc.name.trim(),
-          price: pc.price,
-        }))
-        .filter((pc) => pc.name.length > 0),
+        .map((pc) =>
+          isLinkedPiece(pc)
+            ? { productId: pc.productId.trim() }
+            : {
+                id: (pc.id ?? "").trim().toLowerCase(),
+                name: (pc.name ?? "").trim(),
+                price: pc.price,
+              },
+        )
+        .filter((pc) =>
+          isLinkedPiece(pc)
+            ? pc.productId.length > 0
+            : (pc.name?.length ?? 0) > 0,
+        ),
       sizeChart: sizeChart.trim() === "" ? null : sizeChart.trim(),
     };
     const result = await addProduct(payload);
@@ -155,12 +170,12 @@ export default function ProductAddForm() {
           </label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as Product["category"])}
+            onChange={(e) => setCategory(e.target.value)}
             className={`${inputClass} bg-white`}
           >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.label}
               </option>
             ))}
           </select>
@@ -220,7 +235,12 @@ export default function ProductAddForm() {
         </label>
       </div>
       <SizesEditor sizes={sizes} onChange={setSizes} />
-      <PiecesEditor pieces={pieces} onChange={setPieces} />
+      <PiecesEditor
+        pieces={pieces}
+        products={products}
+        ownId={id}
+        onChange={setPieces}
+      />
       <div>
         <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
           Bảng size (ảnh, không bắt buộc)

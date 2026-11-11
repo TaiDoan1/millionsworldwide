@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { Product } from "../data/products";
+import type { Product, ProductCategory } from "../data/products";
 import { useCart } from "./CartContext";
 import Logo3D from "./Logo3D";
 
@@ -14,15 +14,6 @@ const NAV_LINKS = [
   { label: "FAQ", href: "/faq" },
 ];
 
-const TABS = [
-  { key: "all", label: "ALL PRODUCTS" },
-  { key: "sets", label: "SETS" },
-  { key: "t-shirts", label: "T-SHIRTS" },
-  { key: "shirts", label: "SHIRTS" },
-  { key: "jeans", label: "JEANS" },
-  { key: "shorts", label: "SHORTS" },
-] as const;
-
 function productsForTab(products: Product[], key: string) {
   if (key === "all") return products;
   return products.filter((p) => p.category === key);
@@ -30,10 +21,13 @@ function productsForTab(products: Product[], key: string) {
 
 export default function CollectionHeader({
   products,
+  categories,
   promoBar = false,
 }: {
   /** Live catalog from the page. */
   products: Product[];
+  /** Live categories, for the mega-menu tabs. */
+  categories: ProductCategory[];
   /** True when the promo strip is showing above, pushing the floating header down. */
   promoBar?: boolean;
 }) {
@@ -42,6 +36,12 @@ export default function CollectionHeader({
   const [shopOpen, setShopOpen] = useState(false);
   const [tab, setTab] = useState<string>("all");
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Mega-menu tabs: ALL first, then the live categories in admin order.
+  const tabs = [
+    { key: "all", label: "ALL PRODUCTS" },
+    ...categories.map((c) => ({ key: c.slug, label: c.label.toUpperCase() })),
+  ];
 
   useEffect(() => {
     let last = window.scrollY;
@@ -171,7 +171,7 @@ export default function CollectionHeader({
       >
         <div className="px-10 py-8">
           <div className="flex items-center justify-center gap-9">
-            {TABS.map((t) => (
+            {tabs.map((t) => (
               <button
                 key={t.key}
                 type="button"

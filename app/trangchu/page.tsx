@@ -5,6 +5,7 @@ import CollectionFooter from "../components/CollectionFooter";
 import { CartProvider } from "../components/CartContext";
 import CartDrawer from "../components/CartDrawer";
 import { getProducts } from "../actions/products";
+import { getCategories } from "../actions/categories";
 import { getSettings } from "../actions/settings";
 
 /**
@@ -23,8 +24,9 @@ export const metadata = {
 };
 
 export default async function TrangChuPage() {
-  const [products, settings] = await Promise.all([
+  const [products, categories, settings] = await Promise.all([
     getProducts(),
+    getCategories(),
     getSettings(),
   ]);
   // The promo strip is 30px tall; when it shows, the floating header and
@@ -36,7 +38,7 @@ export default async function TrangChuPage() {
   return (
     <CartProvider products={products}>
     <div className={`min-h-screen bg-white text-black ${inter.className}`}>
-      <CollectionHeader products={products} promoBar={promoBar} />
+      <CollectionHeader products={products} categories={categories} promoBar={promoBar} />
       <CartDrawer />
 
       <main className="w-full">
@@ -60,7 +62,7 @@ export default async function TrangChuPage() {
         </div>
 
         <div className="mt-[1.25rem] sm:mt-[2.25vw]">
-          <ShopSection products={products} />
+          <ShopSection products={products} categories={categories} />
         </div>
       </main>
 

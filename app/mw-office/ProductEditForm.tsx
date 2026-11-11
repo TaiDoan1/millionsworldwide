@@ -8,28 +8,35 @@ import {
   type Product,
   type ProductPatch,
 } from "../actions/products";
-import { CATEGORIES, type ProductPiece, type SizeOption } from "../data/products";
+import {
+  type ProductCategory,
+  isLinkedPiece,
+  type ProductPiece,
+  type SizeOption,
+} from "../data/products";
 import SizesEditor from "./SizesEditor";
 import PiecesEditor from "./PiecesEditor";
 import ImageUpload from "./ImageUpload";
 
-const CATEGORY_LABELS: Record<Product["category"], string> = {
-  sets: "Sets",
-  "t-shirts": "T-Shirts",
-  shirts: "Shirts",
-  jeans: "Jeans",
-  shorts: "Shorts",
-};
-
 /** Per-product edit form on the admin page (admin only, server-checked). */
-export default function ProductEditForm({ product }: { product: Product }) {
+export default function ProductEditForm({
+  product,
+  products,
+  categories,
+}: {
+  product: Product;
+  /** All products, for the "món lẻ" link dropdown. */
+  products: Product[];
+  /** Live categories, for the category dropdown. */
+  categories: ProductCategory[];
+}) {
   const router = useRouter();
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(String(product.price));
   const [compareAt, setCompareAt] = useState(
     product.compareAt ? String(product.compareAt) : "",
   );
-  const [category, setCategory] = useState<Product["category"]>(product.category);
+  const [category, setCategory] = useState<string>(product.category);
   const [soldOut, setSoldOut] = useState(product.soldOut ?? false);
   const [preOrder, setPreOrder] = useState(product.preOrder ?? false);
   const [hidden, setHidden] = useState(product.hidden ?? false);
@@ -82,12 +89,20 @@ export default function ProductEditForm({ product }: { product: Product }) {
             }
           : null,
       pieces: pieces
-        .map((pc) => ({
-          id: pc.id.trim().toLowerCase(),
-          name: pc.name.trim(),
-          price: pc.price,
-        }))
-        .filter((pc) => pc.name.length > 0),
+        .map((pc) =>
+          isLinkedPiece(pc)
+            ? { productId: pc.productId.trim() }
+            : {
+                id: (pc.id ?? "").trim().toLowerCase(),
+                name: (pc.name ?? "").trim(),
+                price: pc.price,
+              },
+        )
+        .filter((pc) =>
+          isLinkedPiece(pc)
+            ? pc.productId.length > 0
+            : (pc.name?.length ?? 0) > 0,
+        ),
       sizeChart: sizeChart.trim() === "" ? null : sizeChart.trim(),
       images,
     };
@@ -183,12 +198,12 @@ export default function ProductEditForm({ product }: { product: Product }) {
           </label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as Product["category"])}
+            onChange={(e) => setCategory(e.target.value)}
             className={`${inputClass} bg-white`}
           >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.label}
               </option>
             ))}
           </select>
@@ -224,7 +239,12 @@ export default function ProductEditForm({ product }: { product: Product }) {
         </label>
       </div>
       <SizesEditor sizes={sizes} onChange={setSizes} />
-      <PiecesEditor pieces={pieces} onChange={setPieces} />
+      <PiecesEditor
+        pieces={pieces}
+        products={products}
+        ownId={product.id}
+        onChange={setPieces}
+      />
       <div>
         <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
           Ảnh sản phẩm (ảnh đầu là ảnh chính)

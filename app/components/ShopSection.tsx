@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Product } from "../data/products";
+import type { Product, ProductCategory } from "../data/products";
 import ProductCard from "./ProductCard";
 import CategoryChips from "../features/shop/CategoryChips";
 import ShopToolbar from "../features/shop/ShopToolbar";
 import {
   PAGE_SIZE,
   SORT_OPTIONS,
+  chipsFor,
   type FilterKey,
   type SortKey,
 } from "../features/shop/shop-options";
@@ -16,7 +17,14 @@ import {
  * Shop grid assembly: filter + sort + layout state live here, the chips
  * row and the toolbar live in features/shop, the cards stay shared.
  */
-export default function ShopSection({ products: catalog }: { products: Product[] }) {
+export default function ShopSection({
+  products: catalog,
+  categories,
+}: {
+  products: Product[];
+  /** Live categories, for the filter chips. */
+  categories: ProductCategory[];
+}) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("best-selling");
   const [sortOpen, setSortOpen] = useState(false);
@@ -70,9 +78,12 @@ export default function ShopSection({ products: catalog }: { products: Product[]
     }, 700);
   };
 
+  const chips = useMemo(() => chipsFor(categories), [categories]);
+
   return (
     <section className="w-full px-3 sm:px-[44px]">
       <CategoryChips
+        chips={chips}
         filter={filter}
         onFilter={(key) => {
           setFilter(key);

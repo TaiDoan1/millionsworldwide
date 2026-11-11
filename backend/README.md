@@ -65,11 +65,18 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   JSON; file JSON giữ lại làm bản dự phòng.
 - **Sản phẩm** lưu ở bảng `products` trong Postgres (tên, giá, giá gốc,
   danh mục, ảnh, hết hàng, đặt trước, ẩn/hiện, size theo từng size, món
-  lẻ trong set (giá lẻ), ảnh bảng size, thông số, thứ tự) — sửa, thêm, xóa trong
+  lẻ trong set (link sản phẩm riêng — giá/size/hết hàng lấy từ sản phẩm
+  đó; món lẻ kiểu cũ {id, tên, giá} vẫn đọc được), ảnh bảng size, thông
+  số, thứ tự) — sửa, thêm, xóa trong
   /mw-office có hiệu lực ngay, không cần đẩy code. Ảnh tải lên từ admin
   lưu vào Volume (`<DATA_DIR>/uploads`, phục vụ ở /uploads/ — xem
   backend/storage/uploads.ts) và chỉ lưu đường dẫn vào bảng; ảnh có sẵn
   trong web vẫn kiểm tra file tồn tại trước khi cho lưu. Đọc hiển thị
+- **Danh mục** lưu ở bảng `categories` trong Postgres (mã slug, tên,
+  thứ tự) — thêm, đổi tên, xếp thứ tự, xóa trong /mw-office; chip lọc
+  trên trang shop và menu danh mục đọc bảng này. Xóa bị chặn khi còn
+  sản phẩm dùng danh mục đó. Không có Postgres thì shop dùng 5 danh mục
+  gốc trong code.
   lỗi thì rơi về seed cho web vẫn mở được, nhưng tính giá đơn thì báo lỗi
   to thay vì tính bằng giá seed cũ.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời

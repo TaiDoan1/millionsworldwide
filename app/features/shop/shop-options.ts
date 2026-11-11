@@ -1,15 +1,18 @@
-import type { Category } from "../../data/products";
+import type { ProductCategory } from "../../data/products";
 
-export type FilterKey = "all" | Category;
+/** "all" or a category slug. Slugs are dynamic (managed in /mw-office),
+ *  so the filter is a plain string, not a fixed union. */
+export type FilterKey = string;
 
-export const CHIPS: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "ALL PRODUCTS" },
-  { key: "sets", label: "SETS" },
-  { key: "t-shirts", label: "T-SHIRTS" },
-  { key: "shirts", label: "SHIRTS" },
-  { key: "jeans", label: "JEANS" },
-  { key: "shorts", label: "SHORTS" },
-];
+/** Filter chips: ALL first, then the live categories in admin order. */
+export function chipsFor(
+  categories: ProductCategory[],
+): { key: FilterKey; label: string }[] {
+  return [
+    { key: "all", label: "ALL PRODUCTS" },
+    ...categories.map((c) => ({ key: c.slug, label: c.label.toUpperCase() })),
+  ];
+}
 
 export type SortKey =
   | "best-selling"

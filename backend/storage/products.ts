@@ -103,14 +103,18 @@ function asPieces(value: unknown): ProductPiece[] {
       ? safeParse(value)
       : undefined;
   if (!Array.isArray(list)) return [];
-  return list.filter(
-    (pc): pc is ProductPiece =>
-      !!pc &&
-      typeof pc === "object" &&
-      typeof (pc as ProductPiece).id === "string" &&
-      typeof (pc as ProductPiece).name === "string" &&
-      typeof (pc as ProductPiece).price === "number",
-  );
+  return list.filter((pc): pc is ProductPiece => {
+    if (!pc || typeof pc !== "object") return false;
+    const p = pc as ProductPiece;
+    // Linked piece: a non-empty productId.
+    if (typeof p.productId === "string") return p.productId.length > 0;
+    // Legacy inline piece: id + name + numeric price.
+    return (
+      typeof p.id === "string" &&
+      typeof p.name === "string" &&
+      typeof p.price === "number"
+    );
+  });
 }
 
 type ProductRow = {

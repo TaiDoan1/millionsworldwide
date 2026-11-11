@@ -13,7 +13,11 @@
  * reject them with the sold-out message instead of "not found".
  */
 import { revalidatePath } from "next/cache";
-import { PRODUCTS, type Product } from "../../app/data/products";
+import {
+  isLinkedPiece,
+  PRODUCTS,
+  type Product,
+} from "../../app/data/products";
 import { postgresConfigured } from "../storage/postgres";
 import { imageFileExists } from "../storage/uploads";
 import {
@@ -26,6 +30,7 @@ import {
   type ProductPatch,
 } from "../storage/products";
 import { isAdminRequest } from "../auth/admin-auth";
+import { getCategories } from "./categories";
 import {
   validateNewProduct,
   validateProductPatch,
@@ -104,7 +109,9 @@ export async function updateProduct(
     return { success: false, error: "Cần kết nối Postgres để sửa sản phẩm." };
   }
   try {
-    const clash = await findPieceIdClash(id, clean.pieces);
+    const categoryError = await checkCategoryExists(clean.category);
+    if (categoryError) return { success: false, error: categoryError };
+    const clash = await findPieceProblem(id, clean.pieces);
     if (clash) return { success: false, error: clash };
     // Every image path must have a file behind it — under public/ or
     // on the uploads volume — or the shop would render a broken card.
@@ -188,7 +195,9 @@ export async function addProduct(
     }
   }
   try {
-    const clash = await findPieceIdClash(clean.id, clean.pieces);
+    const categoryError = await checkCategoryExists(clean.category);
+    if (categoryError) return { success: false, error: categoryError };
+    const clash = await findPieceProblem(clean.id, clean.pieces);
     if (clash) return { success: false, error: clash };
     const inserted = await insertStoredProduct(clean);
     if (!inserted) {
@@ -237,26 +246,49 @@ function cleanSpec(
   return Object.keys(clean).length > 0 ? clean : null;
 }
 
-/** Drop blank-name piece rows; keep id/name/price trimmed and typed. */
+/**
+ * Drop blank rows; keep linked pieces as {productId} and legacy inline
+ * pieces trimmed and typed. Empty placeholder rows from the editor
+ * (no product picked, no name typed) fall out here, before validation.
+ */
 function cleanPieces(
   pieces: ProductPatch["pieces"],
 ): ProductPatch["pieces"] {
   return (pieces ?? [])
-    .map((pc) => ({
-      id: pc.id.trim().toLowerCase(),
-      name: pc.name.trim(),
-      price: pc.price,
-    }))
-    .filter((pc) => pc.name.length > 0);
+    .map((pc) => {
+      if (isLinkedPiece(pc)) return { productId: pc.productId.trim() };
+      return {
+        id: (pc.id ?? "").trim().toLowerCase(),
+        name: (pc.name ?? "").trim(),
+        price: pc.price,
+      };
+    })
+    .filter((pc) =>
+      isLinkedPiece(pc)
+        ? pc.productId.length > 0
+        : (pc.name?.length ?? 0) > 0,
+    );
+}
+
+/** The category must exist in the live list — a slug typed by hand (or
+ *  left over from a deleted category) is refused instead of saved. */
+async function checkCategoryExists(slug: string): Promise<string | null> {
+  const categories = await getCategories();
+  if (!categories.some((c) => c.slug === slug)) {
+    return "Danh mục không còn tồn tại, tải lại trang rồi thử lại nhé.";
+  }
+  return null;
 }
 
 /**
- * A piece id must be unique across the whole catalog — an order line
- * points at exactly one piece — and must never equal a product id
- * (the order flow looks products up first). `ownId` is the product
- * being saved, whose own old pieces don't count as a clash.
+ * Piece sanity against the whole catalog. A linked piece must point at
+ * an existing product that isn't the set itself. A legacy inline piece
+ * id must be unique across the whole catalog — an order line points at
+ * exactly one piece — and must never equal a product id (the order flow
+ * looks products up first). `ownId` is the product being saved, whose
+ * own old pieces don't count as a clash.
  */
-async function findPieceIdClash(
+async function findPieceProblem(
   ownId: string,
   pieces: ProductPatch["pieces"],
 ): Promise<string | null> {
@@ -265,10 +297,19 @@ async function findPieceIdClash(
   for (const p of all) {
     taken.add(p.id);
     if (p.id === ownId) continue;
-    for (const pc of p.pieces ?? []) taken.add(pc.id);
+    for (const pc of p.pieces ?? []) {
+      if (!isLinkedPiece(pc) && pc.id) taken.add(pc.id);
+    }
   }
   for (const pc of pieces) {
-    if (taken.has(pc.id)) {
+    if (isLinkedPiece(pc)) {
+      if (pc.productId === ownId) {
+        return "Không link set tới chính nó, chọn sản phẩm khác nhé.";
+      }
+      if (!all.some((p) => p.id === pc.productId)) {
+        return `Không tìm thấy sản phẩm ${pc.productId} để link.`;
+      }
+    } else if (pc.id && taken.has(pc.id)) {
       return `Mã món lẻ ${pc.id} đã dùng ở chỗ khác, đổi mã khác nhé.`;
     }
   }

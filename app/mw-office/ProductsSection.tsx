@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { getAllProducts } from "../actions/products";
+import { getAllCategories } from "../actions/categories";
+import { SEED_CATEGORIES } from "../data/products";
 import { formatPrice } from "../lib/format";
 import ProductAddForm from "./ProductAddForm";
 import ProductEditForm from "./ProductEditForm";
@@ -17,6 +19,15 @@ export default async function ProductsSection() {
   } catch (e) {
     error = e instanceof Error ? e.message : "Không tải được danh sách sản phẩm.";
   }
+  // Categories for the forms' dropdowns and the "món lẻ" picker: the
+  // seed list when the live list can't be read (the save still checks
+  // against the live list server-side).
+  let categories = SEED_CATEGORIES;
+  try {
+    categories = await getAllCategories();
+  } catch {
+    // Keep the seed fallback.
+  }
 
   return (
     <div className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10">
@@ -25,10 +36,10 @@ export default async function ProductsSection() {
       </h2>
       <p className="text-sm text-gray-500 mb-8">
         Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size,
-        món lẻ trong set (giá lẻ) và thông số từng món — đổi có hiệu lực
-        ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong
-        form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có sẵn
-        trong web thì ghi đường dẫn tay.
+        món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có
+        hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút
+        trong form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có
+        sẵn trong web thì ghi đường dẫn tay.
       </p>
       {error || !products ? (
         <p className="text-sm text-gray-400">
@@ -43,7 +54,7 @@ export default async function ProductsSection() {
               + Thêm sản phẩm mới
             </summary>
             <div className="mt-3 border border-neutral-200 p-4">
-              <ProductAddForm />
+              <ProductAddForm products={products} categories={categories} />
             </div>
           </details>
           <ul className="divide-y divide-neutral-100">
@@ -77,7 +88,11 @@ export default async function ProductsSection() {
                   Sửa
                 </summary>
                 <div className="mt-3 border border-neutral-200 p-4">
-                  <ProductEditForm product={p} />
+                  <ProductEditForm
+                    product={p}
+                    products={products}
+                    categories={categories}
+                  />
                 </div>
               </details>
             </li>

@@ -7,6 +7,7 @@ import { CartProvider } from "../../components/CartContext";
 import CartDrawer from "../../components/CartDrawer";
 import ProductDetail from "../../components/ProductDetail";
 import { getProductById, getProducts } from "../../actions/products";
+import { getCategories } from "../../actions/categories";
 import { getSettings } from "../../actions/settings";
 
 /**
@@ -46,9 +47,10 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [product, products, settings] = await Promise.all([
+  const [product, products, categories, settings] = await Promise.all([
     getProductById(id),
     getProducts(),
+    getCategories(),
     getSettings(),
   ]);
   if (!product) notFound();
@@ -68,11 +70,11 @@ export default async function ProductPage({
   return (
     <CartProvider products={products}>
       <div className={`min-h-screen bg-white text-black ${inter.className}`}>
-        <CollectionHeader products={products} promoBar={promoBar} />
+        <CollectionHeader products={products} categories={categories} promoBar={promoBar} />
         <CartDrawer />
 
         <main className={`w-full px-0 sm:px-[44px] ${promoBar ? "pt-[140px] sm:pt-[136px]" : "pt-[110px] sm:pt-[106px]"}`}>
-          <ProductDetail product={product} styleWith={styleWith} />
+          <ProductDetail product={product} styleWith={styleWith} catalog={products} />
         </main>
 
         <div className="mt-16">

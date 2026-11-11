@@ -21,7 +21,7 @@ export default function BuyBox({
   return (
     <div>
       <span className="text-sm font-bold lowercase text-black">
-        {TAG_BY_CATEGORY[product.category]}
+        {TAG_BY_CATEGORY[product.category] ?? product.category}
       </span>
       <h1 className="mt-2 text-3xl font-bold uppercase leading-tight sm:text-4xl">
         {product.name}

@@ -4,6 +4,7 @@ import LogoutButton from "./LogoutButton"
 import { csvRow } from "../lib/csv"
 import OrdersManager from "./OrdersManager"
 import ProductsSection from "./ProductsSection"
+import CategoriesSection from "./CategoriesSection"
 import { getSettings } from "../actions/settings"
 import { storageBackendLabel } from "../../backend/storage"
 import { getOrders } from "../actions/orders"
@@ -18,6 +19,7 @@ const NAV = [
   { href: "#tong-quan", label: "Tổng quan" },
   { href: "#don-hang", label: "Đơn hàng" },
   { href: "#san-pham", label: "Sản phẩm" },
+  { href: "#danh-muc", label: "Danh mục" },
   { href: "#email", label: "Email" },
   { href: "#cai-dat", label: "Cài đặt" },
 ]
@@ -120,6 +122,10 @@ export default async function AdminPage() {
 
       <div id="san-pham" className="scroll-mt-32">
         <ProductsSection />
+      </div>
+
+      <div id="danh-muc" className="scroll-mt-32">
+        <CategoriesSection />
       </div>
 
       <div id="email" className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10 scroll-mt-32">

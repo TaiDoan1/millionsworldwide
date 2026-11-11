@@ -1,16 +1,18 @@
-import { CHIPS, type FilterKey } from "./shop-options";
+import type { FilterKey } from "./shop-options";
 
 /** Category chips — swipeable row on mobile, centred wrap on desktop. */
 export default function CategoryChips({
+  chips,
   filter,
   onFilter,
 }: {
+  chips: { key: FilterKey; label: string }[];
   filter: FilterKey;
   onFilter: (key: FilterKey) => void;
 }) {
   return (
     <div className="flex flex-nowrap items-center gap-[0.6875rem] overflow-x-auto pb-1 min-[1040px]:flex-wrap min-[1040px]:justify-center min-[1040px]:gap-[1.09375rem] min-[1040px]:overflow-visible">
-      {CHIPS.map((chip) => (
+      {chips.map((chip) => (
         <button
           key={chip.key}
           type="button"
