@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Hint } from "./ui";
 
 /**
  * One photo upload from /mw-office: picks a file, POSTs it to
@@ -61,11 +62,11 @@ export default function ImageUpload({
         onChange={(e) => handleFile(e.target.files?.[0])}
         className="block w-full text-sm text-gray-600 file:mr-3 file:border file:border-gray-300 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:uppercase file:tracking-wider hover:file:border-black disabled:opacity-50"
       />
-      <p className="text-[11px] text-gray-400 mt-1">
+      <Hint>
         {uploading
           ? "Đang tải ảnh lên…"
           : "Ảnh jpg, png hoặc webp, tối đa 5MB — web tự resize về cỡ vừa hiển thị."}
-      </p>
+      </Hint>
       {error && <p className="text-xs text-red-700 mt-1">{error}</p>}
     </div>
   );

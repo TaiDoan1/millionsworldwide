@@ -3,6 +3,7 @@ import { getAllProducts } from "../actions/products";
 import { getAllCategories } from "../actions/categories";
 import { SEED_CATEGORIES } from "../data/products";
 import { formatPrice } from "../lib/format";
+import { AdminSection } from "./ui";
 import ProductAddForm from "./ProductAddForm";
 import ProductEditForm from "./ProductEditForm";
 
@@ -30,17 +31,11 @@ export default async function ProductsSection() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10">
-      <h2 className="text-2xl font-bold tracking-tight mb-1">
-        Sản phẩm{products ? ` (${products.length})` : ""}
-      </h2>
-      <p className="text-sm text-gray-500 mb-8">
-        Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size,
-        món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có
-        hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút
-        trong form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có
-        sẵn trong web thì ghi đường dẫn tay.
-      </p>
+    <AdminSection
+      id="san-pham"
+      title={`Sản phẩm${products ? ` (${products.length})` : ""}`}
+      description="Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size, món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có sẵn trong web thì ghi đường dẫn tay."
+    >
       {error || !products ? (
         <p className="text-sm text-gray-400">
           {error ?? "Không tải được danh sách sản phẩm."}
@@ -100,6 +95,6 @@ export default async function ProductsSection() {
         </ul>
         </>
       )}
-    </div>
+    </AdminSection>
   );
 }

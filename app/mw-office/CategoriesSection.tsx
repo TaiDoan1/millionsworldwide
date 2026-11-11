@@ -1,5 +1,6 @@
 import { getAllCategories } from "../actions/categories";
 import { getAllProducts } from "../actions/products";
+import { AdminSection } from "./ui";
 import CategoriesManager from "./CategoriesManager";
 
 /**
@@ -28,16 +29,11 @@ export default async function CategoriesSection() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10">
-      <h2 className="text-2xl font-bold tracking-tight mb-1">
-        Danh mục{categories ? ` (${categories.length})` : ""}
-      </h2>
-      <p className="text-sm text-gray-500 mb-8">
-        Thêm, đổi tên và xếp thứ tự danh mục — chip lọc trên trang shop và
-        menu danh mục tự cập nhật theo, không cần đẩy code. Mã danh mục
-        (slug) đặt một lần lúc thêm, không đổi được vì sản phẩm đang dùng
-        nó. Danh mục còn sản phẩm thì chưa xóa được.
-      </p>
+    <AdminSection
+      id="danh-muc"
+      title={`Danh mục${categories ? ` (${categories.length})` : ""}`}
+      description="Thêm, đổi tên và xếp thứ tự danh mục — chip lọc trên trang shop và menu danh mục tự cập nhật theo, không cần đẩy code. Mã danh mục (slug) đặt một lần lúc thêm, không đổi được vì sản phẩm đang dùng nó. Danh mục còn sản phẩm thì chưa xóa được."
+    >
       {error || !categories ? (
         <p className="text-sm text-gray-400">
           {error ?? "Không tải được danh sách danh mục."}
@@ -49,6 +45,6 @@ export default async function CategoriesSection() {
           counts={counts}
         />
       )}
-    </div>
+    </AdminSection>
   );
 }

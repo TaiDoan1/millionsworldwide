@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   addCategory,
   deleteCategory,
   updateCategory,
   type ProductCategory,
 } from "../actions/categories";
+import { btnOutline, inputClassSm } from "./ui";
+import { RemoveButton, useAdminSave } from "./ui-client";
 
 /** URL-safe slug from a label: "Áo Hoodie" → "ao-hoodie". */
 function slugify(label: string): string {
@@ -34,7 +35,6 @@ export default function CategoriesManager({
   categories: ProductCategory[];
   counts: Record<string, number>;
 }) {
-  const router = useRouter();
   // Display order is the stored order; the index is the working
   // sortOrder (the server stores whatever order we save). The parent
   // remounts this component (via `key`) whenever the saved list
@@ -45,8 +45,7 @@ export default function CategoriesManager({
   const [newLabel, setNewLabel] = useState("");
   const [newSlug, setNewSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const { saving, message, setMessage, save } = useAdminSave();
 
   function move(index: number, dir: -1 | 1) {
     const to = index + dir;
@@ -61,24 +60,18 @@ export default function CategoriesManager({
   }
 
   async function handleSave() {
-    setSaving(true);
-    setMessage("");
     // Save every row's label + order (re-saving an unchanged row is
     // harmless) so no diff tracking is needed.
-    for (const row of list) {
-      const result = await updateCategory(row.slug, {
-        label: row.label,
-        sortOrder: row.sortOrder,
-      });
-      if (!result.success) {
-        setMessage(result.error ?? "Không lưu được danh mục.");
-        setSaving(false);
-        return;
+    await save(async () => {
+      for (const row of list) {
+        const result = await updateCategory(row.slug, {
+          label: row.label,
+          sortOrder: row.sortOrder,
+        });
+        if (!result.success) return result;
       }
-    }
-    setSaving(false);
-    setMessage("Đã lưu danh mục.");
-    router.refresh();
+      return { success: true };
+    }, "Đã lưu danh mục.");
   }
 
   async function handleAdd() {
@@ -86,21 +79,18 @@ export default function CategoriesManager({
       setMessage("Ghi tên và mã danh mục rồi hãy thêm.");
       return;
     }
-    setSaving(true);
-    setMessage("");
-    const result = await addCategory({
-      slug: newSlug.trim().toLowerCase(),
-      label: newLabel.trim(),
-    });
-    setSaving(false);
-    if (result.success) {
-      setMessage("Đã thêm danh mục.");
+    const ok = await save(
+      () =>
+        addCategory({
+          slug: newSlug.trim().toLowerCase(),
+          label: newLabel.trim(),
+        }),
+      "Đã thêm danh mục.",
+    );
+    if (ok) {
       setNewLabel("");
       setNewSlug("");
       setSlugTouched(false);
-      router.refresh();
-    } else {
-      setMessage(result.error ?? "Không thêm được danh mục.");
     }
   }
 
@@ -113,20 +103,8 @@ export default function CategoriesManager({
       return;
     }
     if (!window.confirm(`Xóa danh mục "${label}"?`)) return;
-    setSaving(true);
-    setMessage("");
-    const result = await deleteCategory(slug);
-    setSaving(false);
-    if (result.success) {
-      setMessage("Đã xóa danh mục.");
-      router.refresh();
-    } else {
-      setMessage(result.error ?? "Không xóa được danh mục.");
-    }
+    await save(() => deleteCategory(slug), "Đã xóa danh mục.");
   }
-
-  const inputClass =
-    "border border-gray-300 p-2 text-sm rounded-sm focus:outline-none focus:border-black";
 
   return (
     <div className="flex flex-col gap-3">
@@ -145,7 +123,7 @@ export default function CategoriesManager({
               }
               maxLength={50}
               aria-label={`Tên danh mục ${row.slug}`}
-              className={`${inputClass} w-44`}
+              className={`${inputClassSm} w-44`}
             />
             <span className="font-mono text-xs text-gray-500">{row.slug}</span>
             <span className="text-xs text-gray-400">
@@ -171,14 +149,10 @@ export default function CategoriesManager({
                 ↓
               </button>
             </span>
-            <button
-              type="button"
+            <RemoveButton
               onClick={() => handleDelete(row.slug, row.label)}
-              aria-label={`Xóa danh mục ${row.label}`}
-              className="text-gray-400 hover:text-black text-lg leading-none px-1"
-            >
-              ×
-            </button>
+              label={`Xóa danh mục ${row.label}`}
+            />
           </div>
         ))}
       </div>
@@ -206,7 +180,7 @@ export default function CategoriesManager({
             }}
             placeholder="Tên danh mục (VD: Hoodies)"
             maxLength={50}
-            className={`${inputClass} w-44`}
+            className={`${inputClassSm} w-44`}
           />
           <input
             type="text"
@@ -217,13 +191,13 @@ export default function CategoriesManager({
             }}
             placeholder="Mã: hoodies"
             maxLength={50}
-            className={`${inputClass} w-44 font-mono text-xs`}
+            className={`${inputClassSm} w-44 font-mono text-xs`}
           />
           <button
             type="button"
             disabled={saving}
             onClick={handleAdd}
-            className="text-xs font-bold tracking-wider uppercase border border-gray-300 px-3 py-1.5 hover:border-black transition-colors disabled:opacity-50"
+            className={`${btnOutline} disabled:opacity-50`}
           >
             + Thêm danh mục
           </button>

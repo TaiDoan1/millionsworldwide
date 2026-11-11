@@ -1,6 +1,8 @@
 "use client";
 
 import type { SizeOption } from "../data/products";
+import { checkboxClass, FieldLabel, inputClassSm } from "./ui";
+import { AddButton, RemoveButton } from "./ui-client";
 
 /**
  * Per-size availability editor: each row is a size label plus its
@@ -25,9 +27,7 @@ export default function SizesEditor({
 
   return (
     <div>
-      <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
-        Size &amp; tồn kho theo size
-      </label>
+      <FieldLabel mb={2}>Size &amp; tồn kho theo size</FieldLabel>
       {sizes.length === 0 ? (
         <p className="text-xs text-gray-400 mb-2">
           Chưa có size — trang chi tiết không hiện chọn size, shop xác nhận
@@ -43,36 +43,28 @@ export default function SizesEditor({
                 onChange={(e) => update(i, { label: e.target.value })}
                 placeholder="VD: M"
                 maxLength={10}
-                className="w-24 border border-gray-300 p-2 text-sm rounded-sm focus:outline-none focus:border-black"
+                className={`${inputClassSm} w-24`}
               />
               <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                 <input
                   type="checkbox"
                   checked={s.soldOut ?? false}
                   onChange={(e) => update(i, { soldOut: e.target.checked })}
-                  className="w-4 h-4 accent-black"
+                  className={checkboxClass}
                 />
                 Hết hàng
               </label>
-              <button
-                type="button"
+              <RemoveButton
                 onClick={() => remove(i)}
-                aria-label={`Xóa size ${s.label}`}
-                className="text-gray-400 hover:text-black text-lg leading-none px-1"
-              >
-                ×
-              </button>
+                label={`Xóa size ${s.label}`}
+              />
             </div>
           ))}
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => onChange([...sizes, { label: "" }])}
-        className="text-xs font-bold tracking-wider uppercase border border-gray-300 px-3 py-1.5 hover:border-black transition-colors"
-      >
+      <AddButton onClick={() => onChange([...sizes, { label: "" }])}>
         + Thêm size
-      </button>
+      </AddButton>
     </div>
   );
 }

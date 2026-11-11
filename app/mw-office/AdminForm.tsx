@@ -2,6 +2,13 @@
 
 import { useState } from "react"
 import { updateSettings, type Settings } from "../actions/settings"
+import {
+  btnPrimaryLg,
+  FieldLabel,
+  Hint,
+  inputClassLg,
+  SaveButton,
+} from "./ui"
 
 export default function AdminForm({ initialSettings }: { initialSettings: Settings }) {
   const [settings, setSettings] = useState<Settings>(initialSettings)
@@ -40,43 +47,43 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
         {settings.comingSoonEnabled && (
           <div className="mt-6 pt-6 border-t border-neutral-200 flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+              <FieldLabel mb={2}>
                 Launch Date & Time (Thời gian mở web)
-              </label>
+              </FieldLabel>
               <input
                 type="datetime-local"
                 value={settings.launchDate ? settings.launchDate.slice(0, 16) : ""}
                 onChange={(e) => setSettings({ ...settings, launchDate: e.target.value })}
-                className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+                className={inputClassLg}
               />
-              <p className="text-[11px] text-gray-400 mt-1">
+              <Hint>
                 Đồng hồ đếm ngược sẽ tự động tính từ bây giờ đến mốc thời gian này.
-              </p>
+              </Hint>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+              <FieldLabel mb={2}>
                 Tiêu đề (Title)
-              </label>
+              </FieldLabel>
               <input
                 type="text"
                 value={settings.comingSoonTitle || ""}
                 onChange={(e) => setSettings({ ...settings, comingSoonTitle: e.target.value })}
                 placeholder="THE OFFICIAL LAUNCH"
-                className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+                className={inputClassLg}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+              <FieldLabel mb={2}>
                 Phụ đề (Subtitle / Tagline)
-              </label>
+              </FieldLabel>
               <input
                 type="text"
                 value={settings.comingSoonSubtitle || ""}
                 onChange={(e) => setSettings({ ...settings, comingSoonSubtitle: e.target.value })}
                 placeholder="MILLIONS IS BUILT FOR THOSE WHO CHOOSE FORM OVER NOISE"
-                className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+                className={inputClassLg}
               />
             </div>
 
@@ -114,33 +121,33 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
         {settings.promoEnabled && (
           <div className="mt-6 pt-6 border-t border-neutral-200 flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+              <FieldLabel mb={2}>
                 Nội dung banner
-              </label>
+              </FieldLabel>
               <input
                 type="text"
                 value={settings.promoText || ""}
                 onChange={(e) => setSettings({ ...settings, promoText: e.target.value })}
                 placeholder="VD: MIỄN PHÍ VẬN CHUYỂN CHO ĐƠN TỪ 1.000.000Đ"
                 maxLength={200}
-                className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+                className={inputClassLg}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+              <FieldLabel mb={2}>
                 Link khi bấm vào (không bắt buộc)
-              </label>
+              </FieldLabel>
               <input
                 type="text"
                 value={settings.promoLink || ""}
                 onChange={(e) => setSettings({ ...settings, promoLink: e.target.value })}
                 placeholder="/trangchu"
-                className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+                className={inputClassLg}
               />
-              <p className="text-[11px] text-gray-400 mt-1">
+              <Hint>
                 Chỉ nhận đường dẫn trong web, bắt đầu bằng / — để trống thì banner không bấm được.
-              </p>
+              </Hint>
             </div>
           </div>
         )}
@@ -154,53 +161,53 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
         </p>
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+            <FieldLabel mb={2}>
               Chữ chạy dưới video (mỗi dòng 1 cụm)
-            </label>
+            </FieldLabel>
             <textarea
               value={settings.marqueeText || ""}
               onChange={(e) => setSettings({ ...settings, marqueeText: e.target.value })}
               placeholder={"Millions Worldwide™\nForm over noise\nMiễn phí vận chuyển toàn quốc"}
               maxLength={2000}
               rows={6}
-              className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+              className={inputClassLg}
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+            <FieldLabel mb={2}>
               Tiêu đề editorial (mỗi dòng 1 hàng chữ lớn)
-            </label>
+            </FieldLabel>
             <textarea
               value={settings.editorialHeading || ""}
               onChange={(e) => setSettings({ ...settings, editorialHeading: e.target.value })}
               placeholder={"FASHION\nWITHOUT\nTHE SHOUT"}
               maxLength={200}
               rows={3}
-              className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+              className={inputClassLg}
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
+            <FieldLabel mb={2}>
               Đoạn editorial dưới tiêu đề
-            </label>
+            </FieldLabel>
             <textarea
               value={settings.editorialText || ""}
               onChange={(e) => setSettings({ ...settings, editorialText: e.target.value })}
               maxLength={1000}
               rows={4}
-              className="w-full border border-gray-300 p-3 text-sm rounded-sm focus:outline-none focus:border-black"
+              className={inputClassLg}
             />
           </div>
         </div>
       </div>
 
-      <button 
-        type="submit" 
-        disabled={isSaving}
-        className="bg-black text-white px-8 py-4 text-sm font-bold tracking-widest uppercase w-fit hover:opacity-80 transition-opacity disabled:opacity-50 mt-4"
+      <SaveButton
+        saving={isSaving}
+        savingLabel="Đang lưu…"
+        className={btnPrimaryLg}
       >
-        {isSaving ? "Đang lưu…" : "Lưu cài đặt"}
-      </button>
+        Lưu cài đặt
+      </SaveButton>
     </form>
   )
 }

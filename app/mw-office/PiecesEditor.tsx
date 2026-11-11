@@ -1,6 +1,8 @@
 "use client";
 
 import { isLinkedPiece, type Product, type ProductPiece } from "../data/products";
+import { FieldLabel, Hint, inputClassSm } from "./ui";
+import { AddButton, RemoveButton } from "./ui-client";
 
 /**
  * "Giá lẻ" editor: each row LINKS one standalone product into the set.
@@ -51,9 +53,7 @@ export default function PiecesEditor({
 
   return (
     <div>
-      <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
-        Món lẻ trong set (link sản phẩm riêng)
-      </label>
+      <FieldLabel mb={2}>Món lẻ trong set (link sản phẩm riêng)</FieldLabel>
       {pieces.length === 0 ? (
         <p className="text-xs text-gray-400 mb-2">
           Chưa có món lẻ — trang chi tiết chỉ bán cả set. Thêm món bên
@@ -70,7 +70,7 @@ export default function PiecesEditor({
                 <select
                   value={pc.productId}
                   onChange={(e) => update(i, { productId: e.target.value })}
-                  className="w-64 border border-gray-300 p-2 text-sm rounded-sm focus:outline-none focus:border-black bg-white"
+                  className={`${inputClassSm} w-64 bg-white`}
                 >
                   <option value="">Chọn sản phẩm…</option>
                   {optionsFor(i).map((p) => (
@@ -89,14 +89,7 @@ export default function PiecesEditor({
                       : "Chưa chọn sản phẩm.";
                   })()}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => remove(i)}
-                  aria-label="Xóa món lẻ"
-                  className="text-gray-400 hover:text-black text-lg leading-none px-1"
-                >
-                  ×
-                </button>
+                <RemoveButton onClick={() => remove(i)} label="Xóa món lẻ" />
               </div>
             ) : (
               <div key={i} className="flex flex-wrap items-center gap-2">
@@ -104,31 +97,23 @@ export default function PiecesEditor({
                   Món lẻ cũ: {pc.name} — {pc.price} nghìn đồng (kiểu cũ,
                   xóa để link lại sản phẩm riêng)
                 </span>
-                <button
-                  type="button"
+                <RemoveButton
                   onClick={() => remove(i)}
-                  aria-label={`Xóa món lẻ ${pc.name}`}
-                  className="text-gray-400 hover:text-black text-lg leading-none px-1"
-                >
-                  ×
-                </button>
+                  label={`Xóa món lẻ ${pc.name}`}
+                />
               </div>
             ),
           )}
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => onChange([...pieces, { productId: "" }])}
-        className="text-xs font-bold tracking-wider uppercase border border-gray-300 px-3 py-1.5 hover:border-black transition-colors"
-      >
+      <AddButton onClick={() => onChange([...pieces, { productId: "" }])}>
         + Thêm món lẻ
-      </button>
-      <p className="text-[11px] text-gray-400 mt-1">
+      </AddButton>
+      <Hint>
         Món lẻ link tới sản phẩm riêng: giá, size và hết hàng lấy từ sản
         phẩm đó. Muốn bán lẻ món chưa có sản phẩm riêng thì thêm sản phẩm
         đó trước rồi quay lại link.
-      </p>
+      </Hint>
     </div>
   );
 }

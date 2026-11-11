@@ -5,6 +5,7 @@ import OrderStatusControl from "./OrderStatusControl";
 import CsvButton from "./CsvButton";
 import { csvRow } from "../lib/csv";
 import { formatPrice } from "../lib/format";
+import { inputClassBase } from "./ui";
 import type { Order } from "../actions/orders";
 
 const STATUS_LABELS: Record<Order["status"], string> = {
@@ -73,12 +74,12 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Tìm mã đơn, tên, số điện thoại…"
-          className="flex-1 min-w-[220px] border border-gray-300 p-2.5 text-sm rounded-sm focus:outline-none focus:border-black"
+          className={`${inputClassBase} flex-1 min-w-[220px]`}
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as "all" | Order["status"])}
-          className="border border-gray-300 p-2.5 text-sm rounded-sm focus:outline-none focus:border-black bg-white"
+          className={`${inputClassBase} bg-white`}
         >
           <option value="all">Tất cả trạng thái</option>
           {STATUSES.map((s) => (

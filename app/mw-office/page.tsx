@@ -1,6 +1,7 @@
 import AdminForm from "./AdminForm"
 import CsvButton from "./CsvButton"
 import LogoutButton from "./LogoutButton"
+import { AdminSection } from "./ui"
 import { csvRow } from "../lib/csv"
 import OrdersManager from "./OrdersManager"
 import ProductsSection from "./ProductsSection"
@@ -97,9 +98,13 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <div id="tong-quan" className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 scroll-mt-32">
-        <h2 className="text-2xl font-bold tracking-tight mb-1">Tổng quan</h2>
-        <p className="text-xs text-gray-400 mb-8">Kho dữ liệu: {backendLabel}</p>
+      <AdminSection
+        id="tong-quan"
+        title="Tổng quan"
+        description={`Kho dữ liệu: ${backendLabel}`}
+        descriptionClassName="text-xs text-gray-400 mb-8"
+        noTopMargin
+      >
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map((s) => (
             <div key={s.label} className="border border-neutral-200 p-4 min-w-0">
@@ -108,38 +113,38 @@ export default async function AdminPage() {
             </div>
           ))}
         </div>
-      </div>
+      </AdminSection>
 
-      <div id="don-hang" className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10 scroll-mt-32">
-        <h2 className="text-2xl font-bold tracking-tight mb-1">Đơn hàng ({orders.length})</h2>
-        <p className="text-sm text-gray-500 mb-8">Đơn mới nhất xếp trước. Khách tra cứu trạng thái bằng mã đơn + số điện thoại tại /track-order.</p>
+      <AdminSection
+        id="don-hang"
+        title={`Đơn hàng (${orders.length})`}
+        description="Đơn mới nhất xếp trước. Khách tra cứu trạng thái bằng mã đơn + số điện thoại tại /track-order."
+      >
         {orders.length === 0 ? (
           <p className="text-sm text-gray-400">Chưa có đơn hàng nào.</p>
         ) : (
           <OrdersManager orders={orders} />
         )}
-      </div>
+      </AdminSection>
 
-      <div id="san-pham" className="scroll-mt-32">
-        <ProductsSection />
-      </div>
+      <ProductsSection />
 
-      <div id="danh-muc" className="scroll-mt-32">
-        <CategoriesSection />
-      </div>
+      <CategoriesSection />
 
-      <div id="email" className="max-w-3xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10 scroll-mt-32">
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-1">
-          <h2 className="text-2xl font-bold tracking-tight">Email đăng ký ({subscribers.length})</h2>
-          {subscribers.length > 0 && (
+      <AdminSection
+        id="email"
+        title={`Email đăng ký (${subscribers.length})`}
+        description="Từ form NOTIFY ME (coming-soon) và newsletter cuối trang."
+        actions={
+          subscribers.length > 0 ? (
             <CsvButton
               filename="millions-email-dang-ky.csv"
               csv={subscribersCsv}
               label="Xuất CSV"
             />
-          )}
-        </div>
-        <p className="text-sm text-gray-500 mb-8">Từ form NOTIFY ME (coming-soon) và newsletter cuối trang.</p>
+          ) : undefined
+        }
+      >
         {subscribers.length === 0 ? (
           <p className="text-sm text-gray-400">Chưa có email nào.</p>
         ) : (
@@ -154,12 +159,11 @@ export default async function AdminPage() {
             ))}
           </ul>
         )}
-      </div>
+      </AdminSection>
 
-      <div id="cai-dat" className="max-w-xl mx-auto bg-white p-12 shadow-xl shadow-black/5 mt-10 scroll-mt-32">
-        <h2 className="text-2xl font-bold tracking-tight mb-8">Cài đặt</h2>
+      <AdminSection id="cai-dat" title="Cài đặt" narrow>
         <AdminForm initialSettings={currentSettings} />
-      </div>
+      </AdminSection>
     </main>
   )
 }

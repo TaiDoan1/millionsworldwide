@@ -1,22 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   deleteProduct,
   updateProduct,
   type Product,
-  type ProductPatch,
 } from "../actions/products";
-import {
-  type ProductCategory,
-  isLinkedPiece,
-  type ProductPiece,
-  type SizeOption,
-} from "../data/products";
-import SizesEditor from "./SizesEditor";
-import PiecesEditor from "./PiecesEditor";
+import { type ProductCategory } from "../data/products";
 import ImageUpload from "./ImageUpload";
+import ProductFormFields from "./ProductFormFields";
+import {
+  buildProductPatch,
+  productToFormValues,
+  type ProductFormValues,
+} from "./product-form";
+import { FieldLabel, Hint, inputClass, messageClass, SaveButton } from "./ui";
+import { useAdminSave } from "./ui-client";
 
 /** Per-product edit form on the admin page (admin only, server-checked). */
 export default function ProductEditForm({
@@ -30,19 +29,11 @@ export default function ProductEditForm({
   /** Live categories, for the category dropdown. */
   categories: ProductCategory[];
 }) {
-  const router = useRouter();
-  const [name, setName] = useState(product.name);
-  const [price, setPrice] = useState(String(product.price));
-  const [compareAt, setCompareAt] = useState(
-    product.compareAt ? String(product.compareAt) : "",
+  const [values, setValues] = useState<ProductFormValues>(() =>
+    productToFormValues(product),
   );
-  const [category, setCategory] = useState<string>(product.category);
-  const [soldOut, setSoldOut] = useState(product.soldOut ?? false);
-  const [preOrder, setPreOrder] = useState(product.preOrder ?? false);
-  const [hidden, setHidden] = useState(product.hidden ?? false);
-  const [sizes, setSizes] = useState<SizeOption[]>(product.sizes ?? []);
-  const [pieces, setPieces] = useState<ProductPiece[]>(product.pieces ?? []);
-  const [sizeChart, setSizeChart] = useState(product.sizeChart ?? "");
+  const patch = (p: Partial<ProductFormValues>) =>
+    setValues((v) => ({ ...v, ...p }));
   const [images, setImages] = useState<string[]>(product.images ?? []);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -61,65 +52,22 @@ export default function ProductEditForm({
   const [fit, setFit] = useState(product.spec?.fit ?? "");
   const [stretch, setStretch] = useState(product.spec?.stretch ?? "");
   const [model, setModel] = useState(product.spec?.model ?? "");
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-
-  function buildPatch(): ProductPatch {
-    return {
-      name,
-      price: Number(price),
-      compareAt: compareAt.trim() === "" ? null : Number(compareAt),
-      category,
-      soldOut,
-      preOrder,
-      hidden,
-      sizes: sizes
-        .map((s) => ({
-          label: s.label.trim(),
-          ...(s.soldOut ? { soldOut: true } : {}),
-        }))
-        .filter((s) => s.label.length > 0),
-      spec:
-        material.trim() || fit.trim() || stretch.trim() || model.trim()
-          ? {
-              ...(material.trim() ? { material: material.trim() } : {}),
-              ...(fit.trim() ? { fit: fit.trim() } : {}),
-              ...(stretch.trim() ? { stretch: stretch.trim() } : {}),
-              ...(model.trim() ? { model: model.trim() } : {}),
-            }
-          : null,
-      pieces: pieces
-        .map((pc) =>
-          isLinkedPiece(pc)
-            ? { productId: pc.productId.trim() }
-            : {
-                id: (pc.id ?? "").trim().toLowerCase(),
-                name: (pc.name ?? "").trim(),
-                price: pc.price,
-              },
-        )
-        .filter((pc) =>
-          isLinkedPiece(pc)
-            ? pc.productId.length > 0
-            : (pc.name?.length ?? 0) > 0,
-        ),
-      sizeChart: sizeChart.trim() === "" ? null : sizeChart.trim(),
-      images,
-    };
-  }
+  const { saving, message, save } = useAdminSave();
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
-    setMessage("");
-    const result = await updateProduct(product.id, buildPatch());
-    setSaving(false);
-    if (result.success) {
-      setMessage("Đã lưu.");
-      router.refresh();
-    } else {
-      setMessage(result.error ?? "Không lưu được.");
-    }
+    await save(
+      () =>
+        updateProduct(
+          product.id,
+          buildProductPatch(
+            values,
+            { material, fit, stretch, model },
+            images,
+          ),
+        ),
+      "Đã lưu.",
+    );
   }
 
   async function handleDelete() {
@@ -130,125 +78,31 @@ export default function ProductEditForm({
     ) {
       return;
     }
-    setSaving(true);
-    setMessage("");
-    const result = await deleteProduct(product.id);
-    setSaving(false);
-    if (result.success) {
-      setMessage("Đã xóa.");
-      router.refresh();
-    } else {
-      setMessage(result.error ?? "Không xóa được.");
-    }
+    await save(() => deleteProduct(product.id), "Đã xóa.");
   }
-
-  const inputClass =
-    "w-full border border-gray-300 p-2.5 text-sm rounded-sm focus:outline-none focus:border-black";
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-3">
       <div>
-        <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
-          Tên sản phẩm
-        </label>
+        <FieldLabel>Tên sản phẩm</FieldLabel>
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={values.name}
+          onChange={(e) => patch({ name: e.target.value })}
           className={inputClass}
         />
       </div>
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
-            Giá (nghìn đồng)
-          </label>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className={inputClass}
-          />
-          <p className="text-[11px] text-gray-400 mt-1">
-            Ví dụ: 890 = 890.000₫.
-          </p>
-        </div>
-        <div className="flex-1">
-          <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
-            Giá gốc (không bắt buộc)
-          </label>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={compareAt}
-            onChange={(e) => setCompareAt(e.target.value)}
-            placeholder="Để trống nếu không giảm giá"
-            className={inputClass}
-          />
-          <p className="text-[11px] text-gray-400 mt-1">
-            Hiện gạch ngang kèm giá bán.
-          </p>
-        </div>
-        <div className="flex-1">
-          <label className="block text-xs font-semibold tracking-wider uppercase mb-1 text-gray-600">
-            Danh mục
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={`${inputClass} bg-white`}
-          >
-            {categories.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-4">
-        <label className="flex items-center gap-2 cursor-pointer text-sm">
-          <input
-            type="checkbox"
-            checked={soldOut}
-            onChange={(e) => setSoldOut(e.target.checked)}
-            className="w-4 h-4 accent-black"
-          />
-          Hết hàng (badge SOLD OUT, khách không đặt được)
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer text-sm">
-          <input
-            type="checkbox"
-            checked={preOrder}
-            onChange={(e) => setPreOrder(e.target.checked)}
-            className="w-4 h-4 accent-black"
-          />
-          Cho đặt trước
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer text-sm">
-          <input
-            type="checkbox"
-            checked={hidden}
-            onChange={(e) => setHidden(e.target.checked)}
-            className="w-4 h-4 accent-black"
-          />
-          Ẩn khỏi shop
-        </label>
-      </div>
-      <SizesEditor sizes={sizes} onChange={setSizes} />
-      <PiecesEditor
-        pieces={pieces}
+      <ProductFormFields
+        values={values}
+        onChange={patch}
         products={products}
+        categories={categories}
         ownId={product.id}
-        onChange={setPieces}
+        showPriceHints
+        verboseCheckboxes
       />
       <div>
-        <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
-          Ảnh sản phẩm (ảnh đầu là ảnh chính)
-        </label>
+        <FieldLabel mb={2}>Ảnh sản phẩm (ảnh đầu là ảnh chính)</FieldLabel>
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {images.map((src, i) => (
@@ -324,29 +178,27 @@ export default function ProductEditForm({
           </div>
         )}
         <ImageUpload onUploaded={(url) => setImages([...images, url])} />
-        <p className="text-[11px] text-gray-400 mt-1">
+        <Hint>
           Kéo thả ảnh để xếp thứ tự hiển thị (ảnh đầu là ảnh chính); trên
           điện thoại dùng nút ‹ › dưới mỗi ảnh. Ảnh tải lên lưu vào Volume
           của web và hiện ngay sau khi bấm Lưu sản phẩm. Xóa ảnh ở đây chỉ
           gỡ khỏi sản phẩm, file vẫn còn trên web.
-        </p>
+        </Hint>
       </div>
       <div>
-        <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
-          Bảng size (ảnh)
-        </label>
-        {sizeChart && (
+        <FieldLabel mb={2}>Bảng size (ảnh)</FieldLabel>
+        {values.sizeChart && (
           <div className="relative mb-3 w-40">
             {/* Plain img on purpose: the chart is served by the /uploads
                 route, outside next/image's local set. */}
             <img
-              src={sizeChart}
+              src={values.sizeChart}
               alt={`Bảng size của ${product.name}`}
               className="w-40 rounded-sm border border-gray-200"
             />
             <button
               type="button"
-              onClick={() => setSizeChart("")}
+              onClick={() => patch({ sizeChart: "" })}
               aria-label="Xóa bảng size"
               className="absolute right-0 top-0 bg-white/90 px-1 text-sm leading-none text-gray-500 hover:text-black"
             >
@@ -354,16 +206,14 @@ export default function ProductEditForm({
             </button>
           </div>
         )}
-        <ImageUpload onUploaded={(url) => setSizeChart(url)} />
-        <p className="text-[11px] text-gray-400 mt-1">
+        <ImageUpload onUploaded={(url) => patch({ sizeChart: url })} />
+        <Hint>
           Up ảnh bảng size (số đo từng size). Khách bấm “Xem bảng size” ở
           trang chi tiết để xem ảnh này. Để trống nếu chưa có.
-        </p>
+        </Hint>
       </div>
       <div>
-        <label className="block text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
-          Thông số (chỉ hiện dòng nào có ghi)
-        </label>
+        <FieldLabel mb={2}>Thông số (chỉ hiện dòng nào có ghi)</FieldLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             type="text"
@@ -400,13 +250,9 @@ export default function ProductEditForm({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-black text-white px-6 py-2.5 text-xs font-bold tracking-widest uppercase hover:opacity-80 transition-opacity disabled:opacity-50"
-        >
-          {saving ? "Đang lưu…" : "Lưu sản phẩm"}
-        </button>
+        <SaveButton saving={saving} savingLabel="Đang lưu…">
+          Lưu sản phẩm
+        </SaveButton>
         <button
           type="button"
           onClick={handleDelete}
@@ -415,7 +261,7 @@ export default function ProductEditForm({
         >
           Xóa sản phẩm
         </button>
-        <span className="text-xs text-gray-500">{message}</span>
+        <span className={messageClass}>{message}</span>
       </div>
     </form>
   );
