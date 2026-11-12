@@ -23,8 +23,6 @@ const OFFICIAL = [
 const SOCIAL = [
   { label: "Instagram", href: "https://www.instagram.com/millions.worldwide" },
   { label: "Facebook", href: "https://www.facebook.com/share/14sNnRXMaZJ/?mibextid=wwXIfr" },
-  { label: "TikTok", href: "https://tiktok.com/" },
-  { label: "Youtube", href: "https://youtube.com/" },
 ];
 
 function InstagramIcon() {
@@ -33,14 +31,6 @@ function InstagramIcon() {
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17" cy="7" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function YoutubeIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M22 8.2a2.8 2.8 0 00-2-2C18.2 5.8 12 5.8 12 5.8s-6.2 0-8 .4a2.8 2.8 0 00-2 2A29 29 0 001.6 12 29 29 0 002 15.8a2.8 2.8 0 002 2c1.8.4 8 .4 8 .4s6.2 0 8-.4a2.8 2.8 0 002-2 29 29 0 00.4-3.8 29 29 0 00-.4-3.8zM10 15V9l5.2 3z" />
     </svg>
   );
 }
@@ -180,15 +170,6 @@ export default function CollectionFooter() {
             className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400 text-white shadow-lg"
           >
             <InstagramIcon />
-          </a>
-          <a
-            href="https://youtube.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="YouTube"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white shadow-lg"
-          >
-            <YoutubeIcon />
           </a>
           <button
             type="button"

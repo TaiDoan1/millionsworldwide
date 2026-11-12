@@ -4,7 +4,10 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Header from "./components/Header";
 import PromoBar from "./components/PromoBar";
+import { CartProvider } from "./components/CartContext";
+import CartDrawer from "./components/CartDrawer";
 import { getSettings } from "./actions/settings";
+import { getProducts } from "./actions/products";
 import { getSiteUrl } from "./lib/site-url";
 
 /**
@@ -27,6 +30,9 @@ export const metadata: Metadata = {
   title: "MILLIONS WORLDWIDE",
   description:
     "MILLIONS WORLDWIDE — thương hiệu thời trang đường phố Việt Nam. Built for those who choose form over noise.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "MILLIONS WORLDWIDE",
     description:
@@ -36,9 +42,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/ig/banner.jpg",
-        width: 1707,
-        height: 2560,
+        url: "/og.jpg",
+        width: 1200,
+        height: 630,
         alt: "MILLIONS WORLDWIDE",
       },
     ],
@@ -48,7 +54,7 @@ export const metadata: Metadata = {
     title: "MILLIONS WORLDWIDE",
     description:
       "MILLIONS WORLDWIDE — thương hiệu thời trang đường phố Việt Nam. Built for those who choose form over noise.",
-    images: ["/ig/banner.jpg"],
+    images: ["/og.jpg"],
   },
   icons: {
     icon: [
@@ -64,10 +70,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Settings are read here (not just on the homepage) because the promo
   // strip and the header offset below it are site-wide. Every route reads
   // fresh per request, so a promo edit in /mw-office applies immediately.
-  const settings = await getSettings();
+  // The cart lives here too, so the Bag button opens it from any page —
+  // the shop pages used to own their own cart each.
+  const [settings, products] = await Promise.all([
+    getSettings(),
+    getProducts(),
+  ]);
   const promoVisible =
     settings.promoEnabled === true &&
     (settings.promoText ?? "").trim().length > 0;
+  const siteUrl = getSiteUrl();
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "MILLIONS WORLDWIDE",
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.png`,
+    sameAs: [
+      "https://www.facebook.com/share/14sNnRXMaZJ/?mibextid=wwXIfr",
+      "https://www.instagram.com/millions.worldwide",
+    ],
+  };
 
   return (
     <html lang="vi" className={`${archivo.variable} h-full antialiased`}>
@@ -75,16 +98,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" href="/favicon.png?v=3" type="image/png" />
         <link rel="shortcut icon" href="/favicon.png?v=3" type="image/png" />
         <link rel="apple-touch-icon" href="/favicon.png?v=3" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
+        />
       </head>
       <body className="min-h-full bg-white text-black">
-        <PromoBar
-          enabled={settings.promoEnabled ?? false}
-          text={settings.promoText ?? ""}
-          link={settings.promoLink ?? ""}
-        />
-        <Header promoVisible={promoVisible} />
-        {children}
-        <Analytics />
+        <CartProvider products={products}>
+          <PromoBar
+            enabled={settings.promoEnabled ?? false}
+            text={settings.promoText ?? ""}
+            link={settings.promoLink ?? ""}
+          />
+          <Header promoVisible={promoVisible} />
+          {children}
+          <CartDrawer />
+          <Analytics />
+        </CartProvider>
       </body>
     </html>
   );

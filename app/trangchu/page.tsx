@@ -1,9 +1,8 @@
 import { Inter } from "next/font/google";
+import type { Metadata } from "next";
 import CollectionHeader from "../components/CollectionHeader";
 import ShopSection from "../components/ShopSection";
 import CollectionFooter from "../components/CollectionFooter";
-import { CartProvider } from "../components/CartContext";
-import CartDrawer from "../components/CartDrawer";
 import { getProducts } from "../actions/products";
 import { getCategories } from "../actions/categories";
 import { getSettings } from "../actions/settings";
@@ -19,8 +18,11 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "products — millions worldwide™",
+  alternates: {
+    canonical: "/trangchu",
+  },
 };
 
 export default async function TrangChuPage() {
@@ -36,10 +38,8 @@ export default async function TrangChuPage() {
     (settings.promoText ?? "").trim().length > 0;
 
   return (
-    <CartProvider products={products}>
     <div className={`min-h-screen bg-white text-black ${inter.className}`}>
       <CollectionHeader products={products} categories={categories} promoBar={promoBar} />
-      <CartDrawer />
 
       <main className="w-full">
         {/* Hero — sized with the reference homepage hero's own formula:
@@ -68,6 +68,5 @@ export default async function TrangChuPage() {
 
       <CollectionFooter />
     </div>
-    </CartProvider>
   );
 }

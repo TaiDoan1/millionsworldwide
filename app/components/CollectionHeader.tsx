@@ -114,35 +114,14 @@ export default function CollectionHeader({
           </span>
         </Link>
 
-        {/* Right utils */}
+        {/* Right utils — only the cart, which works */}
         <div className="flex flex-1 items-center justify-end gap-12">
-          <button
-            type="button"
-            className="hidden text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
-          >
-            Search
-          </button>
-          <button
-            type="button"
-            className="hidden text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60 md:block"
-          >
-            Account
-          </button>
           <button
             type="button"
             onClick={openCart}
             className="text-[max(1rem,1.125vw)] font-bold uppercase text-black transition-opacity hover:opacity-60"
           >
             Cart ({count})
-          </button>
-          <button
-            type="button"
-            className="hidden items-center gap-2 rounded-full border border-black px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-black hover:text-white md:flex"
-          >
-            Tiếng Việt
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-              VN
-            </span>
           </button>
         </div>
       </header>

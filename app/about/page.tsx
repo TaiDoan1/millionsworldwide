@@ -12,7 +12,7 @@ export default function AboutPage() {
       </p>
       <p>
         Mỗi sản phẩm đều được thiết kế và sản xuất tại Việt Nam: từ áo thun logo
-        signature, giày sneakers cho đến sweatpants. Chúng tôi chú trọng phom dáng,
+        signature, denim cho đến quần shorts. Chúng tôi chú trọng phom dáng,
         chất liệu và những chi tiết nhận diện riêng của Millions — như logo tròn dập
         nổi trên các thiết kế denim.
       </p>

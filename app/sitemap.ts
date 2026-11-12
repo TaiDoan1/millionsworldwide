@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "./lib/site-url";
+import { getProducts } from "./actions/products";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
   const now = new Date();
   const routes: { path: string; priority: number; changeFrequency: "weekly" | "monthly" | "yearly" }[] = [
@@ -19,10 +20,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
     { path: "/payment", priority: 0.3, changeFrequency: "yearly" },
   ];
-  return routes.map((r) => ({
-    url: `${base}${r.path}`,
-    lastModified: now,
-    changeFrequency: r.changeFrequency,
-    priority: r.priority,
-  }));
+  // Every visible product page, so Google finds the catalog from the
+  // sitemap instead of having to discover each detail page by crawling.
+  // getProducts() already excludes hidden products.
+  const products = await getProducts().catch(() => []);
+  return [
+    ...routes.map((r) => ({
+      url: `${base}${r.path}`,
+      lastModified: now,
+      changeFrequency: r.changeFrequency,
+      priority: r.priority,
+    })),
+    ...products.map((p) => ({
+      url: `${base}/trangchu/${p.id}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
+  ];
 }

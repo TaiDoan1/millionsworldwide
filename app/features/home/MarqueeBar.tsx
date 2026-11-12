@@ -1,7 +1,7 @@
 const DEFAULT_PHRASES = [
   "Millions Worldwide™",
   "Form over noise",
-  "The online launch — 01.11.2026",
+  "Đổi trả trong 14 ngày",
   "Miễn phí vận chuyển toàn quốc",
   "Designed in Vietnam",
   "New drop — 17 pieces",
