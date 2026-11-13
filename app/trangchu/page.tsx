@@ -66,7 +66,7 @@ export default async function TrangChuPage() {
         </div>
       </main>
 
-      <CollectionFooter />
+      <CollectionFooter whatsappUrl={settings.whatsappUrl} />
     </div>
   );
 }

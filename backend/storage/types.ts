@@ -62,4 +62,10 @@ export type Settings = {
   marqueeText?: string;
   editorialHeading?: string;
   editorialText?: string;
+  /**
+   * WhatsApp link shown as a floating button on the shop pages, e.g.
+   * "https://wa.me/84901234567". Empty means no WhatsApp button.
+   * Edited in /mw-office (Cài đặt → Liên hệ).
+   */
+  whatsappUrl?: string;
 };

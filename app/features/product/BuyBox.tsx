@@ -15,7 +15,6 @@ export default function BuyBox({
 }) {
   const sizes = sizeOptionsFor(product);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
-  const [showChart, setShowChart] = useState(false);
   const sizeRequired = sizes.length > 0;
   const canAdd = !product.soldOut && (!sizeRequired || !!selectedSize);
   return (
@@ -83,28 +82,6 @@ export default function BuyBox({
             Shop sẽ xác nhận size khi gọi xác nhận đơn. Bạn có thể ghi chú
             size mình mặc ở bước đặt hàng.
           </p>
-        </div>
-      )}
-
-      {product.sizeChart && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setShowChart((v) => !v)}
-            aria-expanded={showChart}
-            className="text-sm font-semibold underline underline-offset-4 hover:opacity-60"
-          >
-            {showChart ? "Ẩn bảng size" : "Xem bảng size"}
-          </button>
-          {showChart && (
-            /* Plain img on purpose: the chart is served by the /uploads
-               route, outside next/image's local set. */
-            <img
-              src={product.sizeChart}
-              alt={`Bảng size của ${product.name}`}
-              className="mt-3 w-full rounded-[12px] border border-neutral-200"
-            />
-          )}
         </div>
       )}
 

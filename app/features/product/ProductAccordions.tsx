@@ -58,11 +58,21 @@ export default function ProductAccordions({ product }: { product: Product }) {
         <p>{DESCRIPTION_BY_CATEGORY[product.category] ?? DEFAULT_DESCRIPTION}</p>
       </Accordion>
       <Accordion title="Size & Fit" open={openSection === 1} onToggle={() => toggle(1)}>
-        <p>
-          Web hiện chưa bán theo bảng size cố định trên từng sản phẩm.
-          Khi gọi xác nhận đơn, shop sẽ xác nhận size với bạn trước khi
-          giao hàng.
-        </p>
+        {product.sizeChart ? (
+          /* Plain img on purpose: the chart is served by the /uploads
+             route, outside next/image's local set. */
+          <img
+            src={product.sizeChart}
+            alt={`Bảng size của ${product.name}`}
+            className="w-full rounded-[12px] border border-neutral-200"
+          />
+        ) : (
+          <p>
+            Web hiện chưa bán theo bảng size cố định trên từng sản phẩm.
+            Khi gọi xác nhận đơn, shop sẽ xác nhận size với bạn trước khi
+            giao hàng.
+          </p>
+        )}
       </Accordion>
       <Accordion
         title="Giao hàng & Đổi trả"

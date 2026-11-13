@@ -201,6 +201,32 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
         </div>
       </div>
 
+      {/* CONTACT LINKS */}
+      <div className="p-6 bg-neutral-50 border border-neutral-200 rounded-sm">
+        <h3 className="text-base font-bold tracking-tight uppercase mb-1">Liên hệ</h3>
+        <p className="text-xs text-gray-500 mb-6">
+          Nút liên hệ nổi ở góc trang shop. Để trống thì nút đó không hiện.
+        </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <FieldLabel mb={2}>
+              Link WhatsApp
+            </FieldLabel>
+            <input
+              type="text"
+              value={settings.whatsappUrl || ""}
+              onChange={(e) => setSettings({ ...settings, whatsappUrl: e.target.value })}
+              placeholder="https://wa.me/84901234567"
+              maxLength={500}
+              className={inputClassLg}
+            />
+            <Hint>
+              Dạng https://wa.me/84 + số điện thoại (bỏ số 0 đầu) — VD: 0901234567 thành https://wa.me/84901234567.
+            </Hint>
+          </div>
+        </div>
+      </div>
+
       <SaveButton
         saving={isSaving}
         savingLabel="Đang lưu…"

@@ -63,5 +63,13 @@ export function validateSettings(s: Settings): string | null {
   ) {
     return "Đoạn editorial quá dài.";
   }
+  if (
+    s.whatsappUrl !== undefined &&
+    (typeof s.whatsappUrl !== "string" ||
+      s.whatsappUrl.length > 500 ||
+      (s.whatsappUrl !== "" && !s.whatsappUrl.startsWith("https://")))
+  ) {
+    return "Link WhatsApp phải bắt đầu bằng https:// — VD: https://wa.me/84901234567.";
+  }
   return null;
 }

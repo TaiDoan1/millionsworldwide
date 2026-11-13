@@ -131,7 +131,7 @@ export default async function ProductPage({
       </main>
 
       <div className="mt-16">
-        <CollectionFooter />
+        <CollectionFooter whatsappUrl={settings.whatsappUrl} />
       </div>
     </div>
   );

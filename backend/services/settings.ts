@@ -22,6 +22,7 @@ const DEFAULTS: Settings = {
   marqueeText: "",
   editorialHeading: "",
   editorialText: "",
+  whatsappUrl: "",
 }
 
 export async function getSettings(): Promise<Settings> {
@@ -39,6 +40,7 @@ export async function getSettings(): Promise<Settings> {
       marqueeText: stored.marqueeText ?? DEFAULTS.marqueeText,
       editorialHeading: stored.editorialHeading ?? DEFAULTS.editorialHeading,
       editorialText: stored.editorialText ?? DEFAULTS.editorialText,
+      whatsappUrl: stored.whatsappUrl ?? DEFAULTS.whatsappUrl,
     }
   } catch (error) {
     console.error("Failed to read settings:", error)
