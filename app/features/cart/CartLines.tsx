@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { CartLine } from "../../components/CartContext";
 import { formatPrice } from "../../lib/format";
+import { useLanguage } from "../../lib/i18n";
 
 /** Cart item rows with quantity steppers and per-line totals. */
 export default function CartLines({
@@ -12,6 +13,7 @@ export default function CartLines({
   onQty: (id: string, qty: number, size?: string) => void;
   onRemove: (id: string, size?: string) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <>
       {lines.map(({ product, qty, size }) => (
@@ -33,7 +35,7 @@ export default function CartLines({
               <button
                 type="button"
                 onClick={() => onRemove(product.id, size)}
-                aria-label={`Xoá ${product.name}`}
+                aria-label={t("cart.remove", { name: product.name })}
                 className="text-lg leading-none text-neutral-400 hover:text-black"
               >
                 ×
@@ -49,7 +51,7 @@ export default function CartLines({
                   type="button"
                   onClick={() => onQty(product.id, qty - 1, size)}
                   className="h-8 w-8 text-black"
-                  aria-label="Giảm số lượng"
+                  aria-label={t("cart.decrease")}
                 >
                   −
                 </button>
@@ -58,7 +60,7 @@ export default function CartLines({
                   type="button"
                   onClick={() => onQty(product.id, qty + 1, size)}
                   className="h-8 w-8 text-black"
-                  aria-label="Tăng số lượng"
+                  aria-label={t("cart.increase")}
                 >
                   +
                 </button>

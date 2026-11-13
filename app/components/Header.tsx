@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useCart } from "./CartContext";
+import { LangToggle } from "../lib/i18n";
 
 // Code-split: the Three.js logo used to ship inside every page's bundle.
 // Dynamic import keeps server rendering (no layout shift) but loads the
@@ -52,8 +53,9 @@ export default function Header({ promoVisible = false }: { promoVisible?: boolea
         <Link href="/contact" className="hover:text-gray-500 transition-colors">Contact</Link>
       </nav>
 
-      {/* Right - Bag (opens the cart drawer, now available on every page) */}
-      <div className="flex-1 flex justify-end gap-8 text-[10px] font-medium tracking-widest uppercase">
+      {/* Right - language + Bag (opens the cart drawer, now available on every page) */}
+      <div className="flex flex-1 items-center justify-end gap-8 text-[10px] font-medium tracking-widest uppercase">
+        {!pathname?.startsWith("/mw-office") && <LangToggle />}
         <button
           type="button"
           onClick={openCart}

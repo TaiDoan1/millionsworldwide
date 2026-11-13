@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { placeOrder } from "../actions/orders";
 import { useCart } from "./CartContext";
+import { useLanguage } from "../lib/i18n";
 import CartLines from "../features/cart/CartLines";
 import OrderSummary from "../features/cart/OrderSummary";
 import CheckoutForm, { type CheckoutFormValues } from "../features/cart/CheckoutForm";
@@ -22,6 +23,7 @@ const EMPTY_FORM: CheckoutFormValues = {
  */
 export default function CartDrawer() {
   const { lines, count, subtotal, isOpen, closeCart, setQty, remove, clear } = useCart();
+  const { t } = useLanguage();
   const [form, setForm] = useState<CheckoutFormValues>(EMPTY_FORM);
   const [payment, setPayment] = useState<"cod" | "transfer">("cod");
   const [submitting, setSubmitting] = useState(false);
@@ -51,7 +53,7 @@ export default function CartDrawer() {
     }).catch(
       (): { success: boolean; code?: string; error?: string } => ({
         success: false,
-        error: "Có lỗi xảy ra, thử lại giúp shop nhé.",
+        error: t("cart.error"),
       })
     );
     setSubmitting(false);
@@ -59,7 +61,7 @@ export default function CartDrawer() {
       setOrderCode(res.code);
       clear();
     } else {
-      setError(res.error || "Không đặt được hàng, thử lại giúp shop nhé.");
+      setError(res.error || t("cart.orderError"));
     }
   };
 
@@ -78,12 +80,12 @@ export default function CartDrawer() {
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-5">
           <h2 className="text-lg font-bold uppercase tracking-wide text-black">
-            Giỏ hàng{count > 0 && orderCode === "" ? ` (${count})` : ""}
+            {t("cart.title")}{count > 0 && orderCode === "" ? ` (${count})` : ""}
           </h2>
           <button
             type="button"
             onClick={close}
-            aria-label="Đóng giỏ hàng"
+            aria-label={t("cart.close")}
             className="text-2xl leading-none text-black transition-opacity hover:opacity-60"
           >
             ×
@@ -94,13 +96,13 @@ export default function CartDrawer() {
           <OrderSuccess orderCode={orderCode} payment={payment} onClose={close} />
         ) : lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-            <p className="text-neutral-500">Giỏ hàng đang trống.</p>
+            <p className="text-neutral-500">{t("cart.empty")}</p>
             <button
               type="button"
               onClick={close}
               className="mt-6 h-12 rounded-full bg-black px-8 text-sm font-semibold uppercase tracking-wider text-white"
             >
-              Tiếp tục mua sắm
+              {t("cart.continue")}
             </button>
           </div>
         ) : (

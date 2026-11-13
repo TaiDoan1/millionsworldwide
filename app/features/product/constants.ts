@@ -24,3 +24,19 @@ export const DESCRIPTION_BY_CATEGORY: Record<string, string> = {
   shorts:
     "Quần shorts trong bộ lookbook của Millions. Ảnh sản phẩm là ảnh thật từ buổi chụp của shop.",
 };
+
+/** English versions of the same descriptions (see i18n: policy pages stay Vietnamese). */
+export const DEFAULT_DESCRIPTION_EN =
+  "A piece from the Millions lookbook. Product photos are real shots from the shop's own shoot.";
+
+export const DESCRIPTION_BY_CATEGORY_EN: Record<string, string> = {
+  sets: "A ready-styled set — top and bottom, a full outfit as-is. Product photos are from the Millions lookbook shoot.",
+  "t-shirts":
+    "A tee from the Millions lookbook. Product photos are real shots from the shop's own shoot.",
+  shirts:
+    "A shirt / jacket from the Millions lookbook. Product photos are real shots from the shop's own shoot.",
+  jeans:
+    "Wide-leg jeans from the Millions lookbook. Product photos are real shots from the shop's own shoot.",
+  shorts:
+    "Shorts from the Millions lookbook. Product photos are real shots from the shop's own shoot.",
+};

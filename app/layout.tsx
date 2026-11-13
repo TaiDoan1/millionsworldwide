@@ -4,6 +4,8 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Header from "./components/Header";
 import PromoBar from "./components/PromoBar";
+import FloatingContacts from "./components/FloatingContacts";
+import { LanguageProvider } from "./lib/i18n";
 import { CartProvider } from "./components/CartContext";
 import CartDrawer from "./components/CartDrawer";
 import { getSettings } from "./actions/settings";
@@ -106,17 +108,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="min-h-full bg-white text-black">
-        <CartProvider products={products}>
-          <PromoBar
-            enabled={settings.promoEnabled ?? false}
-            text={settings.promoText ?? ""}
-            link={settings.promoLink ?? ""}
-          />
-          <Header promoVisible={promoVisible} />
-          {children}
-          <CartDrawer />
-          <Analytics />
-        </CartProvider>
+        <LanguageProvider>
+          <CartProvider products={products}>
+            <PromoBar
+              enabled={settings.promoEnabled ?? false}
+              text={settings.promoText ?? ""}
+              link={settings.promoLink ?? ""}
+            />
+            <Header promoVisible={promoVisible} />
+            {children}
+            <CartDrawer />
+            <FloatingContacts whatsappUrl={settings.whatsappUrl} />
+            <Analytics />
+          </CartProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

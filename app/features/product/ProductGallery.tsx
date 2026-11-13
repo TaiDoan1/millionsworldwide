@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useLanguage } from "../../lib/i18n";
 import { EASE } from "./constants";
 
 /** Detail-page gallery: photos stack and crossfade on switch. */
@@ -19,6 +20,7 @@ export default function ProductGallery({
   onPrev: () => void;
   onNext: () => void;
 }) {
+  const { t } = useLanguage();
   const count = images.length;
   return (
     <div>
@@ -51,7 +53,7 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={onPrev}
-              aria-label="Ảnh trước"
+              aria-label={t("gallery.prev")}
               className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg shadow transition hover:bg-white"
             >
               ←
@@ -59,7 +61,7 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={onNext}
-              aria-label="Ảnh sau"
+              aria-label={t("gallery.next")}
               className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg shadow transition hover:bg-white"
             >
               →
@@ -79,7 +81,7 @@ export default function ProductGallery({
               key={src}
               type="button"
               onClick={() => onSelect(i)}
-              aria-label={`Xem ảnh ${i + 1}`}
+              aria-label={t("gallery.view", { n: i + 1 })}
               className={`relative aspect-[2/3] w-[72px] shrink-0 overflow-hidden rounded-[12px] bg-[#f5f5f5] transition-all duration-700 ${EASE} ${
                 i === selected
                   ? "ring-2 ring-black ring-offset-2"

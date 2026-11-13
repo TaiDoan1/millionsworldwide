@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { sizeOptionsFor, type Product } from "../../data/products";
 import { formatPrice } from "../../lib/format";
+import { useLanguage } from "../../lib/i18n";
 import { EASE, TAG_BY_CATEGORY } from "./constants";
 
 /** Sticky buy column: tag, name, price, size picker/note, add button, shipping note. */
@@ -17,6 +18,7 @@ export default function BuyBox({
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const sizeRequired = sizes.length > 0;
   const canAdd = !product.soldOut && (!sizeRequired || !!selectedSize);
+  const { t } = useLanguage();
   return (
     <div>
       <span className="text-sm font-bold lowercase text-black">
@@ -64,13 +66,13 @@ export default function BuyBox({
                   }`}
                 >
                   {s.label}
-                  {disabled ? " · Hết" : ""}
+                  {disabled ? t("buy.soldOutSuffix") : ""}
                 </button>
               );
             })}
           </div>
           {!selectedSize && (
-            <p className="mt-2 text-sm text-[#67645e]">Chọn size trước khi thêm vào giỏ.</p>
+            <p className="mt-2 text-sm text-[#67645e]">{t("buy.sizeHint")}</p>
           )}
         </div>
       ) : (
@@ -79,8 +81,7 @@ export default function BuyBox({
         <div className="mt-6 rounded-[12px] bg-[#f5f5f5] p-4">
           <p className="text-sm font-semibold uppercase tracking-wider">Size</p>
           <p className="mt-1 text-sm leading-relaxed text-[#67645e]">
-            Shop sẽ xác nhận size khi gọi xác nhận đơn. Bạn có thể ghi chú
-            size mình mặc ở bước đặt hàng.
+            {t("buy.sizeNote")}
           </p>
         </div>
       )}
@@ -91,11 +92,10 @@ export default function BuyBox({
         onClick={() => onAdd(selectedSize)}
         className={`mt-6 h-[50px] w-full rounded-full bg-black text-[max(0.875rem,0.925vw)] uppercase text-white transition-opacity duration-700 ${EASE} hover:opacity-80 disabled:cursor-not-allowed disabled:bg-neutral-400`}
       >
-        {product.soldOut ? "Sold Out" : added ? "Đã thêm ✓" : "Thêm vào giỏ"}
+        {product.soldOut ? t("card.soldOut") : added ? t("card.added") : t("card.add")}
       </button>
       <p className="mt-3 text-center text-sm text-[#67645e]">
-        Miễn phí vận chuyển toàn quốc • Shop xử lý đơn trong 1–2 ngày,
-        giao hàng trong 3–5 ngày.
+        {t("buy.shipping")}
       </p>
     </div>
   );

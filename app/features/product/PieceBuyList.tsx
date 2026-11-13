@@ -9,6 +9,7 @@ import {
 } from "../../data/products";
 import { useCart } from "../../components/CartContext";
 import { formatPrice } from "../../lib/format";
+import { useLanguage } from "../../lib/i18n";
 import { EASE } from "./constants";
 
 /**
@@ -27,6 +28,7 @@ export default function PieceBuyList({
   product: Product;
   catalog: Product[];
 }) {
+  const { t } = useLanguage();
   const rows = resolveRows(product, catalog);
   if (rows.length === 0) return null;
 
@@ -36,14 +38,16 @@ export default function PieceBuyList({
   return (
     <div className="mt-8 border-t border-neutral-200 pt-6">
       <p className="text-sm font-semibold uppercase tracking-wider">
-        Mua lẻ từng món
+        {t("pieces.title")}
       </p>
       <p className="mt-1 text-sm leading-relaxed text-[#67645e]">
-        Mua lẻ tổng {formatPrice(pieceTotal)}
+        {t("pieces.summary", { total: formatPrice(pieceTotal) })}
         {saves > 0 && (
           <>
-            {" · "}mua cả set {formatPrice(product.price)} (tiết kiệm{" "}
-            {formatPrice(saves)})
+            {t("pieces.save", {
+              price: formatPrice(product.price),
+              saves: formatPrice(saves),
+            })}
           </>
         )}
         .
@@ -92,6 +96,7 @@ function resolveRows(set: Product, catalog: Product[]): Row[] {
 
 function LinkedRow({ linked }: { linked: Product }) {
   const { add } = useCart();
+  const { t } = useLanguage();
   const sizes = sizeOptionsFor(linked);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     undefined,
@@ -137,7 +142,7 @@ function LinkedRow({ linked }: { linked: Product }) {
           {sizes.map((s) => (
             <option key={s.label} value={s.label} disabled={!!s.soldOut}>
               {s.label}
-              {s.soldOut ? " (hết)" : ""}
+              {s.soldOut ? ` ${t("pieces.sizeOut")}` : ""}
             </option>
           ))}
         </select>
@@ -148,10 +153,10 @@ function LinkedRow({ linked }: { linked: Product }) {
         onClick={handleAdd}
         className={`h-10 rounded-full bg-black px-5 text-xs font-bold uppercase text-white transition-opacity duration-700 ${EASE} hover:opacity-80 disabled:cursor-not-allowed disabled:bg-neutral-400`}
       >
-        {linked.soldOut ? "Hết hàng" : added ? "Đã thêm ✓" : "Thêm vào giỏ"}
+        {linked.soldOut ? t("pieces.soldOut") : added ? t("card.added") : t("card.add")}
       </button>
       {sizeRequired && !selectedSize && (
-        <p className="w-full text-xs text-[#67645e]">Chọn size trước khi thêm.</p>
+        <p className="w-full text-xs text-[#67645e]">{t("pieces.chooseSize")}</p>
       )}
     </div>
   );
@@ -165,6 +170,7 @@ function LegacyRow({
   row: Extract<Row, { kind: "legacy" }>;
 }) {
   const { add } = useCart();
+  const { t } = useLanguage();
   const sizes = sizeOptionsFor(set);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     undefined,
@@ -196,7 +202,7 @@ function LegacyRow({
           {sizes.map((s) => (
             <option key={s.label} value={s.label} disabled={!!s.soldOut}>
               {s.label}
-              {s.soldOut ? " (hết)" : ""}
+              {s.soldOut ? ` ${t("pieces.sizeOut")}` : ""}
             </option>
           ))}
         </select>
@@ -207,10 +213,10 @@ function LegacyRow({
         onClick={handleAdd}
         className={`h-10 rounded-full bg-black px-5 text-xs font-bold uppercase text-white transition-opacity duration-700 ${EASE} hover:opacity-80 disabled:cursor-not-allowed disabled:bg-neutral-400`}
       >
-        {set.soldOut ? "Hết hàng" : added ? "Đã thêm ✓" : "Thêm vào giỏ"}
+        {set.soldOut ? t("pieces.soldOut") : added ? t("card.added") : t("card.add")}
       </button>
       {sizeRequired && !selectedSize && (
-        <p className="w-full text-xs text-[#67645e]">Chọn size trước khi thêm.</p>
+        <p className="w-full text-xs text-[#67645e]">{t("pieces.chooseSize")}</p>
       )}
     </div>
   );

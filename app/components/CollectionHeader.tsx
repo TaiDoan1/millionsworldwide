@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Product, ProductCategory } from "../data/products";
 import { useCart } from "./CartContext";
+import { LangToggle, useLanguage } from "../lib/i18n";
 import Logo3D from "./Logo3D";
 
 const NAV_LINKS = [
@@ -32,12 +33,15 @@ export default function CollectionHeader({
   promoBar?: boolean;
 }) {
   const { count, openCart } = useCart();
+  const { t } = useLanguage();
   const [visible, setVisible] = useState(true);
   const [shopOpen, setShopOpen] = useState(false);
   const [tab, setTab] = useState<string>("all");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Mega-menu tabs: ALL first, then the live categories in admin order.
+  // The tab labels stay English in both languages — they are brand
+  // chrome (like the SHOP / ABOUT nav), not translated UI text.
   const tabs = [
     { key: "all", label: "ALL PRODUCTS" },
     ...categories.map((c) => ({ key: c.slug, label: c.label.toUpperCase() })),
@@ -114,8 +118,9 @@ export default function CollectionHeader({
           </span>
         </Link>
 
-        {/* Right utils — only the cart, which works */}
-        <div className="flex flex-1 items-center justify-end gap-12">
+        {/* Right utils — language + the cart, which works */}
+        <div className="flex flex-1 items-center justify-end gap-6 sm:gap-12">
+          <LangToggle className="text-black" />
           <button
             type="button"
             onClick={openCart}
@@ -179,7 +184,7 @@ export default function CollectionHeader({
                 </div>
                 <p className="mt-3 text-base font-bold uppercase text-black">{p.name}</p>
                 <span className="mt-1 inline-block text-sm font-semibold uppercase tracking-wider text-black underline underline-offset-4">
-                  Buy now
+                  {t("card.viewDetails")}
                 </span>
               </Link>
             ))}

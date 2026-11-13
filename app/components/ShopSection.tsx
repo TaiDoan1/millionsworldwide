@@ -5,9 +5,9 @@ import type { Product, ProductCategory } from "../data/products";
 import ProductCard from "./ProductCard";
 import CategoryChips from "../features/shop/CategoryChips";
 import ShopToolbar from "../features/shop/ShopToolbar";
+import { useLanguage } from "../lib/i18n";
 import {
   PAGE_SIZE,
-  SORT_OPTIONS,
   chipsFor,
   type FilterKey,
   type SortKey,
@@ -31,6 +31,7 @@ export default function ShopSection({
   const [cols, setCols] = useState<2 | 3>(3);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   const products = useMemo(() => {
     let list = [...catalog];
@@ -60,7 +61,7 @@ export default function ShopSection({
   }, [catalog, filter, sort]);
 
   const visible = products.slice(0, visibleCount);
-  const sortLabel = SORT_OPTIONS.find((o) => o.key === sort)?.label;
+  const sortLabel = t(`sort.${sort}`);
 
   const handleSort = (key: SortKey) => {
     setSort(key);
@@ -122,7 +123,7 @@ export default function ShopSection({
       {visibleCount < products.length && (
         <div className="mt-[clamp(1.0625rem,0.68838rem_+_1.59624vw,3.4375rem)] flex flex-col items-center gap-4">
           <p className="text-base text-[#67645e]">
-            Đang hiển thị {visible.length} trong {products.length} sản phẩm
+            {t("shop.showing", { shown: visible.length, total: products.length })}
           </p>
           <button
             type="button"

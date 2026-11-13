@@ -7,6 +7,7 @@ import type { Product } from "../data/products";
 import { sizeOptionsFor } from "../data/products";
 import { useCart } from "./CartContext";
 import { formatPrice } from "../lib/format";
+import { useLanguage } from "../lib/i18n";
 
 // Re-exported so existing imports keep working; new code imports from lib/format.
 export { formatPrice };
@@ -39,6 +40,7 @@ export default function ProductCard({
 }) {
   const [added, setAdded] = useState(false);
   const { add } = useCart();
+  const { t } = useLanguage();
   const firstImage = product.images[0];
   const hoverImage = product.images[1] ?? product.images[0];
   const tag = TAG_BY_CATEGORY[product.category] ?? product.category;
@@ -73,12 +75,12 @@ export default function ProductCard({
 
   const addLabel =
     product.soldOut || allSizesSoldOut
-      ? "Sold Out"
+      ? t("card.soldOut")
       : added
-        ? "Đã thêm ✓"
+        ? t("card.added")
         : sizes.length > 0 && !selectedSize
-          ? "Chọn size"
-          : "Thêm vào giỏ";
+          ? t("card.chooseSize")
+          : t("card.add");
   const addDisabled =
     product.soldOut ||
     allSizesSoldOut ||
@@ -118,7 +120,7 @@ export default function ProductCard({
           The whole photo links to the product detail page. */}
       <Link
         href={`/trangchu/${product.id}`}
-        aria-label={`Xem ${product.name}`}
+        aria-label={t("card.view", { name: product.name })}
         className="relative block max-[819px]:aspect-[2/3] min-[820px]:absolute min-[820px]:inset-0"
       >
         <Image
@@ -204,7 +206,7 @@ export default function ProductCard({
             </span>
           </div>
           <p className="mt-1 text-base text-[#67645e] max-[819px]:hidden">
-            Xuất xứ: Việt Nam
+            {t("card.origin")}
           </p>
 
           {/* Mobile: size row appears above the pill when picking a size */}
@@ -231,7 +233,7 @@ export default function ProductCard({
           href={`/trangchu/${product.id}`}
           className="flex h-[50px] w-full items-center justify-center rounded-full bg-white text-[max(0.875rem,0.925vw)] uppercase text-black shadow"
         >
-          Xem chi tiết
+          {t("card.viewDetails")}
         </Link>
         <button
           type="button"

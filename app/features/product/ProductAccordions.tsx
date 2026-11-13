@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { Product } from "../../data/products";
-import { DEFAULT_DESCRIPTION, DESCRIPTION_BY_CATEGORY, EASE } from "./constants";
+import { useLanguage } from "../../lib/i18n";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_DESCRIPTION_EN,
+  DESCRIPTION_BY_CATEGORY,
+  DESCRIPTION_BY_CATEGORY_EN,
+  EASE,
+} from "./constants";
 
 function Accordion({
   title,
@@ -51,13 +58,18 @@ export default function ProductAccordions({ product }: { product: Product }) {
   const [openSection, setOpenSection] = useState<number | null>(0);
   const toggle = (i: number) =>
     setOpenSection(openSection === i ? null : i);
+  const { lang, t } = useLanguage();
+  const description =
+    lang === "en"
+      ? (DESCRIPTION_BY_CATEGORY_EN[product.category] ?? DEFAULT_DESCRIPTION_EN)
+      : (DESCRIPTION_BY_CATEGORY[product.category] ?? DEFAULT_DESCRIPTION);
 
   return (
     <div className="mt-8 border-t border-neutral-200">
-      <Accordion title="Mô tả" open={openSection === 0} onToggle={() => toggle(0)}>
-        <p>{DESCRIPTION_BY_CATEGORY[product.category] ?? DEFAULT_DESCRIPTION}</p>
+      <Accordion title={t("acc.desc")} open={openSection === 0} onToggle={() => toggle(0)}>
+        <p>{description}</p>
       </Accordion>
-      <Accordion title="Size & Fit" open={openSection === 1} onToggle={() => toggle(1)}>
+      <Accordion title={t("acc.sizeFit")} open={openSection === 1} onToggle={() => toggle(1)}>
         {product.sizeChart ? (
           /* Plain img on purpose: the chart is served by the /uploads
              route, outside next/image's local set. */
@@ -67,43 +79,37 @@ export default function ProductAccordions({ product }: { product: Product }) {
             className="w-full rounded-[12px] border border-neutral-200"
           />
         ) : (
-          <p>
-            Web hiện chưa bán theo bảng size cố định trên từng sản phẩm.
-            Khi gọi xác nhận đơn, shop sẽ xác nhận size với bạn trước khi
-            giao hàng.
-          </p>
+          <p>{t("acc.noSizeChart")}</p>
         )}
       </Accordion>
       <Accordion
-        title="Giao hàng & Đổi trả"
+        title={t("acc.shipping")}
         open={openSection === 2}
         onToggle={() => toggle(2)}
       >
         <p>
-          Miễn phí vận chuyển toàn quốc. Shop xử lý đơn trong 1–2 ngày,
-          giao hàng trong 3–5 ngày. Đổi trả trong 14 ngày với sản phẩm
-          chưa mặc, chưa giặt, còn tag.{" "}
+          {t("acc.shippingText")}{" "}
           <Link href="/shipping" className="underline">
-            Chính sách giao hàng
+            {t("acc.shippingLink")}
           </Link>{" "}
           •{" "}
           <Link href="/refund-policy" className="underline">
-            Chính sách đổi trả
+            {t("acc.returnLink")}
           </Link>
         </p>
       </Accordion>
-      <Accordion title="Cần hỗ trợ?" open={openSection === 3} onToggle={() => toggle(3)}>
+      <Accordion title={t("acc.help")} open={openSection === 3} onToggle={() => toggle(3)}>
         <p>
           <Link href="/contact" className="underline">
-            Liên hệ shop
+            {t("acc.contactShop")}
           </Link>{" "}
           •{" "}
           <Link href="/faq" className="underline">
-            Câu hỏi thường gặp
+            {t("acc.faq")}
           </Link>{" "}
           •{" "}
           <Link href="/track-order" className="underline">
-            Theo dõi đơn hàng
+            {t("acc.trackOrder")}
           </Link>
         </p>
       </Accordion>

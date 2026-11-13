@@ -1,4 +1,5 @@
 import { SORT_OPTIONS, type SortKey } from "./shop-options";
+import { useLanguage } from "../../lib/i18n";
 
 function GridIcon({ cols, active }: { cols: 2 | 3; active: boolean }) {
   const cells = cols === 2 ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -37,6 +38,7 @@ export default function ShopToolbar({
   cols: 2 | 3;
   onCols: (cols: 2 | 3) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="relative mt-5 flex items-center justify-between text-[#67645e] sm:mt-[2.25vw]">
       <div className="relative">
@@ -45,7 +47,7 @@ export default function ShopToolbar({
           onClick={onToggleSort}
           className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]"
         >
-          Sort: <span className="font-bold underline underline-offset-4">{sortLabel}</span>{" "}
+          {t("shop.sort")} <span className="font-bold underline underline-offset-4">{sortLabel}</span>{" "}
           <span aria-hidden>▾</span>
         </button>
         <div
@@ -58,7 +60,7 @@ export default function ShopToolbar({
           <div className="p-4">
             <div className="flex items-center justify-between px-2 pb-2">
               <span className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-                Sort by
+                {t("shop.sortBy")}
               </span>
               <button
                 type="button"
@@ -79,7 +81,7 @@ export default function ShopToolbar({
                       sort === o.key ? "font-bold" : ""
                     }`}
                   >
-                    {o.label}
+                    {t(`sort.${o.key}`)}
                   </button>
                 </li>
               ))}
@@ -89,7 +91,7 @@ export default function ShopToolbar({
       </div>
 
       <div className="flex items-center gap-5">
-        <span className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]">{count} products</span>
+        <span className="text-[clamp(0.875rem,0.830986rem+0.187793vw,1.25rem)] text-[#67645e]">{count === 1 ? t("shop.product1") : t("shop.products", { count })}</span>
         <button
           type="button"
           aria-label="2 column layout"
