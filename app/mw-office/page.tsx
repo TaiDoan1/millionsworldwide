@@ -79,16 +79,16 @@ export default async function AdminPage() {
   ]
 
   return (
-    <main className="min-h-screen bg-[#F8F8F8] text-black py-32 px-8">
+    <main className="min-h-screen bg-[#F8F8F8] text-black px-4 py-24 sm:px-8 sm:py-32">
       <div className="max-w-3xl mx-auto mb-10">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Quản trị Millions</h1>
-        <p className="text-sm text-gray-500 mb-6">Đơn hàng, sản phẩm, email và nội dung web — thay đổi có hiệu lực ngay.</p>
+        <p className="text-base text-gray-600 mb-6">Đơn hàng, sản phẩm, email và nội dung web — thay đổi có hiệu lực ngay.</p>
         <nav className="flex flex-wrap gap-2">
           {NAV.map((n) => (
             <a
               key={n.href}
               href={n.href}
-              className="border border-neutral-300 bg-white px-4 py-2 text-xs font-bold tracking-widest uppercase hover:border-black transition-colors"
+              className="border border-neutral-300 bg-white px-4 py-2.5 text-sm font-bold tracking-widest uppercase hover:border-black transition-colors"
             >
               {n.label}
             </a>
@@ -109,8 +109,8 @@ export default async function AdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map((s) => (
             <div key={s.label} className="border border-neutral-200 p-4 min-w-0">
-              <p className="text-xl font-black break-all sm:text-2xl">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              <p className="text-2xl font-black break-all sm:text-3xl">{s.value}</p>
+              <p className="text-sm text-gray-600 mt-1">{s.label}</p>
             </div>
           ))}
         </div>
@@ -122,7 +122,7 @@ export default async function AdminPage() {
         description="Đơn mới nhất xếp trước. Khách tra cứu trạng thái bằng mã đơn + số điện thoại tại /track-order."
       >
         {orders.length === 0 ? (
-          <p className="text-sm text-gray-400">Chưa có đơn hàng nào.</p>
+          <p className="text-base text-gray-500">Chưa có đơn hàng nào.</p>
         ) : (
           <OrdersManager orders={orders} />
         )}
@@ -147,13 +147,13 @@ export default async function AdminPage() {
         }
       >
         {subscribers.length === 0 ? (
-          <p className="text-sm text-gray-400">Chưa có email nào.</p>
+          <p className="text-base text-gray-500">Chưa có email nào.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-neutral-100 text-base">
             {subscribers.map((s) => (
               <li key={s.email} className="flex flex-wrap justify-between gap-2 py-2.5">
                 <span className="font-medium">{s.email}</span>
-                <span className="text-gray-500">
+                <span className="text-gray-600">
                   {s.source} · {new Date(s.at).toLocaleString("vi-VN")}
                 </span>
               </li>

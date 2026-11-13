@@ -208,7 +208,7 @@ export default function ProductEditForm({
         )}
         <ImageUpload onUploaded={(url) => patch({ sizeChart: url })} />
         <Hint>
-          Up ảnh bảng size (số đo từng size). Khách bấm “Xem bảng size” ở
+          Up ảnh bảng size (số đo từng size). Khách mở mục Size & Fit ở
           trang chi tiết để xem ảnh này. Để trống nếu chưa có.
         </Hint>
       </div>

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { sizeOptionsFor, type Product } from "../../data/products";
 import { placePosOrder, type PlacePosOrderInput } from "../../actions/orders";
 import { formatPrice } from "../../lib/format";
+import { vietqrImageUrl } from "../../lib/vietqr";
 import { btnPrimary, inputClass } from "../ui";
 
 const EASE = "ease-[cubic-bezier(0.76,0,0.24,1)]";
@@ -23,8 +24,17 @@ const PHONE_RE = /^[0-9+\s.()\-]{9,15}$/;
  * build a ticket, then check out as an in-store sale (cash/transfer,
  * handed over on the spot) or a quick online order (COD/transfer, ships
  * like a web order). Prices are recomputed on the server at submit.
+ * After a sale the screen shows a KiotViet-style bill (80mm receipt)
+ * with a VietQR code for transfer payments, plus a print button.
  */
-export default function PosScreen({ products }: { products: Product[] }) {
+export default function PosScreen({
+  products,
+  bank,
+}: {
+  products: Product[];
+  /** Bank account from settings (Cài đặt → Tài khoản ngân hàng). */
+  bank: { code: string; accountNumber: string; accountName: string };
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [staging, setStaging] = useState<{
@@ -45,8 +55,27 @@ export default function PosScreen({ products }: { products: Product[] }) {
   const [success, setSuccess] = useState<{
     code: string;
     total: number;
+    received?: number;
     change?: number;
+    payment: "cash" | "transfer" | "cod";
+    channel: "in-store" | "online";
+    items: TicketLine[];
+    customerName: string;
+    at: string;
   } | null>(null);
+
+  // VietQR for a transfer bill: exact amount + order code as the note.
+  // Null when no bank is configured in settings.
+  const qrUrl =
+    success && success.payment === "transfer"
+      ? vietqrImageUrl({
+          bankCode: bank.code,
+          accountNumber: bank.accountNumber,
+          accountName: bank.accountName,
+          amountVnd: success.total * 1000,
+          content: success.code,
+        })
+      : null;
 
   const categories = useMemo(() => {
     const seen = new Map<string, string>();
@@ -155,7 +184,13 @@ export default function PosScreen({ products }: { products: Product[] }) {
     setSuccess({
       code: res.code ?? "",
       total,
+      received: payment === "cash" ? received : undefined,
       change: payment === "cash" ? received - total : undefined,
+      payment,
+      channel,
+      items: ticket,
+      customerName: name.trim(),
+      at: new Date().toISOString(),
     });
     setTicket([]);
     setStaging(null);
@@ -172,7 +207,16 @@ export default function PosScreen({ products }: { products: Product[] }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto grid gap-6 lg:grid-cols-[1fr_380px]">
+    <>
+      {/* When printing, only the bill prints — everything else hides. */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .mw-receipt, .mw-receipt * { visibility: visible !important; }
+          .mw-receipt { position: fixed !important; left: 0; top: 0; width: 80mm; margin: 0; border: none !important; box-shadow: none !important; }
+        }
+      `}</style>
+      <div className="max-w-6xl mx-auto grid gap-6 lg:grid-cols-[1fr_380px]">
       {/* Product picker */}
       <div className="bg-white p-6 shadow-xl shadow-black/5 sm:p-8">
         <div className="flex flex-wrap gap-2">
@@ -337,22 +381,108 @@ export default function PosScreen({ products }: { products: Product[] }) {
         {success ? (
           <div>
             <h2 className="text-xl font-bold uppercase">Bán xong ✓</h2>
-            <p className="mt-2 text-sm">
-              Mã đơn: <span className="font-black tracking-wider">{success.code}</span>
-            </p>
-            <p className="mt-1 text-sm">
-              Tổng: <span className="font-bold">{formatPrice(success.total)}</span>
-            </p>
-            {success.change !== undefined && (
-              <p className="mt-1 text-sm">
-                Tiền thừa: <span className="font-bold">{formatPrice(success.change)}</span>
-              </p>
-            )}
             <p className="mt-2 text-sm text-gray-500">
               Đơn đã lưu vào danh sách đơn hàng
-              {channel === "in-store" ? " (đã giao)." : " (mới đặt)."}
+              {success.channel === "in-store" ? " (đã giao)." : " (mới đặt)."}
             </p>
-            <button type="button" onClick={sellAgain} className={`${btnPrimary} mt-6 w-full`}>
+
+            {/* Bill 80mm kiểu KiotViet — khi in thì chỉ in mỗi bill này. */}
+            <div className="mw-receipt mx-auto mt-6 w-full max-w-[320px] border border-neutral-300 bg-white p-4 font-mono text-sm">
+              <p className="text-center text-base font-bold">MILLIONS WORLDWIDE</p>
+              <p className="mt-1 text-center font-bold">HÓA ĐƠN BÁN HÀNG</p>
+              <p className="my-3 border-t border-dashed border-neutral-400" />
+              <p>
+                Mã đơn: <span className="font-bold">{success.code}</span>
+              </p>
+              <p>Ngày: {new Date(success.at).toLocaleString("vi-VN")}</p>
+              <p>
+                Kênh: {success.channel === "in-store" ? "Tại quầy" : "Online"}
+              </p>
+              {success.customerName && <p>Khách: {success.customerName}</p>}
+              <p className="my-3 border-t border-dashed border-neutral-400" />
+              <ul>
+                {success.items.map((l) => (
+                  <li key={`${l.id}::${l.size ?? ""}`} className="mb-2">
+                    <p className="font-bold uppercase">
+                      {l.name}
+                      {l.size ? ` · Size ${l.size}` : ""}
+                    </p>
+                    <p className="flex justify-between">
+                      <span>
+                        {l.qty} × {formatPrice(l.price)}
+                      </span>
+                      <span>{formatPrice(l.price * l.qty)}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="my-3 border-t border-dashed border-neutral-400" />
+              <p className="flex justify-between font-bold">
+                <span>TỔNG</span>
+                <span>{formatPrice(success.total)}</span>
+              </p>
+              <p className="flex justify-between">
+                <span>Thanh toán</span>
+                <span>
+                  {success.payment === "cash"
+                    ? "Tiền mặt"
+                    : success.payment === "transfer"
+                      ? "Chuyển khoản"
+                      : "COD"}
+                </span>
+              </p>
+              {success.payment === "cash" && (
+                <>
+                  <p className="flex justify-between">
+                    <span>Khách đưa</span>
+                    <span>{formatPrice(success.received ?? 0)}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>Tiền thừa</span>
+                    <span>{formatPrice(success.change ?? 0)}</span>
+                  </p>
+                </>
+              )}
+              {success.payment === "transfer" && qrUrl && (
+                <div className="mt-3 text-center">
+                  {/* Plain img on purpose: the QR is an external VietQR image. */}
+                  <img
+                    src={qrUrl}
+                    alt="Mã QR chuyển khoản"
+                    className="mx-auto w-44"
+                  />
+                  <p className="mt-1 text-xs">
+                    Quét mã để chuyển {formatPrice(success.total)}
+                    <br />
+                    Nội dung: {success.code}
+                  </p>
+                </div>
+              )}
+              {success.payment === "transfer" && !qrUrl && (
+                <p className="mt-3 text-center text-xs">
+                  Chuyển khoản — chưa nhập tài khoản ngân hàng trong Cài đặt
+                  nên bill không có mã QR.
+                </p>
+              )}
+              <p className="my-3 border-t border-dashed border-neutral-400" />
+              <p className="text-center font-bold">Cảm ơn quý khách!</p>
+              <p className="mt-1 text-center text-xs">
+                Đổi trả trong 14 ngày với sản phẩm chưa mặc, chưa giặt, còn tag.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className={`${btnPrimary} mt-6 w-full`}
+            >
+              In bill
+            </button>
+            <button
+              type="button"
+              onClick={sellAgain}
+              className="mt-2 w-full border border-neutral-300 px-6 py-3 text-sm font-bold uppercase tracking-widest transition-colors hover:border-black"
+            >
               Bán tiếp
             </button>
           </div>
@@ -577,5 +707,6 @@ export default function PosScreen({ products }: { products: Product[] }) {
         )}
       </div>
     </div>
+    </>
   );
 }

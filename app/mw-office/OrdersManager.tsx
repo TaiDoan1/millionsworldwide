@@ -104,25 +104,25 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-gray-400">Không có đơn nào khớp.</p>
+        <p className="text-base text-gray-500">Không có đơn nào khớp.</p>
       ) : (
         <div className="space-y-6">
           {filtered.map((o) => (
             <div key={o.code} className="border border-neutral-200 p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-black tracking-wider">
+                <p className="text-base font-black tracking-wider">
                   {o.code}
                   {o.channel === "in-store" && (
-                    <span className="ml-2 bg-black px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-white">
+                    <span className="ml-2 bg-black px-2 py-0.5 align-middle text-xs font-bold uppercase tracking-wider text-white">
                       Tại quầy
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-gray-600">
                   {new Date(o.at).toLocaleString("vi-VN")}
                 </p>
               </div>
-              <p className="mt-1 text-sm">
+              <p className="mt-1 text-base">
                 {o.customer.name}
                 {o.customer.phone && (
                   <>
@@ -131,13 +131,13 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
                   </>
                 )}
                 {o.customer.address && (
-                  <span className="text-gray-500"> · {o.customer.address}</span>
+                  <span className="text-gray-600"> · {o.customer.address}</span>
                 )}
               </p>
               {o.customer.note && (
-                <p className="text-sm text-gray-500">Ghi chú: {o.customer.note}</p>
+                <p className="text-base text-gray-600">Ghi chú: {o.customer.note}</p>
               )}
-              <ul className="mt-2 text-sm text-gray-700">
+              <ul className="mt-2 text-base text-gray-800">
                 {o.items.map((i) => (
                   <li
                     key={`${i.id}::${i.size ?? ""}`}
@@ -151,15 +151,15 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
                   </li>
                 ))}
               </ul>
-              <div className="mt-2 flex justify-between border-t border-neutral-100 pt-2 text-sm font-bold">
+              <div className="mt-2 flex justify-between border-t border-neutral-100 pt-2 text-base font-bold">
                 <span>
                   Tổng · {PAYMENT_LABELS[o.payment]} ·{" "}
                   {STATUS_LABELS[o.status]}
                 </span>
                 <span>{formatPrice(o.total)}</span>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-gray-500">Đổi trạng thái:</span>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-base">
+                <span className="text-gray-600">Đổi trạng thái:</span>
                 <OrderStatusControl code={o.code} status={o.status} />
               </div>
             </div>

@@ -71,5 +71,28 @@ export function validateSettings(s: Settings): string | null {
   ) {
     return "Link WhatsApp phải bắt đầu bằng https:// — VD: https://wa.me/84901234567.";
   }
+  if (
+    s.bankCode !== undefined &&
+    (typeof s.bankCode !== "string" ||
+      s.bankCode.length > 10 ||
+      (s.bankCode !== "" && !/^[A-Z0-9]+$/.test(s.bankCode)))
+  ) {
+    return "Mã ngân hàng chỉ gồm chữ in hoa và số — VD: MB, VCB, TCB.";
+  }
+  if (
+    s.bankAccountNumber !== undefined &&
+    (typeof s.bankAccountNumber !== "string" ||
+      s.bankAccountNumber.length > 20 ||
+      (s.bankAccountNumber !== "" &&
+        !/^[0-9]+$/.test(s.bankAccountNumber)))
+  ) {
+    return "Số tài khoản chỉ gồm chữ số.";
+  }
+  if (
+    s.bankAccountName !== undefined &&
+    (typeof s.bankAccountName !== "string" || s.bankAccountName.length > 100)
+  ) {
+    return "Tên tài khoản quá dài.";
+  }
   return null;
 }

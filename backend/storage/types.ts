@@ -68,4 +68,14 @@ export type Settings = {
    * Edited in /mw-office (Cài đặt → Liên hệ).
    */
   whatsappUrl?: string;
+  /**
+   * Bank account for transfer payments — used to build the VietQR code
+   * on the POS bill (KiotViet-style: customer scans to pay the exact
+   * amount with the order code as the transfer note). All three empty
+   * means no QR on the bill. Edited in /mw-office (Cài đặt → Tài khoản
+   * ngân hàng). bankCode is the VietQR bank code, e.g. "MB", "VCB", "TCB".
+   */
+  bankCode?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
 };

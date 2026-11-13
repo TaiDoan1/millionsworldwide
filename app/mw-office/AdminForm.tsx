@@ -227,6 +227,62 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
         </div>
       </div>
 
+      {/* BANK ACCOUNT (VietQR on the POS bill) */}
+      <div className="p-6 bg-neutral-50 border border-neutral-200 rounded-sm">
+        <h3 className="text-base font-bold tracking-tight uppercase mb-1">Tài khoản ngân hàng</h3>
+        <p className="text-xs text-gray-500 mb-6">
+          Để máy POS hiện mã QR chuyển khoản trên bill (khách quét là trả
+          đúng số tiền, nội dung là mã đơn). Để trống cả 3 ô thì bill không
+          có mã QR.
+        </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <FieldLabel mb={2}>
+              Mã ngân hàng (VietQR)
+            </FieldLabel>
+            <input
+              type="text"
+              value={settings.bankCode || ""}
+              onChange={(e) => setSettings({ ...settings, bankCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") })}
+              placeholder="VD: MB"
+              maxLength={10}
+              className={inputClassLg}
+            />
+            <Hint>
+              Mã theo chuẩn VietQR — VD: MB (MB Bank), VCB (Vietcombank),
+              TCB (Techcombank), ACB, BIDV.
+            </Hint>
+          </div>
+          <div>
+            <FieldLabel mb={2}>
+              Số tài khoản
+            </FieldLabel>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={settings.bankAccountNumber || ""}
+              onChange={(e) => setSettings({ ...settings, bankAccountNumber: e.target.value.replace(/[^0-9]/g, "") })}
+              placeholder="VD: 0123456789"
+              maxLength={20}
+              className={inputClassLg}
+            />
+          </div>
+          <div>
+            <FieldLabel mb={2}>
+              Tên tài khoản
+            </FieldLabel>
+            <input
+              type="text"
+              value={settings.bankAccountName || ""}
+              onChange={(e) => setSettings({ ...settings, bankAccountName: e.target.value })}
+              placeholder="VD: DOAN ANH TAI"
+              maxLength={100}
+              className={inputClassLg}
+            />
+          </div>
+        </div>
+      </div>
+
       <SaveButton
         saving={isSaving}
         savingLabel="Đang lưu…"

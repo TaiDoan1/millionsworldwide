@@ -23,6 +23,9 @@ const DEFAULTS: Settings = {
   editorialHeading: "",
   editorialText: "",
   whatsappUrl: "",
+  bankCode: "",
+  bankAccountNumber: "",
+  bankAccountName: "",
 }
 
 export async function getSettings(): Promise<Settings> {
@@ -41,6 +44,9 @@ export async function getSettings(): Promise<Settings> {
       editorialHeading: stored.editorialHeading ?? DEFAULTS.editorialHeading,
       editorialText: stored.editorialText ?? DEFAULTS.editorialText,
       whatsappUrl: stored.whatsappUrl ?? DEFAULTS.whatsappUrl,
+      bankCode: stored.bankCode ?? DEFAULTS.bankCode,
+      bankAccountNumber: stored.bankAccountNumber ?? DEFAULTS.bankAccountNumber,
+      bankAccountName: stored.bankAccountName ?? DEFAULTS.bankAccountName,
     }
   } catch (error) {
     console.error("Failed to read settings:", error)

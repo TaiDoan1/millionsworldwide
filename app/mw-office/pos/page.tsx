@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PosScreen from "./PosScreen";
 import { getProducts } from "../../actions/products";
+import { getSettings } from "../../actions/settings";
 
 // Orders and products change at runtime — always render fresh.
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function PosPage() {
     loadError =
       "Chưa tải được danh mục sản phẩm — kiểm tra kết nối kho dữ liệu rồi tải lại trang nhé.";
   }
+  const settings = await getSettings().catch(() => null);
 
   return (
     <main className="min-h-screen bg-[#F8F8F8] text-black py-32 px-8">
@@ -40,7 +42,14 @@ export default async function PosPage() {
           <p className="text-sm text-red-600">{loadError}</p>
         </div>
       ) : (
-        <PosScreen products={products} />
+        <PosScreen
+          products={products}
+          bank={{
+            code: settings?.bankCode ?? "",
+            accountNumber: settings?.bankAccountNumber ?? "",
+            accountName: settings?.bankAccountName ?? "",
+          }}
+        />
       )}
     </main>
   );
