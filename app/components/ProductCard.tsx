@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "../data/products";
+import { sizeOptionsFor } from "../data/products";
 import { useCart } from "./CartContext";
 import { formatPrice } from "../lib/format";
 
@@ -41,12 +42,75 @@ export default function ProductCard({
   const firstImage = product.images[0];
   const hoverImage = product.images[1] ?? product.images[0];
   const tag = TAG_BY_CATEGORY[product.category] ?? product.category;
+  const sizes = sizeOptionsFor(product);
+  const allSizesSoldOut =
+    sizes.length > 0 && sizes.every((s) => s.soldOut);
+  const [showSizes, setShowSizes] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(
+    undefined,
+  );
 
-  const handleAdd = () => {
-    add(product.id);
+  /**
+   * Quick add from the card — but a product that has sizes can only be
+   * added after a size is picked, right here on the card. First tap
+   * opens the size row; once a size is picked the button adds it.
+   * Products without sizes keep the old one-tap add.
+   */
+  const handleAddClick = () => {
+    if (product.soldOut || allSizesSoldOut) return;
+    if (sizes.length > 0 && !selectedSize) {
+      setShowSizes(true);
+      return;
+    }
+    add(product.id, selectedSize);
     setAdded(true);
-    window.setTimeout(() => setAdded(false), 1400);
+    window.setTimeout(() => {
+      setAdded(false);
+      setShowSizes(false);
+      setSelectedSize(undefined);
+    }, 1400);
   };
+
+  const addLabel =
+    product.soldOut || allSizesSoldOut
+      ? "Sold Out"
+      : added
+        ? "Đã thêm ✓"
+        : sizes.length > 0 && !selectedSize
+          ? "Chọn size"
+          : "Thêm vào giỏ";
+  const addDisabled =
+    product.soldOut ||
+    allSizesSoldOut ||
+    (showSizes && !selectedSize);
+
+  const sizePills =
+    sizes.length > 0 && showSizes ? (
+      <div className="flex flex-wrap gap-2">
+        {sizes.map((s) => {
+          const disabled = !!s.soldOut;
+          const active = selectedSize === s.label;
+          return (
+            <button
+              key={s.label}
+              type="button"
+              disabled={disabled}
+              onClick={() => setSelectedSize(s.label)}
+              aria-pressed={active}
+              className={`h-9 min-w-9 rounded-full border px-3 text-xs font-semibold transition-colors duration-700 ${EASE} ${
+                disabled
+                  ? "cursor-not-allowed border-neutral-200 bg-white text-neutral-400 line-through"
+                  : active
+                    ? "border-black bg-black text-white"
+                    : "border-neutral-300 bg-white text-black hover:border-black"
+              }`}
+            >
+              {s.label}
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
 
   return (
     <article className="group relative h-full overflow-hidden rounded-[12px] bg-[#f5f5f5] max-[819px]:flex max-[819px]:flex-col min-[820px]:aspect-[2/3]">
@@ -143,14 +207,17 @@ export default function ProductCard({
             Xuất xứ: Việt Nam
           </p>
 
+          {/* Mobile: size row appears above the pill when picking a size */}
+          {sizePills && <div className="mt-2 min-[820px]:hidden">{sizePills}</div>}
+
           {/* Mobile: compact pill is always visible */}
           <button
             type="button"
-            disabled={product.soldOut}
-            onClick={handleAdd}
+            disabled={addDisabled}
+            onClick={handleAddClick}
             className="mt-2 h-9 w-full rounded-full bg-black text-xs font-semibold uppercase tracking-wider text-white disabled:cursor-not-allowed disabled:bg-neutral-400 min-[820px]:hidden"
           >
-            {product.soldOut ? "Sold Out" : added ? "Đã thêm ✓" : "Thêm vào giỏ"}
+            {addLabel}
           </button>
         </div>
       </div>
@@ -159,6 +226,7 @@ export default function ProductCard({
       <div
         className={`absolute inset-x-0 bottom-0 z-30 hidden translate-y-[150%] flex-col gap-2 p-[1rem_0.75rem] transition-transform duration-700 ${EASE} group-hover:translate-y-0 min-[820px]:flex`}
       >
+        {sizePills}
         <Link
           href={`/trangchu/${product.id}`}
           className="flex h-[50px] w-full items-center justify-center rounded-full bg-white text-[max(0.875rem,0.925vw)] uppercase text-black shadow"
@@ -167,11 +235,11 @@ export default function ProductCard({
         </Link>
         <button
           type="button"
-          disabled={product.soldOut}
-          onClick={handleAdd}
+          disabled={addDisabled}
+          onClick={handleAddClick}
           className="pointer-events-auto h-[50px] w-full rounded-full bg-black text-[max(0.875rem,0.925vw)] uppercase text-white disabled:cursor-not-allowed"
         >
-          {product.soldOut ? "Sold Out" : added ? "Đã thêm ✓" : "Thêm vào giỏ"}
+          {addLabel}
         </button>
       </div>
     </article>
