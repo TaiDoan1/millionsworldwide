@@ -114,13 +114,13 @@ function LinkedRow({ linked }: { linked: Product }) {
         <img
           src={linked.images[0]}
           alt={linked.name}
-          className="h-14 w-14 rounded-sm border border-neutral-200 object-cover"
+          className="h-14 w-14 rounded-[12px] border border-neutral-200 object-cover"
         />
       )}
       <div className="min-w-0 flex-1">
         <Link
           href={`/trangchu/${linked.id}`}
-          className="text-sm font-bold lowercase hover:opacity-60"
+          className="text-sm font-bold uppercase hover:opacity-60"
         >
           {linked.name}
         </Link>
@@ -182,7 +182,7 @@ function LegacyRow({
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-[12px] bg-[#f5f5f5] p-4">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold lowercase">{row.name}</p>
+        <p className="text-sm font-bold uppercase">{row.name}</p>
         <p className="mt-0.5 text-sm font-bold">{formatPrice(row.price)}</p>
       </div>
       {sizes.length > 0 && (

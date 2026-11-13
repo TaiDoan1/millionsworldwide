@@ -80,7 +80,7 @@ export default function ProductGallery({
               type="button"
               onClick={() => onSelect(i)}
               aria-label={`Xem ảnh ${i + 1}`}
-              className={`relative aspect-[2/3] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-[#f5f5f5] transition-all duration-700 ${EASE} ${
+              className={`relative aspect-[2/3] w-[72px] shrink-0 overflow-hidden rounded-[12px] bg-[#f5f5f5] transition-all duration-700 ${EASE} ${
                 i === selected
                   ? "ring-2 ring-black ring-offset-2"
                   : "opacity-70 hover:opacity-100"

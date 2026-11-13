@@ -9,14 +9,14 @@ export default function CartLines({
   onRemove,
 }: {
   lines: CartLine[];
-  onQty: (id: string, qty: number) => void;
-  onRemove: (id: string) => void;
+  onQty: (id: string, qty: number, size?: string) => void;
+  onRemove: (id: string, size?: string) => void;
 }) {
   return (
     <>
-      {lines.map(({ product, qty }) => (
-        <div key={product.id} className="flex gap-4 border-b border-neutral-100 py-4">
-          <div className="relative h-24 w-[72px] shrink-0 overflow-hidden rounded-md bg-neutral-100">
+      {lines.map(({ product, qty, size }) => (
+        <div key={`${product.id}::${size ?? ""}`} className="flex gap-4 border-b border-neutral-100 py-4">
+          <div className="relative h-24 w-[72px] shrink-0 overflow-hidden rounded-[12px] bg-neutral-100">
             <Image
               src={product.images[0]}
               alt={product.name}
@@ -32,19 +32,22 @@ export default function CartLines({
               </p>
               <button
                 type="button"
-                onClick={() => onRemove(product.id)}
+                onClick={() => onRemove(product.id, size)}
                 aria-label={`Xoá ${product.name}`}
                 className="text-lg leading-none text-neutral-400 hover:text-black"
               >
                 ×
               </button>
             </div>
-            <p className="mt-0.5 text-sm text-neutral-500">{formatPrice(product.price)}</p>
+            <p className="mt-0.5 text-sm text-neutral-500">
+              {formatPrice(product.price)}
+              {size ? ` · Size ${size}` : ""}
+            </p>
             <div className="mt-auto flex items-center justify-between pt-2">
               <div className="flex items-center border border-neutral-300 rounded-full">
                 <button
                   type="button"
-                  onClick={() => onQty(product.id, qty - 1)}
+                  onClick={() => onQty(product.id, qty - 1, size)}
                   className="h-8 w-8 text-black"
                   aria-label="Giảm số lượng"
                 >
@@ -53,7 +56,7 @@ export default function CartLines({
                 <span className="w-6 text-center text-sm font-semibold text-black">{qty}</span>
                 <button
                   type="button"
-                  onClick={() => onQty(product.id, qty + 1)}
+                  onClick={() => onQty(product.id, qty + 1, size)}
                   className="h-8 w-8 text-black"
                   aria-label="Tăng số lượng"
                 >
