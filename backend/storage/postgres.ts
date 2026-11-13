@@ -53,6 +53,7 @@ const SCHEMA = `
     note TEXT,
     payment TEXT NOT NULL,
     status TEXT NOT NULL,
+    channel TEXT,
     at TEXT NOT NULL
   );
   CREATE TABLE IF NOT EXISTS subscribers (
@@ -127,6 +128,11 @@ async function init(): Promise<void> {
   try {
     await client.query("BEGIN");
     await client.query(SCHEMA);
+    // Orders placed before POS have no channel column; add it for the
+    // live table (CREATE TABLE IF NOT EXISTS never alters it).
+    await client.query(
+      "ALTER TABLE orders ADD COLUMN IF NOT EXISTS channel TEXT"
+    );
     await migrate(client);
     await client.query("COMMIT");
   } catch (error) {
@@ -351,6 +357,7 @@ type OrderRow = {
   note: string | null;
   payment: Order["payment"];
   status: Order["status"];
+  channel: string | null;
   at: string;
 };
 
@@ -367,6 +374,7 @@ function orderFromRow(r: OrderRow): Order {
     },
     payment: r.payment,
     status: r.status,
+    channel: (r.channel as Order["channel"]) ?? undefined,
     at: r.at,
   };
 }
@@ -374,7 +382,7 @@ function orderFromRow(r: OrderRow): Order {
 export async function listOrders(): Promise<Order[]> {
   await ensureInit();
   const result = await getPool().query<OrderRow>(
-    "SELECT code, items, total, name, phone, address, note, payment, status, at FROM orders ORDER BY id"
+    "SELECT code, items, total, name, phone, address, note, payment, status, channel, at FROM orders ORDER BY id"
   );
   return result.rows.map(orderFromRow);
 }
@@ -382,7 +390,7 @@ export async function listOrders(): Promise<Order[]> {
 export async function appendOrder(order: Order): Promise<void> {
   await ensureInit();
   await getPool().query(
-    "INSERT INTO orders (code, items, total, name, phone, address, note, payment, status, at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+    "INSERT INTO orders (code, items, total, name, phone, address, note, payment, status, channel, at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
     [
       order.code,
       JSON.stringify(order.items),
@@ -393,6 +401,7 @@ export async function appendOrder(order: Order): Promise<void> {
       order.customer.note ?? null,
       order.payment,
       order.status,
+      order.channel ?? null,
       order.at,
     ]
   );

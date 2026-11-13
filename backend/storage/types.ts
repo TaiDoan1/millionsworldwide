@@ -27,8 +27,14 @@ export type Order = {
     address: string;
     note?: string;
   };
-  payment: "cod" | "transfer";
+  payment: "cod" | "transfer" | "cash";
   status: "new" | "confirmed" | "shipping" | "delivered" | "cancelled";
+  /**
+   * Where the order came from. Absent on orders placed before POS
+   * existed — those were all online. "cash" payment only happens
+   * in-store; "cod" only happens online.
+   */
+  channel?: "online" | "in-store";
   at: string;
 };
 

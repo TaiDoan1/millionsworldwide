@@ -4,6 +4,7 @@ import {
   findPiece,
   isSizeSoldOut,
   pieceToProduct,
+  sizeOptionsFor,
 } from "../../app/data/products";
 import { getProductsStrict } from "./products";
 import {
@@ -67,6 +68,51 @@ function newOrderCode(existing: Order[]): string {
   return code;
 }
 
+type RawLine = { id: string; qty: number; size?: string };
+
+/**
+ * Resolve raw lines against the strict catalog: find the product (or a
+ * legacy set piece), reject sold-out products and sizes, clamp
+ * quantities, merge duplicate lines. Prices always come from the
+ * catalog — never from the client.
+ */
+function resolvePricedItems(
+  catalog: Awaited<ReturnType<typeof getProductsStrict>>,
+  rawItems: RawLine[],
+  requireSize: boolean
+): { items: OrderItem[]; total: number; error?: string } {
+  const items: OrderItem[] = [];
+  for (const raw of rawItems) {
+    // A line is a whole product — or one piece of a set ("giá lẻ").
+    // A linked piece's id IS its standalone product's id, so it is
+    // found above as a product. A legacy inline piece is priced from
+    // its own price and inherits the set's sizes and sold-out state.
+    const product = catalog.find((p) => p.id === raw.id);
+    const found = product ? null : findPiece(catalog, raw.id);
+    const priced = product ?? (found ? pieceToProduct(found.set, found.piece, catalog) : null);
+    const parent = product ?? found?.set;
+    if (!priced || !parent || parent.soldOut) {
+      return { items, total: 0, error: "Có sản phẩm đã hết hàng trong giỏ." };
+    }
+    // Per-size stock: only a size explicitly marked soldOut is rejected.
+    // No size chosen means the shop confirms size by phone, as before.
+    const size = typeof raw.size === "string" ? raw.size.trim().slice(0, 10) : undefined;
+    // At the counter the seller picks the size on the spot — a product
+    // that has sizes cannot be sold without one.
+    if (requireSize && !size && sizeOptionsFor(parent).length > 0) {
+      return { items, total: 0, error: `Chưa chọn size cho ${priced.name}.` };
+    }
+    if (size && isSizeSoldOut(parent, size)) {
+      return { items, total: 0, error: `Size ${size} của ${priced.name} đã hết hàng.` };
+    }
+    const qty = Math.max(1, Math.min(10, Math.floor(raw.qty) || 1));
+    const existing = items.find((i) => i.id === priced.id && i.size === size);
+    if (existing) existing.qty = Math.min(10, existing.qty + qty);
+    else items.push({ id: priced.id, name: priced.name, price: priced.price, qty, size });
+  }
+  return { items, total: items.reduce((sum, i) => sum + i.price * i.qty, 0) };
+}
+
 /**
  * Place an order. Prices are always recomputed from the catalogue on the
  * server — the client only sends product ids and quantities.
@@ -95,7 +141,6 @@ export async function placeOrder(
     return { success: false, error: "Giỏ hàng đang trống." };
   }
 
-  const items: OrderItem[] = [];
   // Strict catalog: a DB outage must fail the order loudly, never price
   // it from the stale code seed while the live catalog is unreachable.
   let catalog: Awaited<ReturnType<typeof getProductsStrict>>;
@@ -105,31 +150,12 @@ export async function placeOrder(
     console.error("Failed to read pricing catalog:", error);
     return { success: false, error: "Không kết nối được kho dữ liệu, thử lại sau ít phút nhé." };
   }
-  for (const raw of input.items) {
-    // A line is a whole product — or one piece of a set ("giá lẻ").
-    // A linked piece's id IS its standalone product's id, so it is
-    // found above as a product. A legacy inline piece is priced from
-    // its own price and inherits the set's sizes and sold-out state.
-    const product = catalog.find((p) => p.id === raw.id);
-    const found = product ? null : findPiece(catalog, raw.id);
-    const priced = product ?? (found ? pieceToProduct(found.set, found.piece, catalog) : null);
-    const parent = product ?? found?.set;
-    if (!priced || !parent || parent.soldOut) {
-      return { success: false, error: "Có sản phẩm đã hết hàng trong giỏ." };
-    }
-    // Per-size stock: only a size explicitly marked soldOut is rejected.
-    // No size chosen means the shop confirms size by phone, as before.
-    const size = typeof raw.size === "string" ? raw.size.trim().slice(0, 10) : undefined;
-    if (size && isSizeSoldOut(parent, size)) {
-      return { success: false, error: `Size ${size} của ${priced.name} đã hết hàng.` };
-    }
-    const qty = Math.max(1, Math.min(10, Math.floor(raw.qty) || 1));
-    const existing = items.find((i) => i.id === priced.id && i.size === size);
-    if (existing) existing.qty = Math.min(10, existing.qty + qty);
-    else items.push({ id: priced.id, name: priced.name, price: priced.price, qty, size });
+  const resolved = resolvePricedItems(catalog, input.items, false);
+  if (resolved.error) {
+    return { success: false, error: resolved.error };
   }
-
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const items = resolved.items;
+  const total = resolved.total;
 
   try {
     const orders = await listOrders();
@@ -152,6 +178,92 @@ export async function placeOrder(
   } catch (error) {
     console.error("Failed to store order:", error);
     return { success: false, error: "Không lưu được đơn, anh/chị thử lại giúp shop nhé." };
+  }
+}
+
+export type PlacePosOrderInput = {
+  channel: "in-store" | "online";
+  items: { id: string; qty: number; size?: string }[];
+  customer: { name?: string; phone?: string; address?: string; note?: string };
+  payment: "cash" | "transfer" | "cod";
+};
+
+/**
+ * Place an order from the POS screen (/mw-office/pos). Admin only — no
+ * public rate limit. In-store sales are paid on the spot (cash or
+ * transfer) and handed over immediately, so they land as "delivered";
+ * online sales taken by phone/chat go through the normal flow as "new".
+ * Unlike the web checkout, a product that has sizes cannot be sold
+ * without a size: the seller picks it on the spot.
+ */
+export async function placePosOrder(
+  input: PlacePosOrderInput
+): Promise<{ success: boolean; code?: string; error?: string }> {
+  if (!(await isAdminRequest())) {
+    return { success: false, error: "Không có quyền bán hàng." };
+  }
+  const channel = input.channel === "online" ? "online" : "in-store";
+  const payment = input.payment;
+  if (
+    (channel === "in-store" && payment !== "cash" && payment !== "transfer") ||
+    (channel === "online" && payment !== "cod" && payment !== "transfer")
+  ) {
+    return { success: false, error: "Hình thức thanh toán chưa đúng với kênh bán." };
+  }
+  const name = (input.customer?.name || "").trim();
+  const phone = (input.customer?.phone || "").trim();
+  const address = (input.customer?.address || "").trim();
+  const note = (input.customer?.note || "").trim();
+  if (name.length > 100 || address.length > 500 || note.length > 500) {
+    return { success: false, error: "Thông tin nhập vào quá dài." };
+  }
+  if (channel === "online") {
+    if (!name || !phone || !address) {
+      return { success: false, error: "Đơn online cần họ tên, số điện thoại và địa chỉ." };
+    }
+    if (!/^[0-9+\s.()\-]{9,15}$/.test(phone)) {
+      return { success: false, error: "Số điện thoại chưa đúng định dạng." };
+    }
+  }
+  if (!Array.isArray(input.items) || input.items.length === 0) {
+    return { success: false, error: "Phiếu bán đang trống." };
+  }
+
+  let catalog: Awaited<ReturnType<typeof getProductsStrict>>;
+  try {
+    catalog = await getProductsStrict();
+  } catch (error) {
+    console.error("Failed to read pricing catalog:", error);
+    return { success: false, error: "Không kết nối được kho dữ liệu, thử lại sau ít phút nhé." };
+  }
+  const resolved = resolvePricedItems(catalog, input.items, true);
+  if (resolved.error) {
+    return { success: false, error: resolved.error };
+  }
+
+  try {
+    const orders = await listOrders();
+    const order: Order = {
+      code: newOrderCode(orders),
+      items: resolved.items,
+      total: resolved.total,
+      customer: {
+        name: channel === "in-store" && !name ? "Khách tại quầy" : name,
+        phone,
+        address,
+        note: note || undefined,
+      },
+      payment,
+      channel,
+      status: channel === "in-store" ? "delivered" : "new",
+      at: new Date().toISOString(),
+    };
+    await appendOrder(order);
+    revalidatePath("/mw-office");
+    return { success: true, code: order.code };
+  } catch (error) {
+    console.error("Failed to store POS order:", error);
+    return { success: false, error: "Không lưu được đơn, thử lại giúp shop nhé." };
   }
 }
 

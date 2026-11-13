@@ -17,6 +17,7 @@ import { formatPrice } from "../lib/format"
 export const dynamic = "force-dynamic"
 
 const NAV = [
+  { href: "/mw-office/pos", label: "Bán hàng" },
   { href: "#tong-quan", label: "Tổng quan" },
   { href: "#don-hang", label: "Đơn hàng" },
   { href: "#san-pham", label: "Sản phẩm" },

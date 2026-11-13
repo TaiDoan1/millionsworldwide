@@ -45,6 +45,7 @@ const SCHEMA = `
     note TEXT,
     payment TEXT NOT NULL,
     status TEXT NOT NULL,
+    channel TEXT,
     at TEXT NOT NULL
   );
   CREATE TABLE IF NOT EXISTS subscribers (
@@ -104,6 +105,14 @@ async function initDb(): Promise<DatabaseSync> {
   }
   const db = new DatabaseSyncCtor(path.join(fileStore.dataDir(), DB_FILE));
   db.exec(SCHEMA);
+  // SQLite has no ADD COLUMN IF NOT EXISTS: add the POS channel column
+  // to an existing shop.db only when it is missing.
+  const cols = db.prepare("PRAGMA table_info(orders)").all() as {
+    name: string;
+  }[];
+  if (!cols.some((c) => c.name === "channel")) {
+    db.exec("ALTER TABLE orders ADD COLUMN channel TEXT");
+  }
   await migrateFromJson(db);
   return db;
 }
@@ -205,6 +214,7 @@ function orderFromRow(r: Record<string, unknown>): Order {
     },
     payment: r.payment as Order["payment"],
     status: r.status as Order["status"],
+    channel: (r.channel as Order["channel"]) ?? undefined,
     at: r.at as string,
   };
 }
@@ -228,7 +238,7 @@ export async function appendOrder(order: Order): Promise<void> {
   // silently overwriting another order; the service already checks codes
   // against the current list, so this is a last-resort guard.
   db.prepare(
-    "INSERT INTO orders (code, items, total, name, phone, address, note, payment, status, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO orders (code, items, total, name, phone, address, note, payment, status, channel, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     order.code,
     JSON.stringify(order.items),
@@ -239,6 +249,7 @@ export async function appendOrder(order: Order): Promise<void> {
     order.customer.note ?? null,
     order.payment,
     order.status,
+    order.channel ?? null,
     order.at
   );
 }

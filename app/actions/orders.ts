@@ -7,15 +7,17 @@ import {
   findOrder as findOrderService,
   getOrders as getOrdersService,
   placeOrder as placeOrderService,
+  placePosOrder as placePosOrderService,
   updateOrderStatus as updateOrderStatusService,
 } from "../../backend/services/orders";
 import type {
   Order,
   OrderItem,
   PlaceOrderInput,
+  PlacePosOrderInput,
 } from "../../backend/services/orders";
 
-export type { Order, OrderItem, PlaceOrderInput };
+export type { Order, OrderItem, PlaceOrderInput, PlacePosOrderInput };
 
 export async function getOrders(): Promise<Order[]> {
   return getOrdersService();
@@ -25,6 +27,12 @@ export async function placeOrder(
   input: PlaceOrderInput
 ): Promise<{ success: boolean; code?: string; error?: string }> {
   return placeOrderService(input);
+}
+
+export async function placePosOrder(
+  input: PlacePosOrderInput
+): Promise<{ success: boolean; code?: string; error?: string }> {
+  return placePosOrderService(input);
 }
 
 export async function findOrder(

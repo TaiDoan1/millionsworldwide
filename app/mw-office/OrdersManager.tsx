@@ -16,6 +16,12 @@ const STATUS_LABELS: Record<Order["status"], string> = {
   cancelled: "Đã hủy",
 };
 
+const PAYMENT_LABELS: Record<Order["payment"], string> = {
+  cod: "COD",
+  transfer: "Chuyển khoản",
+  cash: "Tiền mặt",
+};
+
 const STATUSES = Object.keys(STATUS_LABELS) as Order["status"][];
 
 /** Order list with search, status filter and CSV export (filtered rows). */
@@ -40,6 +46,7 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
     let out = csvRow([
       "Mã đơn",
       "Ngày",
+      "Kênh",
       "Khách",
       "SĐT",
       "Địa chỉ",
@@ -52,10 +59,11 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
       out += csvRow([
         o.code,
         new Date(o.at).toLocaleString("vi-VN"),
+        o.channel === "in-store" ? "Tại quầy" : "Online",
         o.customer.name,
         o.customer.phone,
         o.customer.address,
-        o.payment === "cod" ? "COD" : "Chuyển khoản",
+        PAYMENT_LABELS[o.payment],
         STATUS_LABELS[o.status],
         o.total,
         o.items
@@ -102,14 +110,29 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
           {filtered.map((o) => (
             <div key={o.code} className="border border-neutral-200 p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-black tracking-wider">{o.code}</p>
+                <p className="font-black tracking-wider">
+                  {o.code}
+                  {o.channel === "in-store" && (
+                    <span className="ml-2 bg-black px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-white">
+                      Tại quầy
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-gray-500">
                   {new Date(o.at).toLocaleString("vi-VN")}
                 </p>
               </div>
               <p className="mt-1 text-sm">
-                {o.customer.name} — {o.customer.phone}
-                <span className="text-gray-500"> · {o.customer.address}</span>
+                {o.customer.name}
+                {o.customer.phone && (
+                  <>
+                    {" — "}
+                    {o.customer.phone}
+                  </>
+                )}
+                {o.customer.address && (
+                  <span className="text-gray-500"> · {o.customer.address}</span>
+                )}
               </p>
               {o.customer.note && (
                 <p className="text-sm text-gray-500">Ghi chú: {o.customer.note}</p>
@@ -130,7 +153,7 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
               </ul>
               <div className="mt-2 flex justify-between border-t border-neutral-100 pt-2 text-sm font-bold">
                 <span>
-                  Tổng · {o.payment === "cod" ? "COD" : "Chuyển khoản"} ·{" "}
+                  Tổng · {PAYMENT_LABELS[o.payment]} ·{" "}
                   {STATUS_LABELS[o.status]}
                 </span>
                 <span>{formatPrice(o.total)}</span>
