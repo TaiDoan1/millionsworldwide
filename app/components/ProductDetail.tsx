@@ -6,7 +6,8 @@ import type { Product } from "../data/products";
 import { useCart } from "./CartContext";
 import ProductGallery from "../features/product/ProductGallery";
 import BuyBox from "../features/product/BuyBox";
-import PieceBuyList from "../features/product/PieceBuyList";
+import SetPicker from "../features/product/SetPicker";
+import { resolveRows } from "../features/product/piece-rows";
 import ProductAccordions from "../features/product/ProductAccordions";
 import RelatedProducts from "../features/product/RelatedProducts";
 
@@ -40,6 +41,11 @@ export default function ProductDetail({
     window.setTimeout(() => setAdded(false), 1400);
     openCart();
   };
+
+  // A set with linked pieces sells through the Shopee-style picker
+  // (choose 1 piece or the full set); anything else uses the plain
+  // buy box. The old separate "Mua lẻ từng món" list is gone.
+  const hasPieces = resolveRows(product, catalog).length > 0;
 
   return (
     <div className="w-full">
@@ -75,8 +81,11 @@ export default function ProductDetail({
           className="mw-fade-up w-full lg:sticky lg:top-[110px] lg:w-[45%] lg:self-start"
           style={{ animationDelay: "160ms" }}
         >
-          <BuyBox product={product} added={added} onAdd={handleAdd} />
-          <PieceBuyList product={product} catalog={catalog} />
+          {hasPieces ? (
+            <SetPicker product={product} catalog={catalog} />
+          ) : (
+            <BuyBox product={product} added={added} onAdd={handleAdd} />
+          )}
           <ProductAccordions product={product} />
         </div>
       </div>

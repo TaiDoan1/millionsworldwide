@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  isLinkedPiece,
   sizeOptionsFor,
   type Product,
 } from "../../data/products";
@@ -11,6 +10,7 @@ import { useCart } from "../../components/CartContext";
 import { formatPrice } from "../../lib/format";
 import { useLanguage } from "../../lib/i18n";
 import { EASE } from "./constants";
+import { resolveRows, type PieceRow } from "./piece-rows";
 
 /**
  * "Mua lẻ từng món" on a set's detail page: each piece is a link to a
@@ -63,35 +63,6 @@ export default function PieceBuyList({
       </div>
     </div>
   );
-}
-
-type Row =
-  | { kind: "linked"; product: Product; price: number }
-  | { kind: "legacy"; id: string; name: string; price: number };
-
-function resolveRows(set: Product, catalog: Product[]): Row[] {
-  const rows: Row[] = [];
-  for (const piece of set.pieces ?? []) {
-    if (isLinkedPiece(piece)) {
-      const linked = catalog.find((p) => p.id === piece.productId);
-      if (linked) {
-        rows.push({ kind: "linked", product: linked, price: linked.price });
-      }
-      // Gone or hidden from the visible catalog: skip the row.
-    } else if (
-      typeof piece.id === "string" &&
-      typeof piece.name === "string" &&
-      typeof piece.price === "number"
-    ) {
-      rows.push({
-        kind: "legacy",
-        id: piece.id,
-        name: piece.name,
-        price: piece.price,
-      });
-    }
-  }
-  return rows;
 }
 
 function LinkedRow({ linked }: { linked: Product }) {
@@ -167,7 +138,7 @@ function LegacyRow({
   row,
 }: {
   set: Product;
-  row: Extract<Row, { kind: "legacy" }>;
+  row: Extract<PieceRow, { kind: "legacy" }>;
 }) {
   const { add } = useCart();
   const { t } = useLanguage();
