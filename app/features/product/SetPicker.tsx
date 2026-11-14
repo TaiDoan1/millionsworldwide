@@ -23,7 +23,7 @@ import {
  * separate list below). Two steps, in order:
  *
  * 1. Pick pieces in "Thành phần bộ" — no size here. Nothing is picked
- *    by default; the customer chooses first.
+ *    by default, and leaving it empty buys the full set.
  * 2. Pick size in ONE frame below: the set's shared size when the full
  *    set is picked, that piece's own sizes when a single piece is
  *    picked. (A partial pick of 2+ pieces from a 3+ piece set falls
@@ -61,34 +61,41 @@ export default function SetPicker({
 
   const allSelected = selected.length === rows.length && rows.length > 0;
   const selectedRows = rows.filter((r) => selected.includes(rowKey(r)));
+  // Empty selection = the full set: set price, set sizes, set photos.
+  const isFullSet = allSelected || selectedRows.length === 0;
   const pieceTotal = selectedRows.reduce((s, r) => s + r.price, 0);
   const saves = pieceTotal - product.price;
-  const total = allSelected ? product.price : pieceTotal;
+  const total = isFullSet ? product.price : pieceTotal;
+  // Sum of the pieces that can still be bought — the savings baseline
+  // for the full set, whether picked piece by piece or left empty.
+  const buyableTotal = rows
+    .filter((r) => !rowSoldOut(r, product))
+    .reduce((s, r) => s + r.price, 0);
+  const fullSetSaves = buyableTotal - product.price;
   const setSizes = sizeOptionsFor(product);
 
   const sizesFor = (row: PieceRow) =>
     row.kind === "linked" ? sizeOptionsFor(row.product) : setSizes;
 
-  // The single size frame's options: set sizes for the full set, the
-  // one piece's sizes for a single piece. Null = partial multi-piece
-  // pick, which keeps one size row per piece instead.
+  // The single size frame's options: set sizes for the full set (all
+  // picked, or nothing picked), the one piece's sizes for a single
+  // piece. Null = partial multi-piece pick, which keeps one size row
+  // per piece instead.
   const selectionSizes =
-    allSelected || selectedRows.length === 1
-      ? allSelected
-        ? setSizes
-        : sizesFor(selectedRows[0])
-      : null;
+    selectedRows.length === 0 || allSelected
+      ? setSizes
+      : selectedRows.length === 1
+        ? sizesFor(selectedRows[0])
+        : null;
 
   const sizeOk =
-    selected.length > 0 &&
-    (selectionSizes !== null
+    selectionSizes !== null
       ? selectionSizes.length === 0 || !!size
       : selectedRows.every((r) => {
           const sizes = sizesFor(r);
           return sizes.length === 0 || !!pieceSizes[rowKey(r)];
-        }));
-  const canAdd =
-    !product.soldOut && selected.length > 0 && sizeOk;
+        });
+  const canAdd = !product.soldOut && sizeOk;
 
   const toggle = (key: string) => {
     // Empty is allowed now — nothing is picked by default.
@@ -105,7 +112,7 @@ export default function SetPicker({
 
   const handleAdd = () => {
     if (!canAdd) return;
-    if (allSelected) {
+    if (allSelected || selectedRows.length === 0) {
       add(product.id, size);
     } else if (selectedRows.length === 1) {
       add(rowProductId(selectedRows[0]), size);
@@ -165,8 +172,7 @@ export default function SetPicker({
             {formatPrice(product.compareAt)}
           </span>
         )}
-        {/* Nothing picked yet: headline stays the set's price. */}
-        {formatPrice(selected.length === 0 ? product.price : total)}
+        {formatPrice(total)}
       </p>
       {product.preOrder && (
         <p className="mt-2 inline-block bg-[#666] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
@@ -208,13 +214,11 @@ export default function SetPicker({
           })}
         </div>
         <p className="mt-3 text-sm leading-relaxed text-[#67645e]">
-          {selected.length === 0 ? (
-            t("picker.emptyHint")
-          ) : allSelected ? (
-            saves > 0 ? (
-              t("picker.save", { saves: formatPrice(saves) })
+          {isFullSet ? (
+            fullSetSaves > 0 ? (
+              t("picker.save", { saves: formatPrice(fullSetSaves) })
             ) : (
-              t("pieces.summary", { total: formatPrice(pieceTotal) })
+              t("pieces.summary", { total: formatPrice(buyableTotal) })
             )
           ) : (
             <>
@@ -236,9 +240,8 @@ export default function SetPicker({
       {/* Step 2 — size, AFTER picking pieces: one frame only. Full set
           takes the set's shared size, a single piece takes that piece's
           sizes. The piece picker above never shows size. Nothing picked
-          yet: no size frame at all. */}
-      {selected.length > 0 &&
-        (selectionSizes !== null ? (
+          yet still shows the set's size frame — empty means the full set. */}
+      {selectionSizes !== null ? (
         selectionSizes.length > 0 ? (
           <div className="mt-6">
             <p className="text-sm font-semibold uppercase tracking-wider">Size</p>
@@ -277,7 +280,7 @@ export default function SetPicker({
             );
           })}
         </div>
-        ))}
+      )}
 
       <button
         type="button"
@@ -287,11 +290,9 @@ export default function SetPicker({
       >
         {product.soldOut
           ? t("card.soldOut")
-          : selected.length === 0
-            ? t("picker.chooseFirst")
-            : added
-              ? t("card.added")
-              : t("card.add")}
+          : added
+            ? t("card.added")
+            : t("card.add")}
       </button>
       <p className="mt-3 text-center text-sm text-[#67645e]">
         {t("buy.shipping")}
