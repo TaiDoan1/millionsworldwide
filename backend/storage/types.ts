@@ -14,6 +14,9 @@ export type OrderItem = {
   /** Size the customer picked on the detail page, if any. Absent means
    *  the shop confirms size by phone, as before. */
   size?: string;
+  /** Color the customer picked on the detail page, if any. Absent
+   *  means the product had no colors to pick from. */
+  color?: string;
 };
 
 export type Order = {

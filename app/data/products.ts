@@ -17,6 +17,20 @@ export type SizeOption = {
   soldOut?: boolean;
 };
 
+/**
+ * One color of a product. `hex` drives the swatch dot on the detail
+ * page; `images` are this color's own photos — picking the color swaps
+ * the gallery to them (empty means the product's photos). Only colors
+ * listed here are offered, never invented.
+ */
+export type ProductColor = {
+  label: string;
+  /** Swatch colour, e.g. "#111111". */
+  hex?: string;
+  soldOut?: boolean;
+  images?: string[];
+};
+
 /** Short spec facts. Every field is optional on purpose: the detail page
  *  only renders the rows that are actually filled in, so no material,
  *  fit or model info is ever invented for a product that has none. */
@@ -68,6 +82,14 @@ export type Product = {
    *  Add the shop's real size list here and the detail page will show a
    *  picker with sold-out sizes locked. Never invent a size list. */
   sizes?: SizeOption[];
+  /**
+   * Per-color options with their own photos, in one place (this file).
+   * When absent, no color picker is shown at all — the product is sold
+   * in its gallery photos as before. Add the shop's real colors here
+   * and the detail page will show a picker; picking a color with
+   * photos swaps the gallery to them. Never invent a color list.
+   */
+  colors?: ProductColor[];
   /** Spec facts for the detail page; omitted rows are simply not shown. */
   spec?: ProductSpec;
   /**
@@ -101,6 +123,25 @@ export function sizeOptionsFor(product: Product): SizeOption[] {
 /** True when this size is locked for this product. */
 export function isSizeSoldOut(product: Product, label: string): boolean {
   return product.sizes?.some((s) => s.label === label && s.soldOut) ?? false;
+}
+
+/** Effective color options for a product: its own list, or none. */
+export function colorOptionsFor(product: Product): ProductColor[] {
+  return product.colors ?? [];
+}
+
+/** True when this color is locked for this product. */
+export function isColorSoldOut(product: Product, label: string): boolean {
+  return product.colors?.some((c) => c.label === label && c.soldOut) ?? false;
+}
+
+/**
+ * This color's own photos, when the shop supplied any — otherwise null
+ * and the caller keeps the product's photos.
+ */
+export function colorImages(product: Product, label: string): string[] | null {
+  const images = product.colors?.find((c) => c.label === label)?.images ?? [];
+  return images.length > 0 ? images : null;
 }
 
 /** Find a piece anywhere in the catalog: its parent set + the piece.
@@ -150,6 +191,7 @@ export function pieceToProduct(
     soldOut: set.soldOut,
     preOrder: set.preOrder,
     ...(set.sizes ? { sizes: set.sizes } : {}),
+    ...(set.colors ? { colors: set.colors } : {}),
   };
 }
 

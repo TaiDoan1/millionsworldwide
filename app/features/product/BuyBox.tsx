@@ -1,24 +1,43 @@
 import { useState } from "react";
-import { sizeOptionsFor, type Product } from "../../data/products";
+import {
+  colorImages,
+  colorOptionsFor,
+  sizeOptionsFor,
+  type Product,
+} from "../../data/products";
 import { formatPrice } from "../../lib/format";
 import { useLanguage } from "../../lib/i18n";
 import { EASE, TAG_BY_CATEGORY } from "./constants";
 
-/** Sticky buy column: tag, name, price, size picker/note, add button, shipping note. */
+/** Sticky buy column: tag, name, price, color/size picker/note, add button, shipping note. */
 export default function BuyBox({
   product,
   added,
   onAdd,
+  onGalleryImages,
 }: {
   product: Product;
   added: boolean;
-  onAdd: (size?: string) => void;
+  onAdd: (size?: string, color?: string) => void;
+  /** Called when a color with its own photos is picked, so the gallery swaps to them. */
+  onGalleryImages?: (images: string[]) => void;
 }) {
   const sizes = sizeOptionsFor(product);
+  const colors = colorOptionsFor(product);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
   const sizeRequired = sizes.length > 0;
-  const canAdd = !product.soldOut && (!sizeRequired || !!selectedSize);
+  const colorRequired = colors.length > 0;
+  const canAdd =
+    !product.soldOut &&
+    (!sizeRequired || !!selectedSize) &&
+    (!colorRequired || !!selectedColor);
   const { t } = useLanguage();
+
+  const pickColor = (label: string) => {
+    setSelectedColor(label);
+    onGalleryImages?.(colorImages(product, label) ?? product.images);
+  };
   return (
     <div>
       <span className="text-sm font-bold lowercase text-black">
@@ -39,6 +58,52 @@ export default function BuyBox({
         <p className="mt-2 inline-block bg-[#666] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
           Pre-order
         </p>
+      )}
+
+      {colors.length > 0 && (
+        /* Per-color picker — only shown when the shop has supplied real
+           colors in /mw-office. Picking a color with its own photos
+           swaps the gallery to them; sold-out colors are locked. */
+        <div className="mt-6">
+          <p className="text-sm font-semibold uppercase tracking-wider">
+            {t("buy.colorTitle")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {colors.map((c) => {
+              const disabled = !!c.soldOut;
+              const active = selectedColor === c.label;
+              return (
+                <button
+                  key={c.label}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => pickColor(c.label)}
+                  aria-pressed={active}
+                  className={`flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors duration-700 ${EASE} ${
+                    disabled
+                      ? "cursor-not-allowed border-neutral-200 text-neutral-400 line-through"
+                      : active
+                        ? "border-black bg-black text-white"
+                        : "border-neutral-300 bg-white text-black hover:border-black"
+                  }`}
+                >
+                  {c.hex && (
+                    <span
+                      aria-hidden
+                      className="h-4 w-4 rounded-full border border-black/10"
+                      style={{ backgroundColor: c.hex }}
+                    />
+                  )}
+                  {c.label}
+                  {disabled ? t("buy.soldOutSuffix") : ""}
+                </button>
+              );
+            })}
+          </div>
+          {!selectedColor && (
+            <p className="mt-2 text-sm text-[#67645e]">{t("buy.colorHint")}</p>
+          )}
+        </div>
       )}
 
       {sizes.length > 0 ? (
@@ -89,7 +154,7 @@ export default function BuyBox({
       <button
         type="button"
         disabled={!canAdd}
-        onClick={() => onAdd(selectedSize)}
+        onClick={() => onAdd(selectedSize, selectedColor)}
         className={`mt-6 h-[50px] w-full rounded-full bg-black text-[max(0.875rem,0.925vw)] uppercase text-white transition-opacity duration-700 ${EASE} hover:opacity-80 disabled:cursor-not-allowed disabled:bg-neutral-400`}
       >
         {product.soldOut ? t("card.soldOut") : added ? t("card.added") : t("card.add")}

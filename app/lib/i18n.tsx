@@ -46,6 +46,8 @@ const DICT: Record<Lang, Record<string, string>> = {
     "card.origin": "Xuất xứ: Việt Nam",
     "card.view": "Xem {name}",
     "buy.sizeHint": "Chọn size trước khi thêm vào giỏ.",
+    "buy.colorTitle": "Màu",
+    "buy.colorHint": "Chọn màu trước khi thêm vào giỏ.",
     "buy.sizeNote":
       "Shop sẽ xác nhận size khi gọi xác nhận đơn. Bạn có thể ghi chú size mình mặc ở bước đặt hàng.",
     "buy.shipping":
@@ -74,6 +76,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     "picker.hint": "Chọn món lẻ muốn mua, hoặc để trống để mua cả bộ.",
     "picker.save": "Tiết kiệm {saves} so với mua lẻ",
     "picker.sizeFor": "Size · {name}",
+    "picker.colorFor": "Màu · {name}",
     "related.title": "Phối cùng",
     "related.sub": "Gợi ý mặc cùng {name}",
     "cart.title": "Giỏ hàng",
@@ -83,6 +86,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     "cart.error": "Có lỗi xảy ra, thử lại giúp shop nhé.",
     "cart.orderError": "Không đặt được hàng, thử lại giúp shop nhé.",
     "cart.remove": "Xoá {name}",
+    "cart.color": "Màu {color}",
     "cart.decrease": "Giảm số lượng",
     "cart.increase": "Tăng số lượng",
     "checkout.delivery": "Thông tin giao hàng",
@@ -167,6 +171,8 @@ const DICT: Record<Lang, Record<string, string>> = {
     "card.origin": "Origin: Vietnam",
     "card.view": "View {name}",
     "buy.sizeHint": "Choose a size before adding to cart.",
+    "buy.colorTitle": "Color",
+    "buy.colorHint": "Choose a color before adding to cart.",
     "buy.sizeNote":
       "The shop will confirm your size by phone when confirming the order. You can note your size at checkout.",
     "buy.shipping":
@@ -195,6 +201,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     "picker.hint": "Pick the pieces you want, or leave it empty to buy the full set.",
     "picker.save": "Save {saves} vs buying separately",
     "picker.sizeFor": "Size · {name}",
+    "picker.colorFor": "Color · {name}",
     "related.title": "Style with",
     "related.sub": "Pairs well with {name}",
     "cart.title": "Cart",
@@ -204,6 +211,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     "cart.error": "Something went wrong, please try again.",
     "cart.orderError": "Could not place your order, please try again.",
     "cart.remove": "Remove {name}",
+    "cart.color": "Color {color}",
     "cart.decrease": "Decrease quantity",
     "cart.increase": "Increase quantity",
     "checkout.delivery": "Delivery information",

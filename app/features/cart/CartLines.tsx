@@ -10,14 +10,14 @@ export default function CartLines({
   onRemove,
 }: {
   lines: CartLine[];
-  onQty: (id: string, qty: number, size?: string) => void;
-  onRemove: (id: string, size?: string) => void;
+  onQty: (id: string, qty: number, size?: string, color?: string) => void;
+  onRemove: (id: string, size?: string, color?: string) => void;
 }) {
   const { t } = useLanguage();
   return (
     <>
-      {lines.map(({ product, qty, size }) => (
-        <div key={`${product.id}::${size ?? ""}`} className="flex gap-4 border-b border-neutral-100 py-4">
+      {lines.map(({ product, qty, size, color }) => (
+        <div key={`${product.id}::${size ?? ""}::${color ?? ""}`} className="flex gap-4 border-b border-neutral-100 py-4">
           <div className="relative h-24 w-[72px] shrink-0 overflow-hidden rounded-[12px] bg-neutral-100">
             <Image
               src={product.images[0]}
@@ -34,7 +34,7 @@ export default function CartLines({
               </p>
               <button
                 type="button"
-                onClick={() => onRemove(product.id, size)}
+                onClick={() => onRemove(product.id, size, color)}
                 aria-label={t("cart.remove", { name: product.name })}
                 className="text-lg leading-none text-neutral-400 hover:text-black"
               >
@@ -44,12 +44,13 @@ export default function CartLines({
             <p className="mt-0.5 text-sm text-neutral-500">
               {formatPrice(product.price)}
               {size ? ` · Size ${size}` : ""}
+              {color ? ` · ${t("cart.color", { color })}` : ""}
             </p>
             <div className="mt-auto flex items-center justify-between pt-2">
               <div className="flex items-center border border-neutral-300 rounded-full">
                 <button
                   type="button"
-                  onClick={() => onQty(product.id, qty - 1, size)}
+                  onClick={() => onQty(product.id, qty - 1, size, color)}
                   className="h-8 w-8 text-black"
                   aria-label={t("cart.decrease")}
                 >
@@ -58,7 +59,7 @@ export default function CartLines({
                 <span className="w-6 text-center text-sm font-semibold text-black">{qty}</span>
                 <button
                   type="button"
-                  onClick={() => onQty(product.id, qty + 1, size)}
+                  onClick={() => onQty(product.id, qty + 1, size, color)}
                   className="h-8 w-8 text-black"
                   aria-label={t("cart.increase")}
                 >

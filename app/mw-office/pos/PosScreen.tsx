@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { sizeOptionsFor, type Product } from "../../data/products";
+import {
+  colorOptionsFor,
+  sizeOptionsFor,
+  type Product,
+} from "../../data/products";
 import { placePosOrder, type PlacePosOrderInput } from "../../actions/orders";
 import { formatPrice } from "../../lib/format";
 import { vietqrImageUrl } from "../../lib/vietqr";
@@ -14,6 +18,7 @@ type TicketLine = {
   name: string;
   price: number;
   size?: string;
+  color?: string;
   qty: number;
 };
 
@@ -40,6 +45,7 @@ export default function PosScreen({
   const [staging, setStaging] = useState<{
     product: Product;
     size?: string;
+    color?: string;
     qty: number;
   } | null>(null);
   const [ticket, setTicket] = useState<TicketLine[]>([]);
@@ -98,25 +104,47 @@ export default function PosScreen({
   const received = Math.floor(Number(cashReceived) || 0);
   const change = payment === "cash" ? received - total : null;
 
+  // The product being picked at the counter, with its real options.
+  const stagingSizes = staging ? sizeOptionsFor(staging.product) : [];
+  const stagingColors = staging ? colorOptionsFor(staging.product) : [];
+  const stagingReady =
+    !!staging &&
+    (stagingSizes.length === 0 || !!staging.size) &&
+    (stagingColors.length === 0 || !!staging.color);
+
   function switchChannel(next: "in-store" | "online") {
     setChannel(next);
     setPayment(next === "in-store" ? "cash" : "cod");
     setMessage(null);
   }
 
-  function addLine(product: Product, size: string | undefined, qty: number) {
+  function addLine(
+    product: Product,
+    size: string | undefined,
+    color: string | undefined,
+    qty: number,
+  ) {
     setTicket((prev) => {
-      const found = prev.find((l) => l.id === product.id && l.size === size);
+      const found = prev.find(
+        (l) => l.id === product.id && l.size === size && l.color === color,
+      );
       if (found) {
         return prev.map((l) =>
-          l.id === product.id && l.size === size
+          l.id === product.id && l.size === size && l.color === color
             ? { ...l, qty: Math.min(10, l.qty + qty) }
             : l
         );
       }
       return [
         ...prev,
-        { id: product.id, name: product.name, price: product.price, size, qty },
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          size,
+          color,
+          qty,
+        },
       ];
     });
   }
@@ -124,19 +152,27 @@ export default function PosScreen({
   function handleTile(product: Product) {
     if (product.soldOut) return;
     const sizes = sizeOptionsFor(product);
-    if (sizes.length === 0) {
-      addLine(product, undefined, 1);
+    const colors = colorOptionsFor(product);
+    if (sizes.length === 0 && colors.length === 0) {
+      addLine(product, undefined, undefined, 1);
       return;
     }
-    setStaging({ product, size: undefined, qty: 1 });
+    setStaging({ product, size: undefined, color: undefined, qty: 1 });
   }
 
-  function setLineQty(id: string, size: string | undefined, qty: number) {
+  function setLineQty(
+    id: string,
+    size: string | undefined,
+    color: string | undefined,
+    qty: number,
+  ) {
     setTicket((prev) =>
       qty <= 0
-        ? prev.filter((l) => !(l.id === id && l.size === size))
+        ? prev.filter(
+            (l) => !(l.id === id && l.size === size && l.color === color),
+          )
         : prev.map((l) =>
-            l.id === id && l.size === size
+            l.id === id && l.size === size && l.color === color
               ? { ...l, qty: Math.min(10, qty) }
               : l
           )
@@ -166,7 +202,12 @@ export default function PosScreen({
     setMessage(null);
     const input: PlacePosOrderInput = {
       channel,
-      items: ticket.map((l) => ({ id: l.id, qty: l.qty, size: l.size })),
+      items: ticket.map((l) => ({
+        id: l.id,
+        qty: l.qty,
+        size: l.size,
+        color: l.color,
+      })),
       customer: {
         name: name.trim() || undefined,
         phone: phone.trim() || undefined,
@@ -270,30 +311,75 @@ export default function PosScreen({
               </button>
             </div>
             <p className="mt-1 text-sm font-bold">{formatPrice(staging.product.price)}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {sizeOptionsFor(staging.product).map((s) => {
-                const disabled = !!s.soldOut;
-                const active = staging.size === s.label;
-                return (
-                  <button
-                    key={s.label}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => setStaging({ ...staging, size: s.label })}
-                    aria-pressed={active}
-                    className={`h-11 min-w-11 rounded-full border px-4 text-sm font-semibold transition-colors duration-700 ${EASE} ${
-                      disabled
-                        ? "cursor-not-allowed border-neutral-200 bg-white text-neutral-400 line-through"
-                        : active
-                          ? "border-black bg-black text-white"
-                          : "border-neutral-300 bg-white text-black hover:border-black"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
+            {stagingColors.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  Màu
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {stagingColors.map((c) => {
+                    const disabled = !!c.soldOut;
+                    const active = staging.color === c.label;
+                    return (
+                      <button
+                        key={c.label}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => setStaging({ ...staging, color: c.label })}
+                        aria-pressed={active}
+                        className={`flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors duration-700 ${EASE} ${
+                          disabled
+                            ? "cursor-not-allowed border-neutral-200 bg-white text-neutral-400 line-through"
+                            : active
+                              ? "border-black bg-black text-white"
+                              : "border-neutral-300 bg-white text-black hover:border-black"
+                        }`}
+                      >
+                        {c.hex && (
+                          <span
+                            aria-hidden
+                            className="h-4 w-4 rounded-full border border-black/10"
+                            style={{ backgroundColor: c.hex }}
+                          />
+                        )}
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {stagingSizes.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  Size
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {stagingSizes.map((s) => {
+                    const disabled = !!s.soldOut;
+                    const active = staging.size === s.label;
+                    return (
+                      <button
+                        key={s.label}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => setStaging({ ...staging, size: s.label })}
+                        aria-pressed={active}
+                        className={`h-11 min-w-11 rounded-full border px-4 text-sm font-semibold transition-colors duration-700 ${EASE} ${
+                          disabled
+                            ? "cursor-not-allowed border-neutral-200 bg-white text-neutral-400 line-through"
+                            : active
+                              ? "border-black bg-black text-white"
+                              : "border-neutral-300 bg-white text-black hover:border-black"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <div className="flex items-center rounded-full border border-neutral-300 bg-white">
                 <button
@@ -322,17 +408,24 @@ export default function PosScreen({
               </div>
               <button
                 type="button"
-                disabled={!staging.size}
+                disabled={!stagingReady}
                 onClick={() => {
-                  addLine(staging.product, staging.size, staging.qty);
+                  if (!staging) return;
+                  addLine(staging.product, staging.size, staging.color, staging.qty);
                   setStaging(null);
                 }}
                 className={btnPrimary}
               >
                 Thêm vào phiếu
               </button>
-              {!staging.size && (
-                <span className="text-xs text-[#67645e]">Chọn size trước nhé.</span>
+              {!stagingReady && (
+                <span className="text-xs text-[#67645e]">
+                  {stagingColors.length > 0 && !staging.color && stagingSizes.length > 0 && !staging.size
+                    ? "Chọn màu và size trước nhé."
+                    : stagingColors.length > 0 && !staging.color
+                      ? "Chọn màu trước nhé."
+                      : "Chọn size trước nhé."}
+                </span>
               )}
             </div>
           </div>
@@ -402,10 +495,11 @@ export default function PosScreen({
               <p className="my-3 border-t border-dashed border-neutral-400" />
               <ul>
                 {success.items.map((l) => (
-                  <li key={`${l.id}::${l.size ?? ""}`} className="mb-2">
+                  <li key={`${l.id}::${l.size ?? ""}::${l.color ?? ""}`} className="mb-2">
                     <p className="font-bold uppercase">
                       {l.name}
                       {l.size ? ` · Size ${l.size}` : ""}
+                      {l.color ? ` · Màu ${l.color}` : ""}
                     </p>
                     <p className="flex justify-between">
                       <span>
@@ -528,7 +622,7 @@ export default function PosScreen({
               <ul className="mt-4 divide-y divide-neutral-100">
                 {ticket.map((l) => (
                   <li
-                    key={`${l.id}::${l.size ?? ""}`}
+                    key={`${l.id}::${l.size ?? ""}::${l.color ?? ""}`}
                     className="flex items-center justify-between gap-2 py-3"
                   >
                     <div className="min-w-0">
@@ -536,13 +630,14 @@ export default function PosScreen({
                       <p className="text-xs text-gray-500">
                         {formatPrice(l.price)}
                         {l.size ? ` · Size ${l.size}` : ""}
+                        {l.color ? ` · Màu ${l.color}` : ""}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <div className="flex items-center rounded-full border border-neutral-300">
                         <button
                           type="button"
-                          onClick={() => setLineQty(l.id, l.size, l.qty - 1)}
+                          onClick={() => setLineQty(l.id, l.size, l.color, l.qty - 1)}
                           className="h-8 w-8 text-black"
                           aria-label="Giảm số lượng"
                         >
@@ -553,7 +648,7 @@ export default function PosScreen({
                         </span>
                         <button
                           type="button"
-                          onClick={() => setLineQty(l.id, l.size, l.qty + 1)}
+                          onClick={() => setLineQty(l.id, l.size, l.color, l.qty + 1)}
                           className="h-8 w-8 text-black"
                           aria-label="Tăng số lượng"
                         >
@@ -568,7 +663,12 @@ export default function PosScreen({
                         onClick={() =>
                           setTicket((prev) =>
                             prev.filter(
-                              (x) => !(x.id === l.id && x.size === l.size)
+                              (x) =>
+                                !(
+                                  x.id === l.id &&
+                                  x.size === l.size &&
+                                  x.color === l.color
+                                )
                             )
                           )
                         }

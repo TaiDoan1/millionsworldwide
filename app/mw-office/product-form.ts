@@ -1,6 +1,7 @@
 import {
   isLinkedPiece,
   type ProductCategory,
+  type ProductColor,
   type ProductPiece,
   type ProductSpec,
   type SizeOption,
@@ -28,6 +29,7 @@ export type ProductFormValues = {
   preOrder: boolean;
   hidden: boolean;
   sizes: SizeOption[];
+  colors: ProductColor[];
   pieces: ProductPiece[];
   sizeChart: string;
 };
@@ -43,6 +45,7 @@ export function productToFormValues(product: Product): ProductFormValues {
     preOrder: product.preOrder ?? false,
     hidden: product.hidden ?? false,
     sizes: product.sizes ?? [],
+    colors: product.colors ?? [],
     pieces: product.pieces ?? [],
     sizeChart: product.sizeChart ?? "",
   };
@@ -61,6 +64,7 @@ export function emptyProductFormValues(
     preOrder: false,
     hidden: false,
     sizes: [],
+    colors: [],
     pieces: [],
     sizeChart: "",
   };
@@ -74,6 +78,22 @@ export function cleanSizes(sizes: SizeOption[]): SizeOption[] {
       ...(s.soldOut ? { soldOut: true } : {}),
     }))
     .filter((s) => s.label.length > 0);
+}
+
+/** Trim color labels + hex, drop empty rows. */
+export function cleanColors(colors: ProductColor[]): ProductColor[] {
+  return colors
+    .map((c) => ({
+      label: c.label.trim(),
+      ...(typeof c.hex === "string" && c.hex.trim().length > 0
+        ? { hex: c.hex.trim().toLowerCase() }
+        : {}),
+      ...(c.soldOut ? { soldOut: true } : {}),
+      ...((c.images ?? []).length > 0
+        ? { images: (c.images ?? []).map((s) => s.trim()).filter((s) => s.length > 0) }
+        : {}),
+    }))
+    .filter((c) => c.label.length > 0);
 }
 
 /**
@@ -141,6 +161,7 @@ export function buildProductPatch(
     preOrder: values.preOrder,
     hidden: values.hidden,
     sizes: cleanSizes(values.sizes),
+    colors: cleanColors(values.colors),
     spec: cleanSpec(spec),
     pieces: cleanPieces(values.pieces),
     sizeChart: cleanSizeChart(values.sizeChart),
@@ -166,6 +187,7 @@ export function buildNewProduct(
     hidden: values.hidden,
     images,
     sizes: cleanSizes(values.sizes),
+    colors: cleanColors(values.colors),
     spec: null,
     pieces: cleanPieces(values.pieces),
     sizeChart: cleanSizeChart(values.sizeChart),

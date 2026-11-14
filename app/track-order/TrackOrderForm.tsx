@@ -81,9 +81,9 @@ export default function TrackOrderForm() {
           </p>
           <ul className="mt-3 space-y-1 text-sm text-neutral-600">
             {result.order.items.map((i) => (
-              <li key={`${i.id}::${i.size ?? ""}`} className="flex justify-between gap-4">
+              <li key={`${i.id}::${i.size ?? ""}::${i.color ?? ""}`} className="flex justify-between gap-4">
                 <span className="uppercase">
-                  {i.name}{i.size ? ` · Size ${i.size}` : ""} × {i.qty}
+                  {i.name}{i.size ? ` · Size ${i.size}` : ""}{i.color ? ` · ${t("cart.color", { color: i.color })}` : ""} × {i.qty}
                 </span>
                 <span>{formatPrice(i.price * i.qty)}</span>
               </li>

@@ -14,6 +14,7 @@
 import {
   PRODUCTS,
   type Product,
+  type ProductColor,
   type ProductPiece,
   type ProductSpec,
   type SizeOption,
@@ -32,6 +33,8 @@ export type ProductPatch = {
   preOrder: boolean;
   hidden: boolean;
   sizes: SizeOption[];
+  /** Per-color options with their own photos (label + hex + soldOut + images). */
+  colors: ProductColor[];
   spec: ProductSpec | null;
   /** Pieces of a set ("giá lẻ"), each buyable on its own from the set page. */
   pieces: ProductPiece[];
@@ -82,6 +85,19 @@ function asSizeOptions(value: unknown): SizeOption[] {
   );
 }
 
+function asColors(value: unknown): ProductColor[] {
+  const list = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? safeParse(value)
+      : undefined;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (c): c is ProductColor =>
+      !!c && typeof c === "object" && typeof (c as ProductColor).label === "string",
+  );
+}
+
 function asSpec(value: unknown): ProductSpec | undefined {
   const parsed = typeof value === "string" ? safeParse(value) : value;
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -127,6 +143,7 @@ type ProductRow = {
   pre_order: boolean;
   compare_at: number | null;
   sizes: unknown;
+  colors: unknown;
   spec: unknown;
   pieces: unknown;
   size_chart: string | null;
@@ -146,6 +163,8 @@ function rowToProduct(row: ProductRow): Product {
   if (typeof row.compare_at === "number") product.compareAt = row.compare_at;
   const sizes = asSizeOptions(row.sizes);
   if (sizes.length > 0) product.sizes = sizes;
+  const colors = asColors(row.colors);
+  if (colors.length > 0) product.colors = colors;
   const spec = asSpec(row.spec);
   if (spec) product.spec = spec;
   const pieces = asPieces(row.pieces);
@@ -175,6 +194,7 @@ export function ensureProductsInit(): Promise<void> {
           pre_order BOOLEAN NOT NULL DEFAULT FALSE,
           compare_at INTEGER,
           sizes JSONB NOT NULL DEFAULT '[]',
+          colors JSONB NOT NULL DEFAULT '[]',
           spec JSONB,
           pieces JSONB NOT NULL DEFAULT '[]',
           size_chart TEXT,
@@ -193,6 +213,10 @@ export function ensureProductsInit(): Promise<void> {
       await pool.query(
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS size_chart TEXT",
       );
+      // Same for the per-color options column (added later).
+      await pool.query(
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS colors JSONB NOT NULL DEFAULT '[]'",
+      );
       const count = await pool.query("SELECT COUNT(*) AS n FROM products");
       if (Number(count.rows[0]?.n ?? 0) === 0) {
         for (let i = 0; i < PRODUCTS.length; i++) {
@@ -200,8 +224,8 @@ export function ensureProductsInit(): Promise<void> {
           await pool.query(
             `INSERT INTO products
                (id, name, price, category, images, sold_out, pre_order,
-                compare_at, sizes, spec, pieces, size_chart, hidden, sort_order)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                compare_at, sizes, colors, spec, pieces, size_chart, hidden, sort_order)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
              ON CONFLICT (id) DO NOTHING`,
             [
               p.id,
@@ -213,6 +237,7 @@ export function ensureProductsInit(): Promise<void> {
               p.preOrder ?? false,
               p.compareAt ?? null,
               JSON.stringify(p.sizes ?? []),
+              JSON.stringify(p.colors ?? []),
               p.spec ? JSON.stringify(p.spec) : null,
               JSON.stringify(p.pieces ?? []),
               p.sizeChart ?? null,
@@ -262,8 +287,8 @@ export async function updateProduct(
     `UPDATE products
      SET name = $1, price = $2, compare_at = $3, category = $4,
          sold_out = $5, pre_order = $6, hidden = $7, sizes = $8, spec = $9,
-         pieces = $10, images = $11, size_chart = $12
-     WHERE id = $13`,
+         pieces = $10, images = $11, size_chart = $12, colors = $13
+     WHERE id = $14`,
     [
       patch.name,
       patch.price,
@@ -277,6 +302,7 @@ export async function updateProduct(
       JSON.stringify(patch.pieces ?? []),
       JSON.stringify(patch.images ?? []),
       patch.sizeChart ?? null,
+      JSON.stringify(patch.colors ?? []),
       id,
     ],
   );
@@ -290,8 +316,8 @@ export async function insertProduct(p: NewProduct): Promise<boolean> {
   const { rowCount } = await pool.query(
     `INSERT INTO products
        (id, name, price, compare_at, category, images, sold_out, pre_order,
-        hidden, sizes, spec, pieces, size_chart, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+        hidden, sizes, colors, spec, pieces, size_chart, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
        (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM products))
      ON CONFLICT (id) DO NOTHING`,
     [
@@ -305,6 +331,7 @@ export async function insertProduct(p: NewProduct): Promise<boolean> {
       p.preOrder ?? false,
       p.hidden,
       JSON.stringify(p.sizes ?? []),
+      JSON.stringify(p.colors ?? []),
       p.spec ? JSON.stringify(p.spec) : null,
       JSON.stringify(p.pieces ?? []),
       p.sizeChart ?? null,

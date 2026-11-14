@@ -98,6 +98,7 @@ export async function updateProduct(
         ...(s.soldOut ? { soldOut: true } : {}),
       }))
       .filter((s) => s.label.length > 0),
+    colors: cleanColors(patch.colors),
     spec: cleanSpec(patch.spec),
     pieces: cleanPieces(patch.pieces),
     sizeChart: (patch.sizeChart ?? "").trim() || null,
@@ -130,6 +131,17 @@ export async function updateProduct(
       }
       if (!imageFileExists(clean.sizeChart)) {
         return { success: false, error: `Không tìm thấy file ảnh bảng size trong web: ${clean.sizeChart}` };
+      }
+    }
+    // Same rule for each color's own photos.
+    for (const c of clean.colors) {
+      for (const src of c.images ?? []) {
+        if (!/\.(jpe?g|png|webp)$/i.test(src)) {
+          return { success: false, error: `Ảnh của màu ${c.label} phải là file jpg, png hoặc webp: ${src}` };
+        }
+        if (!imageFileExists(src)) {
+          return { success: false, error: `Không tìm thấy file ảnh của màu ${c.label} trong web: ${src}` };
+        }
       }
     }
     const found = await updateStoredProduct(id, clean);
@@ -165,6 +177,7 @@ export async function addProduct(
         ...(s.soldOut ? { soldOut: true } : {}),
       }))
       .filter((s) => s.label.length > 0),
+    colors: cleanColors(p.colors),
     spec: cleanSpec(p.spec),
     pieces: cleanPieces(p.pieces),
     sizeChart: (p.sizeChart ?? "").trim() || null,
@@ -192,6 +205,17 @@ export async function addProduct(
     }
     if (!imageFileExists(clean.sizeChart)) {
       return { success: false, error: `Không tìm thấy file ảnh bảng size trong web: ${clean.sizeChart}` };
+    }
+  }
+  // Same rule for each color's own photos.
+  for (const c of clean.colors) {
+    for (const src of c.images ?? []) {
+      if (!/\.(jpe?g|png|webp)$/i.test(src)) {
+        return { success: false, error: `Ảnh của màu ${c.label} phải là file jpg, png hoặc webp: ${src}` };
+      }
+      if (!imageFileExists(src)) {
+        return { success: false, error: `Không tìm thấy file ảnh của màu ${c.label} trong web: ${src}` };
+      }
     }
   }
   try {
@@ -230,6 +254,28 @@ export async function deleteProduct(
     console.error("Failed to delete product:", error);
     return { success: false, error: "Không xóa được sản phẩm." };
   }
+}
+
+/**
+ * Drop blank rows; keep label + hex + soldOut + photo list per color.
+ * Hex is lowercased so "#ABCDEF" and "#abcdef" never count as two
+ * different swatches.
+ */
+function cleanColors(
+  colors: ProductPatch["colors"],
+): ProductPatch["colors"] {
+  return (colors ?? [])
+    .map((c) => ({
+      label: (c.label ?? "").trim(),
+      ...(typeof c.hex === "string" && c.hex.trim().length > 0
+        ? { hex: c.hex.trim().toLowerCase() }
+        : {}),
+      ...(c.soldOut ? { soldOut: true } : {}),
+      ...((c.images ?? []).length > 0
+        ? { images: (c.images ?? []).map((s) => s.trim()).filter((s) => s.length > 0) }
+        : {}),
+    }))
+    .filter((c) => c.label.length > 0);
 }
 
 function cleanSpec(

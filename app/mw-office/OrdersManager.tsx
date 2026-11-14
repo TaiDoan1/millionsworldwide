@@ -67,7 +67,10 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
         STATUS_LABELS[o.status],
         o.total,
         o.items
-          .map((i) => `${i.name}${i.size ? ` (Size ${i.size})` : ""} x${i.qty}`)
+          .map(
+            (i) =>
+              `${i.name}${i.size ? ` (Size ${i.size})` : ""}${i.color ? ` (Màu ${i.color})` : ""} x${i.qty}`,
+          )
           .join("; "),
       ]);
     }
@@ -140,12 +143,13 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
               <ul className="mt-2 text-base text-gray-800">
                 {o.items.map((i) => (
                   <li
-                    key={`${i.id}::${i.size ?? ""}`}
+                    key={`${i.id}::${i.size ?? ""}::${i.color ?? ""}`}
                     className="flex justify-between"
                   >
                     <span className="uppercase">
                       {i.name}
-                      {i.size ? ` · Size ${i.size}` : ""} × {i.qty}
+                      {i.size ? ` · Size ${i.size}` : ""}
+                      {i.color ? ` · Màu ${i.color}` : ""} × {i.qty}
                     </span>
                     <span>{formatPrice(i.price * i.qty)}</span>
                   </li>

@@ -12,7 +12,12 @@ import {
 import type { Product } from "../data/products";
 import { findPiece, isLinkedPiece, pieceToProduct } from "../data/products";
 
-export type CartLine = { product: Product; qty: number; size?: string };
+export type CartLine = {
+  product: Product;
+  qty: number;
+  size?: string;
+  color?: string;
+};
 
 type CartContextValue = {
   lines: CartLine[];
@@ -22,9 +27,9 @@ type CartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  add: (id: string, size?: string) => void;
-  remove: (id: string, size?: string) => void;
-  setQty: (id: string, qty: number, size?: string) => void;
+  add: (id: string, size?: string, color?: string) => void;
+  remove: (id: string, size?: string, color?: string) => void;
+  setQty: (id: string, qty: number, size?: string, color?: string) => void;
   clear: () => void;
 };
 
@@ -80,10 +85,14 @@ function writeCart(items: Record<string, number>) {
   listeners.forEach((cb) => cb());
 }
 
-/* Cart storage keys: "product-id" (no size chosen, old carts keep working)
- * or "product-id::SIZE" (size picked on the detail page). */
-function cartKey(id: string, size?: string) {
-  return size ? `${id}::${size}` : id;
+/* Cart storage keys: "product-id" (no size/color chosen, old carts keep
+ * working), "product-id::SIZE", or "product-id::SIZE::COLOR" — the
+ * segments stay positional, so a color without a size keeps an empty
+ * middle segment ("product-id::::COLOR"). */
+function cartKey(id: string, size?: string, color?: string) {
+  const parts = [id, size ?? "", color ?? ""];
+  while (parts.length > 1 && parts[parts.length - 1] === "") parts.pop();
+  return parts.join("::");
 }
 
 function parseCart(
@@ -130,29 +139,29 @@ export function CartProvider({
   const [isOpen, setIsOpen] = useState(false);
 
   const add = useCallback(
-    (id: string, size?: string) => {
-      const key = cartKey(id, size);
+    (id: string, size?: string, color?: string) => {
+      const key = cartKey(id, size, color);
       writeCart({ ...items, [key]: Math.min(10, (items[key] ?? 0) + 1) });
     },
     [items]
   );
 
   const remove = useCallback(
-    (id: string, size?: string) => {
+    (id: string, size?: string, color?: string) => {
       const next = { ...items };
-      delete next[cartKey(id, size)];
+      delete next[cartKey(id, size, color)];
       writeCart(next);
     },
     [items]
   );
 
   const setQty = useCallback(
-    (id: string, qty: number, size?: string) => {
+    (id: string, qty: number, size?: string, color?: string) => {
       if (qty <= 0) {
-        remove(id, size);
+        remove(id, size, color);
         return;
       }
-      writeCart({ ...items, [cartKey(id, size)]: Math.min(10, qty) });
+      writeCart({ ...items, [cartKey(id, size, color)]: Math.min(10, qty) });
     },
     [items, remove]
   );
@@ -162,9 +171,15 @@ export function CartProvider({
   const value = useMemo<CartContextValue>(() => {
     const lines: CartLine[] = Object.entries(items)
       .map(([key, qty]): CartLine | null => {
-        const [id, size] = key.split("::");
+        const [id, size, color] = key.split("::");
         const product = products.find((p) => p.id === id);
-        if (product) return { product, qty, size: size || undefined };
+        if (product)
+          return {
+            product,
+            qty,
+            size: size || undefined,
+            color: color || undefined,
+          };
         // A "giá lẻ" line: the id is a legacy piece of a set, shown with
         // the set's name/images and priced from the piece itself.
         // (A linked piece's id IS its product id, found above.)
@@ -176,6 +191,7 @@ export function CartProvider({
           product: pieceProduct,
           qty,
           size: size || undefined,
+          color: color || undefined,
         };
       })
       .filter((l): l is CartLine => l !== null);

@@ -10,6 +10,7 @@ import {
   selectClass,
 } from "./ui";
 import SizesEditor from "./SizesEditor";
+import ColorsEditor from "./ColorsEditor";
 import PiecesEditor from "./PiecesEditor";
 import type { ProductFormValues } from "./product-form";
 
@@ -119,6 +120,10 @@ export default function ProductFormFields({
       <SizesEditor
         sizes={values.sizes}
         onChange={(sizes) => onChange({ sizes })}
+      />
+      <ColorsEditor
+        colors={values.colors}
+        onChange={(colors) => onChange({ colors })}
       />
       <PiecesEditor
         pieces={values.pieces}

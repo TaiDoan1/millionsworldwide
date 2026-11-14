@@ -11,20 +11,24 @@ export function rowKey(row: PieceRow): string {
 
 /**
  * Gallery images for a selection: a single linked piece shows its own
- * photos; anything else (nothing picked, the full set, a partial
- * multi-piece pick, or a legacy piece with no photos of its own)
- * shows the set's photos.
+ * photos; a picked color with its own photos comes next; anything else
+ * (nothing picked, the full set, a partial multi-piece pick, or a
+ * legacy piece with no photos of its own) shows the set's photos.
  */
 export function galleryImagesFor(
   set: Product,
   rows: PieceRow[],
   selectedKeys: string[],
+  colorImages?: string[] | null,
 ): string[] {
   if (selectedKeys.length === 1) {
     const row = rows.find((r) => rowKey(r) === selectedKeys[0]);
     if (row?.kind === "linked" && row.product.images.length > 0) {
       return row.product.images;
     }
+  }
+  if (colorImages && colorImages.length > 0) {
+    return colorImages;
   }
   return set.images;
 }

@@ -1,7 +1,9 @@
 /** Backend service: order rules (validation, server-side pricing, order codes). Called only via app/actions/orders.ts. */
 import { revalidatePath } from "next/cache";
 import {
+  colorOptionsFor,
   findPiece,
+  isColorSoldOut,
   isSizeSoldOut,
   pieceToProduct,
   sizeOptionsFor,
@@ -19,7 +21,7 @@ export type { Order, OrderItem } from "../storage/types";
 import type { Order, OrderItem } from "../storage/types";
 
 export type PlaceOrderInput = {
-  items: { id: string; qty: number; size?: string }[];
+  items: { id: string; qty: number; size?: string; color?: string }[];
   customer: { name: string; phone: string; address: string; note?: string };
   payment: "cod" | "transfer";
 };
@@ -68,18 +70,19 @@ function newOrderCode(existing: Order[]): string {
   return code;
 }
 
-type RawLine = { id: string; qty: number; size?: string };
+type RawLine = { id: string; qty: number; size?: string; color?: string };
 
 /**
  * Resolve raw lines against the strict catalog: find the product (or a
- * legacy set piece), reject sold-out products and sizes, clamp
- * quantities, merge duplicate lines. Prices always come from the
+ * legacy set piece), reject sold-out products and sizes and colors,
+ * clamp quantities, merge duplicate lines. Prices always come from the
  * catalog — never from the client.
  */
 function resolvePricedItems(
   catalog: Awaited<ReturnType<typeof getProductsStrict>>,
   rawItems: RawLine[],
-  requireSize: boolean
+  requireSize: boolean,
+  requireColor: boolean,
 ): { items: OrderItem[]; total: number; error?: string } {
   const items: OrderItem[] = [];
   for (const raw of rawItems) {
@@ -105,10 +108,33 @@ function resolvePricedItems(
     if (size && isSizeSoldOut(parent, size)) {
       return { items, total: 0, error: `Size ${size} của ${priced.name} đã hết hàng.` };
     }
+    // Per-color stock, same rule as sizes: only a color explicitly
+    // marked soldOut is rejected; an unknown color is refused outright.
+    const color =
+      typeof raw.color === "string" ? raw.color.trim().slice(0, 20) : undefined;
+    if (requireColor && !color && colorOptionsFor(parent).length > 0) {
+      return { items, total: 0, error: `Chưa chọn màu cho ${priced.name}.` };
+    }
+    if (color && !colorOptionsFor(parent).some((c) => c.label === color)) {
+      return { items, total: 0, error: `Màu ${color} của ${priced.name} không có.` };
+    }
+    if (color && isColorSoldOut(parent, color)) {
+      return { items, total: 0, error: `Màu ${color} của ${priced.name} đã hết hàng.` };
+    }
     const qty = Math.max(1, Math.min(10, Math.floor(raw.qty) || 1));
-    const existing = items.find((i) => i.id === priced.id && i.size === size);
+    const existing = items.find(
+      (i) => i.id === priced.id && i.size === size && i.color === color,
+    );
     if (existing) existing.qty = Math.min(10, existing.qty + qty);
-    else items.push({ id: priced.id, name: priced.name, price: priced.price, qty, size });
+    else
+      items.push({
+        id: priced.id,
+        name: priced.name,
+        price: priced.price,
+        qty,
+        size,
+        color,
+      });
   }
   return { items, total: items.reduce((sum, i) => sum + i.price * i.qty, 0) };
 }
@@ -150,7 +176,7 @@ export async function placeOrder(
     console.error("Failed to read pricing catalog:", error);
     return { success: false, error: "Không kết nối được kho dữ liệu, thử lại sau ít phút nhé." };
   }
-  const resolved = resolvePricedItems(catalog, input.items, false);
+  const resolved = resolvePricedItems(catalog, input.items, false, false);
   if (resolved.error) {
     return { success: false, error: resolved.error };
   }
@@ -183,7 +209,7 @@ export async function placeOrder(
 
 export type PlacePosOrderInput = {
   channel: "in-store" | "online";
-  items: { id: string; qty: number; size?: string }[];
+  items: { id: string; qty: number; size?: string; color?: string }[];
   customer: { name?: string; phone?: string; address?: string; note?: string };
   payment: "cash" | "transfer" | "cod";
 };
@@ -236,7 +262,7 @@ export async function placePosOrder(
     console.error("Failed to read pricing catalog:", error);
     return { success: false, error: "Không kết nối được kho dữ liệu, thử lại sau ít phút nhé." };
   }
-  const resolved = resolvePricedItems(catalog, input.items, true);
+  const resolved = resolvePricedItems(catalog, input.items, true, true);
   if (resolved.error) {
     return { success: false, error: resolved.error };
   }

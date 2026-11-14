@@ -43,8 +43,8 @@ export default function ProductDetail({
   const prev = () => setSelected((s) => (s - 1 + count) % count);
   const next = () => setSelected((s) => (s + 1) % count);
 
-  const handleAdd = (size?: string) => {
-    add(product.id, size);
+  const handleAdd = (size?: string, color?: string) => {
+    add(product.id, size, color);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1400);
     openCart();
@@ -96,7 +96,12 @@ export default function ProductDetail({
               onGalleryImages={handleGalleryImages}
             />
           ) : (
-            <BuyBox product={product} added={added} onAdd={handleAdd} />
+            <BuyBox
+              product={product}
+              added={added}
+              onAdd={handleAdd}
+              onGalleryImages={handleGalleryImages}
+            />
           )}
           <ProductAccordions product={product} />
         </div>

@@ -6,6 +6,7 @@
 import { isLinkedPiece } from "../../app/data/products";
 import type { ProductPatch, NewProduct } from "../storage/products";
 import type {
+  ProductColor,
   ProductPiece,
   ProductSpec,
   SizeOption,
@@ -48,6 +49,8 @@ export function validateProductPatch(p: ProductPatch): string | null {
   }
   const sizesError = validateSizes(p.sizes ?? []);
   if (sizesError) return sizesError;
+  const colorsError = validateColors(p.colors ?? []);
+  if (colorsError) return colorsError;
   const specError = validateSpec(p.spec);
   if (specError) return specError;
   const piecesError = validatePieces(p.pieces ?? []);
@@ -78,6 +81,41 @@ export function validateSizes(sizes: SizeOption[]): string | null {
     }
     const label = s.label.trim();
     if (seen.has(label)) return `Size ${label} bị trùng.`;
+    seen.add(label);
+  }
+  return null;
+}
+
+export function validateColors(colors: ProductColor[]): string | null {
+  if (!Array.isArray(colors) || colors.length > 10) {
+    return "Danh sách màu tối đa 10 mục.";
+  }
+  const seen = new Set<string>();
+  for (const c of colors) {
+    if (
+      !c ||
+      typeof c.label !== "string" ||
+      c.label.trim().length === 0 ||
+      c.label.trim().length > 20
+    ) {
+      return "Mỗi màu phải từ 1 đến 20 ký tự.";
+    }
+    if (c.label.includes(":")) {
+      return "Tên màu không dùng dấu hai chấm.";
+    }
+    if (
+      c.hex !== undefined &&
+      (typeof c.hex !== "string" || !/^#[0-9a-fA-F]{6}$/.test(c.hex))
+    ) {
+      return "Mã màu phải có dạng #RRGGBB, ví dụ #111111.";
+    }
+    if (c.soldOut !== undefined && typeof c.soldOut !== "boolean") {
+      return "Trạng thái hết hàng của màu chưa đúng.";
+    }
+    const imagesError = validateImages(c.images ?? []);
+    if (imagesError) return `Ảnh của màu ${c.label.trim()}: ${imagesError}`;
+    const label = c.label.trim().toLowerCase();
+    if (seen.has(label)) return `Màu ${c.label.trim()} bị trùng.`;
     seen.add(label);
   }
   return null;
