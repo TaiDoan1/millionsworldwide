@@ -1,16 +1,18 @@
-import Image from "next/image";
 import { getAllProducts } from "../actions/products";
 import { getAllCategories } from "../actions/categories";
 import { SEED_CATEGORIES } from "../data/products";
-import { formatPrice } from "../lib/format";
 import { AdminSection } from "./ui";
 import ProductAddForm from "./ProductAddForm";
-import ProductEditForm from "./ProductEditForm";
+import ProductsList from "./ProductsList";
+import CategoriesManager from "./CategoriesManager";
 
 /**
  * Product management on /mw-office. Self-fetching: when Postgres is not
  * configured (or unreachable) it renders the reason instead of an empty
  * list, so an empty catalog is never mistaken for "no products".
+ *
+ * Categories live in this same section now (below the product list):
+ * they are product metadata, and the list is only a handful of rows.
  */
 export default async function ProductsSection() {
   let products: Awaited<ReturnType<typeof getAllProducts>> | null = null;
@@ -30,11 +32,19 @@ export default async function ProductsSection() {
     // Keep the seed fallback.
   }
 
+  // Product counts per category, for the delete guard's display.
+  const counts: Record<string, number> = {};
+  if (products) {
+    for (const p of products) {
+      counts[p.category] = (counts[p.category] ?? 0) + 1;
+    }
+  }
+
   return (
     <AdminSection
       id="san-pham"
-      title={`Sản phẩm${products ? ` (${products.length})` : ""}`}
-      description="Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size, món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có sẵn trong web thì ghi đường dẫn tay."
+      title={`Sản phẩm & Danh mục${products ? ` (${products.length})` : ""}`}
+      description="Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size, màu, món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có sẵn trong web thì ghi đường dẫn tay."
     >
       {error || !products ? (
         <p className="text-sm text-gray-400">
@@ -52,47 +62,24 @@ export default async function ProductsSection() {
               <ProductAddForm products={products} categories={categories} />
             </div>
           </details>
-          <ul className="divide-y divide-neutral-100">
-          {products.map((p) => (
-            <li key={p.id} className="py-4">
-              <div className="flex items-center gap-4">
-                {p.images[0] ? (
-                  <Image
-                    src={p.images[0]}
-                    alt={p.name}
-                    width={56}
-                    height={56}
-                    className="h-14 w-14 rounded-sm object-cover bg-neutral-100"
-                  />
-                ) : (
-                  <div className="h-14 w-14 rounded-sm bg-neutral-100" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold uppercase truncate">{p.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {formatPrice(p.price)} · {p.category}
-                    {p.compareAt ? ` · Giá gốc ${formatPrice(p.compareAt)}` : ""}
-                    {p.soldOut ? " · Hết hàng" : ""}
-                    {p.preOrder ? " · Đặt trước" : ""}
-                    {p.hidden ? " · Đang ẩn khỏi shop" : ""}
-                  </p>
-                </div>
-              </div>
-              <details className="mt-3">
-                <summary className="cursor-pointer text-sm font-semibold text-gray-600 hover:text-black w-fit">
-                  Sửa
-                </summary>
-                <div className="mt-3 border border-neutral-200 p-4">
-                  <ProductEditForm
-                    product={p}
-                    products={products}
-                    categories={categories}
-                  />
-                </div>
-              </details>
-            </li>
-          ))}
-        </ul>
+          <ProductsList products={products} categories={categories} />
+          <div className="mt-10 border-t border-neutral-200 pt-6">
+            <h3 className="text-lg font-bold tracking-tight">
+              Danh mục ({categories.length})
+            </h3>
+            <p className="text-base text-gray-600 mb-6 mt-1">
+              Thêm, đổi tên và xếp thứ tự danh mục — chip lọc trên trang
+              shop và menu danh mục tự cập nhật theo, không cần đẩy code.
+              Mã danh mục (slug) đặt một lần lúc thêm, không đổi được vì
+              sản phẩm đang dùng nó. Danh mục còn sản phẩm thì chưa xóa
+              được.
+            </p>
+            <CategoriesManager
+              key={categories.map((c) => `${c.slug}:${c.label}`).join("|")}
+              categories={categories}
+              counts={counts}
+            />
+          </div>
         </>
       )}
     </AdminSection>

@@ -6,7 +6,10 @@ import CsvButton from "./CsvButton";
 import { csvRow } from "../lib/csv";
 import { formatPrice } from "../lib/format";
 import { inputClassBase } from "./ui";
+import { Pager } from "./ui-client";
 import type { Order } from "../actions/orders";
+
+const PAGE_SIZE = 10;
 
 const STATUS_LABELS: Record<Order["status"], string> = {
   new: "Mới đặt",
@@ -28,6 +31,7 @@ const STATUSES = Object.keys(STATUS_LABELS) as Order["status"][];
 export default function OrdersManager({ orders }: { orders: Order[] }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | Order["status"]>("all");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -41,6 +45,15 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
       );
     });
   }, [orders, query, status]);
+
+  // A new search or filter starts back at page 1; a shorter list
+  // clamps the page instead of showing an empty page.
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pages);
+  const pageOrders = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
   const csv = useMemo(() => {
     let out = csvRow([
@@ -83,13 +96,19 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
           placeholder="Tìm mã đơn, tên, số điện thoại…"
           className={`${inputClassBase} flex-1 min-w-[220px]`}
         />
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as "all" | Order["status"])}
+          onChange={(e) => {
+            setStatus(e.target.value as "all" | Order["status"]);
+            setPage(1);
+          }}
           className={`${inputClassBase} bg-white`}
         >
           <option value="all">Tất cả trạng thái</option>
@@ -109,8 +128,9 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
       {filtered.length === 0 ? (
         <p className="text-base text-gray-500">Không có đơn nào khớp.</p>
       ) : (
-        <div className="space-y-6">
-          {filtered.map((o) => (
+        <>
+          <div className="space-y-6">
+            {pageOrders.map((o) => (
             <div key={o.code} className="border border-neutral-200 p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-base font-black tracking-wider">
@@ -168,7 +188,9 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+          <Pager page={safePage} pages={pages} onPage={setPage} />
+        </>
       )}
     </div>
   );

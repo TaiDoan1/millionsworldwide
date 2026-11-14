@@ -5,7 +5,7 @@ import { AdminSection } from "./ui"
 import { csvRow } from "../lib/csv"
 import OrdersManager from "./OrdersManager"
 import ProductsSection from "./ProductsSection"
-import CategoriesSection from "./CategoriesSection"
+import SubscribersList from "./SubscribersList"
 import { getSettings } from "../actions/settings"
 import { storageBackendLabel } from "../../backend/storage"
 import { getOrders } from "../actions/orders"
@@ -21,7 +21,6 @@ const NAV = [
   { href: "#tong-quan", label: "Tổng quan" },
   { href: "#don-hang", label: "Đơn hàng" },
   { href: "#san-pham", label: "Sản phẩm" },
-  { href: "#danh-muc", label: "Danh mục" },
   { href: "#email", label: "Email" },
   { href: "#cai-dat", label: "Cài đặt" },
 ]
@@ -130,8 +129,6 @@ export default async function AdminPage() {
 
       <ProductsSection />
 
-      <CategoriesSection />
-
       <AdminSection
         id="email"
         title={`Email đăng ký (${subscribers.length})`}
@@ -149,16 +146,7 @@ export default async function AdminPage() {
         {subscribers.length === 0 ? (
           <p className="text-base text-gray-500">Chưa có email nào.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100 text-base">
-            {subscribers.map((s) => (
-              <li key={s.email} className="flex flex-wrap justify-between gap-2 py-2.5">
-                <span className="font-medium">{s.email}</span>
-                <span className="text-gray-600">
-                  {s.source} · {new Date(s.at).toLocaleString("vi-VN")}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <SubscribersList subscribers={subscribers} />
         )}
       </AdminSection>
 
