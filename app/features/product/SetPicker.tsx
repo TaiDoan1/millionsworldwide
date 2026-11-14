@@ -7,6 +7,7 @@ import { formatPrice } from "../../lib/format";
 import { useLanguage } from "../../lib/i18n";
 import { EASE, TAG_BY_CATEGORY } from "./constants";
 import {
+  galleryImagesFor,
   resolveRows,
   rowKey,
   rowName,
@@ -21,7 +22,8 @@ import {
  * old two-step flow (buy the whole set in the buy box, pieces in a
  * separate list below). Two steps, in order:
  *
- * 1. Pick pieces in "Thành phần bộ" — no size here.
+ * 1. Pick pieces in "Thành phần bộ" — no size here. Nothing is picked
+ *    by default; the customer chooses first.
  * 2. Pick size in ONE frame below: the set's shared size when the full
  *    set is picked, that piece's own sizes when a single piece is
  *    picked. (A partial pick of 2+ pieces from a 3+ piece set falls
@@ -31,22 +33,26 @@ import {
  *   line when it beats the pieces' sum).
  * - A subset = each piece at its own price.
  * - One "Thêm vào giỏ" adds everything picked at once.
- * Only renders when the set actually has pieces linked in /mw-office.
+ * The gallery follows the selection (via onGalleryImages): a single
+ * linked piece shows that piece's photos, anything else shows the
+ * set's photos. Only renders when the set actually has pieces linked
+ * in /mw-office.
  */
 export default function SetPicker({
   product,
   catalog,
+  onGalleryImages,
 }: {
   product: Product;
   catalog: Product[];
+  /** Called whenever the selection changes, with the photos the gallery should show. */
+  onGalleryImages?: (images: string[]) => void;
 }) {
   const { t } = useLanguage();
   const { add, openCart } = useCart();
   const rows = resolveRows(product, catalog);
-  // Default: the full set (every piece that can still be bought).
-  const [selected, setSelected] = useState<string[]>(() =>
-    rows.filter((r) => !rowSoldOut(r, product)).map((r) => rowKey(r)),
-  );
+  // Default: nothing picked — the customer chooses first.
+  const [selected, setSelected] = useState<string[]>([]);
   const [size, setSize] = useState<string | undefined>(undefined);
   // Only for the partial 2+ piece fallback (see below); the normal
   // full-set / single-piece flows share the one `size` above.
@@ -85,18 +91,16 @@ export default function SetPicker({
     !product.soldOut && selected.length > 0 && sizeOk;
 
   const toggle = (key: string) => {
-    // Keep at least one piece picked — an empty set buys nothing.
+    // Empty is allowed now — nothing is picked by default.
     const next = selected.includes(key)
-      ? selected.length <= 1
-        ? selected
-        : selected.filter((k) => k !== key)
+      ? selected.filter((k) => k !== key)
       : [...selected, key];
-    if (next === selected) return;
     // A different selection can mean different sizes (set sizes vs a
     // piece's sizes), so a picked size never carries over.
     setSize(undefined);
     setPieceSizes({});
     setSelected(next);
+    onGalleryImages?.(galleryImagesFor(product, rows, next));
   };
 
   const handleAdd = () => {
@@ -161,7 +165,8 @@ export default function SetPicker({
             {formatPrice(product.compareAt)}
           </span>
         )}
-        {formatPrice(total)}
+        {/* Nothing picked yet: headline stays the set's price. */}
+        {formatPrice(selected.length === 0 ? product.price : total)}
       </p>
       {product.preOrder && (
         <p className="mt-2 inline-block bg-[#666] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
@@ -203,7 +208,9 @@ export default function SetPicker({
           })}
         </div>
         <p className="mt-3 text-sm leading-relaxed text-[#67645e]">
-          {allSelected ? (
+          {selected.length === 0 ? (
+            t("picker.emptyHint")
+          ) : allSelected ? (
             saves > 0 ? (
               t("picker.save", { saves: formatPrice(saves) })
             ) : (
@@ -228,8 +235,10 @@ export default function SetPicker({
 
       {/* Step 2 — size, AFTER picking pieces: one frame only. Full set
           takes the set's shared size, a single piece takes that piece's
-          sizes. The piece picker above never shows size. */}
-      {selectionSizes !== null ? (
+          sizes. The piece picker above never shows size. Nothing picked
+          yet: no size frame at all. */}
+      {selected.length > 0 &&
+        (selectionSizes !== null ? (
         selectionSizes.length > 0 ? (
           <div className="mt-6">
             <p className="text-sm font-semibold uppercase tracking-wider">Size</p>
@@ -268,7 +277,7 @@ export default function SetPicker({
             );
           })}
         </div>
-      )}
+        ))}
 
       <button
         type="button"
@@ -276,11 +285,13 @@ export default function SetPicker({
         onClick={handleAdd}
         className={`mt-6 h-[50px] w-full rounded-full bg-black text-[max(0.875rem,0.925vw)] uppercase text-white transition-opacity duration-700 ${EASE} hover:opacity-80 disabled:cursor-not-allowed disabled:bg-neutral-400`}
       >
-        {product.soldOut || selected.length === 0
+        {product.soldOut
           ? t("card.soldOut")
-          : added
-            ? t("card.added")
-            : t("card.add")}
+          : selected.length === 0
+            ? t("picker.chooseFirst")
+            : added
+              ? t("card.added")
+              : t("card.add")}
       </button>
       <p className="mt-3 text-center text-sm text-[#67645e]">
         {t("buy.shipping")}

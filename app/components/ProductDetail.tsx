@@ -30,7 +30,15 @@ export default function ProductDetail({
   const [added, setAdded] = useState(false);
   const { add, openCart } = useCart();
 
-  const images = product.images;
+  // Gallery photos follow the set picker's selection: a single linked
+  // piece shows that piece's photos, anything else shows the set's.
+  const [galleryImages, setGalleryImages] = useState(product.images);
+  const handleGalleryImages = (imgs: string[]) => {
+    setGalleryImages(imgs);
+    setSelected(0);
+  };
+
+  const images = galleryImages;
   const count = images.length;
   const prev = () => setSelected((s) => (s - 1 + count) % count);
   const next = () => setSelected((s) => (s + 1) % count);
@@ -82,7 +90,11 @@ export default function ProductDetail({
           style={{ animationDelay: "160ms" }}
         >
           {hasPieces ? (
-            <SetPicker product={product} catalog={catalog} />
+            <SetPicker
+              product={product}
+              catalog={catalog}
+              onGalleryImages={handleGalleryImages}
+            />
           ) : (
             <BuyBox product={product} added={added} onAdd={handleAdd} />
           )}
