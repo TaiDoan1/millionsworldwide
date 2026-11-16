@@ -17,6 +17,7 @@ import {
   isLinkedPiece,
   PRODUCTS,
   type Product,
+  type ProductPiece,
 } from "../../app/data/products";
 import { postgresConfigured } from "../storage/postgres";
 import { imageFileExists } from "../storage/uploads";
@@ -144,6 +145,18 @@ export async function updateProduct(
         }
       }
     }
+    // Same rule for each piece's own photos.
+    for (const pc of clean.pieces) {
+      if (isLinkedPiece(pc)) continue;
+      for (const src of pc.images ?? []) {
+        if (!/\.(jpe?g|png|webp)$/i.test(src)) {
+          return { success: false, error: `Ảnh của món ${pc.name} phải là file jpg, png hoặc webp: ${src}` };
+        }
+        if (!imageFileExists(src)) {
+          return { success: false, error: `Không tìm thấy file ảnh của món ${pc.name} trong web: ${src}` };
+        }
+      }
+    }
     const found = await updateStoredProduct(id, clean);
     if (!found) return { success: false, error: "Không tìm thấy sản phẩm." };
     revalidateProductPages(id);
@@ -215,6 +228,18 @@ export async function addProduct(
       }
       if (!imageFileExists(src)) {
         return { success: false, error: `Không tìm thấy file ảnh của màu ${c.label} trong web: ${src}` };
+      }
+    }
+  }
+  // Same rule for each piece's own photos.
+  for (const pc of clean.pieces) {
+    if (isLinkedPiece(pc)) continue;
+    for (const src of pc.images ?? []) {
+      if (!/\.(jpe?g|png|webp)$/i.test(src)) {
+        return { success: false, error: `Ảnh của món ${pc.name} phải là file jpg, png hoặc webp: ${src}` };
+      }
+      if (!imageFileExists(src)) {
+        return { success: false, error: `Không tìm thấy file ảnh của món ${pc.name} trong web: ${src}` };
       }
     }
   }
@@ -301,12 +326,15 @@ function cleanPieces(
   pieces: ProductPatch["pieces"],
 ): ProductPatch["pieces"] {
   return (pieces ?? [])
-    .map((pc) => {
+    .map((pc): ProductPiece => {
       if (isLinkedPiece(pc)) return { productId: pc.productId.trim() };
       return {
         id: (pc.id ?? "").trim().toLowerCase(),
         name: (pc.name ?? "").trim(),
         price: pc.price,
+        ...((pc.images ?? []).length > 0
+          ? { images: (pc.images ?? []).map((s) => s.trim()).filter((s) => s.length > 0) }
+          : {}),
       };
     })
     .filter((pc) =>

@@ -20,12 +20,9 @@ import { useAdminSave } from "./ui-client";
 /** Per-product edit form on the admin page (admin only, server-checked). */
 export default function ProductEditForm({
   product,
-  products,
   categories,
 }: {
   product: Product;
-  /** All products, for the "món lẻ" link dropdown. */
-  products: Product[];
   /** Live categories, for the category dropdown. */
   categories: ProductCategory[];
 }) {
@@ -95,9 +92,7 @@ export default function ProductEditForm({
       <ProductFormFields
         values={values}
         onChange={patch}
-        products={products}
         categories={categories}
-        ownId={product.id}
         showPriceHints
         verboseCheckboxes
       />

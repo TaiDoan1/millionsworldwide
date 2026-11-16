@@ -113,6 +113,9 @@ export function cleanPieces(pieces: ProductPiece[]): ProductPiece[] {
           id: (pc.id ?? "").trim().toLowerCase(),
           name,
           price: pc.price,
+          ...((pc.images ?? []).length > 0
+            ? { images: (pc.images ?? []).map((s) => s.trim()).filter((s) => s.length > 0) }
+            : {}),
         });
       }
     }

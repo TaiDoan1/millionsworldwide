@@ -59,7 +59,7 @@ export default async function ProductsSection() {
               + Thêm sản phẩm mới
             </summary>
             <div className="mt-3 border border-neutral-200 p-4">
-              <ProductAddForm products={products} categories={categories} />
+              <ProductAddForm categories={categories} />
             </div>
           </details>
           <ProductsList products={products} categories={categories} />

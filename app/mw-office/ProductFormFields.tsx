@@ -1,6 +1,5 @@
 "use client";
 
-import type { Product } from "../actions/products";
 import type { ProductCategory } from "../data/products";
 import {
   checkboxClass,
@@ -16,26 +15,20 @@ import type { ProductFormValues } from "./product-form";
 
 /**
  * The fields the add and edit product forms share: prices, category,
- * the three toggles, sizes and linked pieces. The two forms keep only
+ * the three toggles, sizes, colors and pieces. The two forms keep only
  * what differs (name/id layout, images, spec, save/delete buttons).
  */
 export default function ProductFormFields({
   values,
   onChange,
-  products,
   categories,
-  ownId,
   showPriceHints,
   verboseCheckboxes,
 }: {
   values: ProductFormValues;
   onChange: (patch: Partial<ProductFormValues>) => void;
-  /** All products, for the "món lẻ" link dropdown. */
-  products: Product[];
   /** Live categories, for the category dropdown. */
   categories: ProductCategory[];
-  /** The product being edited (its own id is excluded from links). */
-  ownId: string;
   /** Edit form shows the price hints; add form does not. */
   showPriceHints?: boolean;
   /** Edit form spells out what "Hết hàng" does; add form keeps it short. */
@@ -127,8 +120,6 @@ export default function ProductFormFields({
       />
       <PiecesEditor
         pieces={values.pieces}
-        products={products}
-        ownId={ownId}
         onChange={(pieces) => onChange({ pieces })}
       />
     </>

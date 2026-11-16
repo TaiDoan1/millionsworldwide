@@ -50,12 +50,18 @@ export type ProductSpec = {
  * existed) but the admin only writes links now.
  */
 export type ProductPiece = {
-  /** Link to a standalone product (the normal case). */
+  /** Link to a standalone product (old shape — kept for reading data
+   *  saved before; the editor no longer creates links). */
   productId?: string;
-  /** Legacy inline piece: its own id/name/price. */
+  /** Inline piece: its own id/name/price, plus its own photos. */
   id?: string;
   name?: string;
   price?: number;
+  /**
+   * This piece's own photos. Picking the piece on the detail page
+   * swaps the gallery to them; empty means the set's photos.
+   */
+  images?: string[];
 };
 
 /** True when the piece links to a standalone product. */
@@ -187,7 +193,8 @@ export function pieceToProduct(
     name: `${set.name} — ${piece.name}`,
     price: piece.price,
     category: set.category,
-    images: set.images,
+    images:
+      piece.images && piece.images.length > 0 ? piece.images : set.images,
     soldOut: set.soldOut,
     preOrder: set.preOrder,
     ...(set.sizes ? { sizes: set.sizes } : {}),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addProduct, type Product } from "../actions/products";
+import { addProduct } from "../actions/products";
 import { type ProductCategory } from "../data/products";
 import ImageUpload from "./ImageUpload";
 import ProductFormFields from "./ProductFormFields";
@@ -19,11 +19,8 @@ import { useAdminSave } from "./ui-client";
  * in the web (the server refuses the save for paths with no file).
  */
 export default function ProductAddForm({
-  products,
   categories,
 }: {
-  /** All products, for the "món lẻ" link dropdown. */
-  products: Product[];
   /** Live categories, for the category dropdown. */
   categories: ProductCategory[];
 }) {
@@ -88,9 +85,7 @@ export default function ProductAddForm({
       <ProductFormFields
         values={values}
         onChange={patch}
-        products={products}
         categories={categories}
-        ownId={id}
       />
       <div>
         <FieldLabel>Ảnh (mỗi dòng 1 đường dẫn, ảnh đầu là ảnh chính)</FieldLabel>

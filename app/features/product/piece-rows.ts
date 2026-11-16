@@ -1,19 +1,21 @@
 import { isLinkedPiece, type Product } from "../../data/products";
 
-/** One resolved piece row: a linked standalone product, or a legacy inline piece. */
+/** One resolved piece row: a linked standalone product, or an inline
+ *  piece with its own name/price/photos. */
 export type PieceRow =
   | { kind: "linked"; product: Product; price: number }
-  | { kind: "legacy"; id: string; name: string; price: number };
+  | { kind: "legacy"; id: string; name: string; price: number; images: string[] };
 
 export function rowKey(row: PieceRow): string {
   return row.kind === "linked" ? row.product.id : row.id;
 }
 
 /**
- * Gallery images for a selection: a single linked piece shows its own
- * photos; a picked color with its own photos comes next; anything else
- * (nothing picked, the full set, a partial multi-piece pick, or a
- * legacy piece with no photos of its own) shows the set's photos.
+ * Gallery images for a selection: a single piece shows its own photos
+ * (the linked product's, or the inline piece's own list); a picked
+ * color with its own photos comes next; anything else (nothing picked,
+ * the full set, a partial multi-piece pick, or a piece with no photos
+ * of its own) shows the set's photos.
  */
 export function galleryImagesFor(
   set: Product,
@@ -23,8 +25,12 @@ export function galleryImagesFor(
 ): string[] {
   if (selectedKeys.length === 1) {
     const row = rows.find((r) => rowKey(r) === selectedKeys[0]);
-    if (row?.kind === "linked" && row.product.images.length > 0) {
-      return row.product.images;
+    const images =
+      row?.kind === "linked"
+        ? row.product.images
+        : (row?.kind === "legacy" ? row.images : undefined) ?? [];
+    if (images.length > 0) {
+      return images;
     }
   }
   if (colorImages && colorImages.length > 0) {
@@ -70,6 +76,7 @@ export function resolveRows(set: Product, catalog: Product[]): PieceRow[] {
         id: piece.id,
         name: piece.name,
         price: piece.price,
+        images: piece.images ?? [],
       });
     }
   }

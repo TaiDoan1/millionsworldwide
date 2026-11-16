@@ -96,7 +96,6 @@ export default function ProductsList({
                   <div className="mt-3 border border-neutral-200 p-4">
                     <ProductEditForm
                       product={p}
-                      products={products}
                       categories={categories}
                     />
                   </div>

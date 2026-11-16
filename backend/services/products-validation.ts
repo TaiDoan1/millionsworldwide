@@ -229,6 +229,10 @@ export function validatePieces(pieces: ProductPiece[]): string | null {
     ) {
       return "Giá lẻ phải là số nguyên từ 1 đến 100.000 (nghìn đồng).";
     }
+    const pieceImagesError = validateImages(pc.images ?? []);
+    if (pieceImagesError) {
+      return `Ảnh của món ${pc.name.trim()}: ${pieceImagesError}`;
+    }
     if (seenIds.has(pc.id)) return `Mã món lẻ ${pc.id} bị trùng.`;
     seenIds.add(pc.id);
   }
