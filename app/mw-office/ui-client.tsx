@@ -1,9 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { btnOutline, removeBtnClass } from "./ui";
 import { pageWindow } from "./pager";
+
+type SavePopupState = { ok: boolean; text: string } | null;
+
+/**
+ * One toast for every admin save: fixed at the top of the screen so
+ * it is seen even when the save button is far below the fold. Green
+ * with a tick on success, red with a cross on failure; closes itself
+ * after a few seconds, or at once on the × button.
+ */
+export function SavePopup({
+  popup,
+  onClose,
+}: {
+  popup: SavePopupState;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!popup) return;
+    const t = setTimeout(onClose, 5000);
+    return () => clearTimeout(t);
+  }, [popup, onClose]);
+  if (!popup) return null;
+  return (
+    <div
+      role={popup.ok ? "status" : "alert"}
+      className={`fixed left-1/2 top-4 z-50 flex w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 items-start gap-3 rounded-[12px] px-4 py-3 text-sm font-medium text-white shadow-lg ${
+        popup.ok ? "bg-green-700" : "bg-red-700"
+      }`}
+    >
+      <span aria-hidden className="text-base leading-none">
+        {popup.ok ? "✓" : "✕"}
+      </span>
+      <span className="flex-1">{popup.text}</span>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Đóng thông báo"
+        className="text-base leading-none opacity-80 hover:opacity-100"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 /**
  * Client-only admin bits: the shared save flow and the small
@@ -15,12 +59,15 @@ type SaveResult = { success: boolean; error?: string };
 
 /**
  * The save flow every admin form repeats: saving flag, inline message,
- * refresh the page on success. Returns true when the save succeeded.
+ * a toast popup (success/failure) on top, refresh the page on success.
+ * Returns true when the save succeeded. Render the returned `popup`
+ * element next to the save button.
  */
 export function useAdminSave() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [popup, setPopup] = useState<SavePopupState>(null);
 
   async function save(
     fn: () => Promise<SaveResult>,
@@ -28,18 +75,28 @@ export function useAdminSave() {
   ): Promise<boolean> {
     setSaving(true);
     setMessage("");
+    setPopup(null);
     const result = await fn();
     setSaving(false);
     if (result.success) {
       setMessage(okMessage);
+      setPopup({ ok: true, text: okMessage });
       router.refresh();
       return true;
     }
-    setMessage(result.error ?? "Không lưu được.");
+    const error = result.error ?? "Không lưu được.";
+    setMessage(error);
+    setPopup({ ok: false, text: error });
     return false;
   }
 
-  return { saving, message, setMessage, save };
+  return {
+    saving,
+    message,
+    setMessage,
+    save,
+    popup: <SavePopup popup={popup} onClose={() => setPopup(null)} />,
+  };
 }
 
 /** Nút × gỡ 1 dòng (size, món lẻ, ảnh, danh mục). */

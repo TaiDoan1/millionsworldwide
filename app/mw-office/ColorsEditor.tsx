@@ -110,6 +110,12 @@ export default function ColorsEditor({
                   Ảnh của màu này — chọn màu trên trang chi tiết sẽ đổi
                   sang các ảnh dưới đây (để trống thì giữ ảnh chung).
                 </p>
+                {images.length > 0 && c.label.trim().length === 0 && (
+                  <p className="mt-2 text-xs font-medium text-red-700">
+                    Chưa đặt tên màu — màu này sẽ không được lưu, nhập tên
+                    trước khi lưu nhé.
+                  </p>
+                )}
                 {images.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {images.map((src, j) => (

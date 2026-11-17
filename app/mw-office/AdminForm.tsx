@@ -9,17 +9,24 @@ import {
   inputClassLg,
   SaveButton,
 } from "./ui"
+import { SavePopup } from "./ui-client"
 
 export default function AdminForm({ initialSettings }: { initialSettings: Settings }) {
   const [settings, setSettings] = useState<Settings>(initialSettings)
   const [isSaving, setIsSaving] = useState(false)
-  
+  const [popup, setPopup] = useState<{ ok: boolean; text: string } | null>(null)
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
+    setPopup(null)
     const result = await updateSettings(settings)
     setIsSaving(false)
-    alert(result.success ? "Đã lưu cài đặt." : (result.error ?? "Không lưu được cài đặt."))
+    setPopup(
+      result.success
+        ? { ok: true, text: "Đã lưu cài đặt." }
+        : { ok: false, text: result.error ?? "Không lưu được cài đặt." },
+    )
   }
 
   return (
@@ -290,6 +297,7 @@ export default function AdminForm({ initialSettings }: { initialSettings: Settin
       >
         Lưu cài đặt
       </SaveButton>
+      <SavePopup popup={popup} onClose={() => setPopup(null)} />
     </form>
   )
 }

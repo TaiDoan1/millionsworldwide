@@ -49,7 +49,7 @@ export default function ProductEditForm({
   const [fit, setFit] = useState(product.spec?.fit ?? "");
   const [stretch, setStretch] = useState(product.spec?.stretch ?? "");
   const [model, setModel] = useState(product.spec?.model ?? "");
-  const { saving, message, save } = useAdminSave();
+  const { saving, message, save, popup } = useAdminSave();
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -257,6 +257,7 @@ export default function ProductEditForm({
           Xóa sản phẩm
         </button>
         <span className={messageClass}>{message}</span>
+        {popup}
       </div>
     </form>
   );

@@ -31,7 +31,7 @@ export default function ProductAddForm({
   const patch = (p: Partial<ProductFormValues>) =>
     setValues((v) => ({ ...v, ...p }));
   const [images, setImages] = useState("");
-  const { saving, message, save } = useAdminSave();
+  const { saving, message, save, popup } = useAdminSave();
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -124,6 +124,7 @@ export default function ProductAddForm({
           Thêm sản phẩm
         </SaveButton>
         <span className={messageClass}>{message}</span>
+        {popup}
       </div>
     </form>
   );

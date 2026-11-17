@@ -45,7 +45,7 @@ export default function CategoriesManager({
   const [newLabel, setNewLabel] = useState("");
   const [newSlug, setNewSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const { saving, message, setMessage, save } = useAdminSave();
+  const { saving, message, setMessage, save, popup } = useAdminSave();
 
   function move(index: number, dir: -1 | 1) {
     const to = index + dir;
@@ -205,6 +205,7 @@ export default function CategoriesManager({
       </div>
 
       {message && <p className="text-sm text-gray-600">{message}</p>}
+      {popup}
     </div>
   );
 }

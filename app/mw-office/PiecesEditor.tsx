@@ -152,6 +152,13 @@ export default function PiecesEditor({
                     tự điền từ tên, sửa được
                   </span>
                 </div>
+                {(pc.images ?? []).length > 0 &&
+                  (pc.name ?? "").trim().length === 0 && (
+                    <p className="mt-2 text-xs font-medium text-red-700">
+                      Chưa đặt tên món — món này sẽ không được lưu, nhập
+                      tên trước khi lưu nhé.
+                    </p>
+                  )}
                 <div className="mt-3">
                   <p className="text-xs font-semibold tracking-wider uppercase mb-2 text-gray-600">
                     Ảnh của món
