@@ -20,7 +20,7 @@ import {
   type ProductPiece,
 } from "../../app/data/products";
 import { postgresConfigured } from "../storage/postgres";
-import { imageFileExists } from "../storage/uploads";
+import { imageFileExistsAsync } from "../storage/uploads";
 import {
   deleteProduct as deleteStoredProduct,
   getProduct as getStoredProduct,
@@ -121,7 +121,7 @@ export async function updateProduct(
       if (!/\.(jpe?g|png|webp)$/i.test(src)) {
         return { success: false, error: `Ảnh phải là file jpg, png hoặc webp: ${src}` };
       }
-      if (!imageFileExists(src)) {
+      if (!(await imageFileExistsAsync(src))) {
         return { success: false, error: `Không tìm thấy file ảnh trong web: ${src}` };
       }
     }
@@ -130,7 +130,7 @@ export async function updateProduct(
       if (!/\.(jpe?g|png|webp)$/i.test(clean.sizeChart)) {
         return { success: false, error: `Ảnh bảng size phải là file jpg, png hoặc webp: ${clean.sizeChart}` };
       }
-      if (!imageFileExists(clean.sizeChart)) {
+      if (!(await imageFileExistsAsync(clean.sizeChart))) {
         return { success: false, error: `Không tìm thấy file ảnh bảng size trong web: ${clean.sizeChart}` };
       }
     }
@@ -140,7 +140,7 @@ export async function updateProduct(
         if (!/\.(jpe?g|png|webp)$/i.test(src)) {
           return { success: false, error: `Ảnh của màu ${c.label} phải là file jpg, png hoặc webp: ${src}` };
         }
-        if (!imageFileExists(src)) {
+        if (!(await imageFileExistsAsync(src))) {
           return { success: false, error: `Không tìm thấy file ảnh của màu ${c.label} trong web: ${src}` };
         }
       }
@@ -152,7 +152,7 @@ export async function updateProduct(
         if (!/\.(jpe?g|png|webp)$/i.test(src)) {
           return { success: false, error: `Ảnh của món ${pc.name} phải là file jpg, png hoặc webp: ${src}` };
         }
-        if (!imageFileExists(src)) {
+        if (!(await imageFileExistsAsync(src))) {
           return { success: false, error: `Không tìm thấy file ảnh của món ${pc.name} trong web: ${src}` };
         }
       }
@@ -207,7 +207,7 @@ export async function addProduct(
     if (!/\.(jpe?g|png|webp)$/i.test(src)) {
       return { success: false, error: `Ảnh phải là file jpg, png hoặc webp: ${src}` };
     }
-    if (!imageFileExists(src)) {
+    if (!(await imageFileExistsAsync(src))) {
       return { success: false, error: `Không tìm thấy file ảnh trong web: ${src}` };
     }
   }
@@ -216,7 +216,7 @@ export async function addProduct(
     if (!/\.(jpe?g|png|webp)$/i.test(clean.sizeChart)) {
       return { success: false, error: `Ảnh bảng size phải là file jpg, png hoặc webp: ${clean.sizeChart}` };
     }
-    if (!imageFileExists(clean.sizeChart)) {
+    if (!(await imageFileExistsAsync(clean.sizeChart))) {
       return { success: false, error: `Không tìm thấy file ảnh bảng size trong web: ${clean.sizeChart}` };
     }
   }
@@ -226,7 +226,7 @@ export async function addProduct(
       if (!/\.(jpe?g|png|webp)$/i.test(src)) {
         return { success: false, error: `Ảnh của màu ${c.label} phải là file jpg, png hoặc webp: ${src}` };
       }
-      if (!imageFileExists(src)) {
+      if (!(await imageFileExistsAsync(src))) {
         return { success: false, error: `Không tìm thấy file ảnh của màu ${c.label} trong web: ${src}` };
       }
     }
@@ -238,7 +238,7 @@ export async function addProduct(
       if (!/\.(jpe?g|png|webp)$/i.test(src)) {
         return { success: false, error: `Ảnh của món ${pc.name} phải là file jpg, png hoặc webp: ${src}` };
       }
-      if (!imageFileExists(src)) {
+      if (!(await imageFileExistsAsync(src))) {
         return { success: false, error: `Không tìm thấy file ảnh của món ${pc.name} trong web: ${src}` };
       }
     }

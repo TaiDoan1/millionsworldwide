@@ -8,6 +8,7 @@ import {
   UPLOAD_MAX_BYTES,
   uploadsDir,
 } from "../../../../backend/storage/uploads";
+import { r2Configured, r2Upload } from "../../../../backend/storage/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,11 @@ export const dynamic = "force-dynamic";
  * Admin-only (the same Basic Auth check as the admin mutations — the
  * browser sends the saved login automatically on this origin). The
  * file is validated (type + 5MB), resized to at most 1200px wide so
- * a phone photo doesn't ship at full size, and stored on the Railway
- * volume; only its URL path is returned — the caller saves that path
- * on the product, and the photo shows on the web immediately.
+ * a phone photo doesn't ship at full size, and stored on R2 when it
+ * is configured (Cloudflare R2, bucket millions-images) — or on the
+ * Railway volume when it isn't; only its URL path is returned — the
+ * caller saves that path on the product, and the photo shows on the
+ * web immediately.
  */
 export async function POST(req: Request) {
   if (!(await isAdminRequest())) {
@@ -71,6 +74,25 @@ export async function POST(req: Request) {
     output = input;
   }
   const name = makeUploadFileName(file.name, kind.ext);
+  // R2 when configured: the photo leaves the server entirely, so a
+  // redeploy or region move can't lose it the way the volume did
+  // (33 uploaded images, 15/11). The returned path keeps the
+  // "/uploads/<file>" shape, so no product data has to change.
+  // An R2 failure is reported, never silently written to the volume:
+  // a volume copy would be lost again and the save check (which
+  // looks on R2) would refuse the product.
+  if (r2Configured()) {
+    try {
+      await r2Upload(name, output, file.type);
+    } catch (error) {
+      console.error("Failed to upload image to R2:", error);
+      return NextResponse.json(
+        { error: "Không up được ảnh lên R2, thử lại nhé." },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ url: `/uploads/${name}` });
+  }
   const dir = uploadsDir();
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, name), output);

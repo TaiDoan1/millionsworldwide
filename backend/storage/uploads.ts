@@ -7,7 +7,11 @@
  * - Photos the owner uploads from /mw-office live on the Railway
  *   volume (<DATA_DIR>/uploads) and are served by the
  *   app/uploads/[...path] route — so an upload shows on the web
- *   immediately, with no code push and no redeploy.
+ *   immediately, with no code push and no redeploy. When R2 is
+ *   configured (backend/storage/r2.ts) new uploads go to R2 instead
+ *   — the volume kept losing them — and the serve route reads R2
+ *   when the volume has no copy. Either way the stored path keeps
+ *   the "/uploads/<file>" shape.
  * - The database stores ONLY the URL path ("/uploads/<file>" or
  *   "/products/<file>"), never the image bytes: bytes in Postgres
  *   would bloat the database and serve slowly for no benefit.
@@ -15,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { dataDir } from "./file";
+import { r2Configured, r2Exists, r2PublicUrl } from "./r2";
 
 /** Uploaded files live under the data dir, next to orders/settings. */
 export function uploadsDir(): string {
@@ -75,11 +80,41 @@ export function resolveUploadPath(src: string): string | null {
  * for the photos that ship with the code, or on the volume for
  * photos uploaded from /mw-office. The admin save refuses paths
  * with no file behind them, so the shop never renders a broken card.
+ *
+ * Kept synchronous for the volume/public cases. Use
+ * imageFileExistsAsync for the save check — it also looks the file
+ * up on R2 when the volume has no copy.
  */
 export function imageFileExists(src: string): boolean {
   if (src.startsWith("/uploads/")) {
     const file = resolveUploadPath(src);
     return file !== null && fs.existsSync(file);
+  }
+  if (!src.startsWith("/") || src.includes("..")) return false;
+  return fs.existsSync(path.join(process.cwd(), "public", src));
+}
+
+/**
+ * Async version of the save check: "/uploads/<file>" counts when the
+ * file is on the volume OR in R2 (when R2 is configured), and a full
+ * R2 public URL counts when that object exists. A file that exists
+ * nowhere still fails, so a product can never be saved pointing at
+ * a photo that was lost — the same rule that caught the 33 broken
+ * images, now looking on R2 instead of only on the volume.
+ */
+export async function imageFileExistsAsync(src: string): Promise<boolean> {
+  if (src.startsWith("/uploads/")) {
+    if (imageFileExists(src)) return true;
+    if (!r2Configured()) return false;
+    return r2Exists(src.slice("/uploads/".length));
+  }
+  const publicUrl = r2PublicUrl("");
+  if (
+    publicUrl &&
+    src.startsWith(publicUrl) &&
+    !src.includes("..")
+  ) {
+    return r2Exists(src.slice(publicUrl.length));
   }
   if (!src.startsWith("/") || src.includes("..")) return false;
   return fs.existsSync(path.join(process.cwd(), "public", src));
