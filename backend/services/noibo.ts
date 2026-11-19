@@ -346,20 +346,20 @@ export async function deleteStaff(id: number): Promise<Result> {
   }
 }
 
-/** Founder-only: create a task. */
+/**
+ * Create a task. Founders assign to anyone (or no one); staff create
+ * tasks for themselves.
+ */
 export async function createTask(input: {
   title: string;
   assigneeId: number | null;
   dueDate: string | null;
   note: string | null;
 }): Promise<Result> {
-  const me = await requireFounder();
-  if (!me) {
-    return {
-      success: false,
-      error: "Chỉ founder mới giao được việc.",
-    };
-  }
+  const me = await getNoiboSessionStaff();
+  if (!me) return { success: false, error: "Cần đăng nhập lại." };
+  const assigneeId =
+    me.role === "founder" ? input.assigneeId : me.id;
   const title = typeof input.title === "string" ? input.title.trim() : "";
   const badTitle = validateTaskTitle(title);
   if (badTitle) return { success: false, error: badTitle };
@@ -377,15 +377,15 @@ export async function createTask(input: {
   const badNote = validateTaskNote(note);
   if (badNote) return { success: false, error: badNote };
   try {
-    if (input.assigneeId !== null) {
-      const assignee = await store.getStaffById(input.assigneeId);
+    if (assigneeId !== null) {
+      const assignee = await store.getStaffById(assigneeId);
       if (!assignee || !assignee.active) {
         return { success: false, error: "Người được giao việc không còn hoạt động." };
       }
     }
     await store.insertTask({
       title,
-      assigneeId: input.assigneeId,
+      assigneeId,
       dueDate,
       note,
       createdBy: me.id,
@@ -427,16 +427,21 @@ export async function updateTaskStatus(
   }
 }
 
-/** Founder-only: delete a task. */
+/**
+ * Delete a task. Founders may delete any task; staff may delete their own.
+ */
 export async function deleteTask(id: number): Promise<Result> {
-  const me = await requireFounder();
-  if (!me) {
-    return {
-      success: false,
-      error: "Chỉ founder mới xóa được công việc.",
-    };
-  }
+  const me = await getNoiboSessionStaff();
+  if (!me) return { success: false, error: "Cần đăng nhập lại." };
   try {
+    const task = await store.getTaskById(id);
+    if (!task) return { success: false, error: "Không tìm thấy công việc." };
+    if (me.role !== "founder" && task.assigneeId !== me.id) {
+      return {
+        success: false,
+        error: "Bạn chỉ xóa được việc của chính mình.",
+      };
+    }
     const ok = await store.deleteTask(id);
     if (!ok) return { success: false, error: "Không tìm thấy công việc." };
     revalidatePath("/noibo");

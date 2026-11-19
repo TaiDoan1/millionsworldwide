@@ -97,11 +97,15 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   tự check-in/check-out trên `/noibo` (1 ca đang mở mỗi người, giờ
   tính theo giờ VN), founder xem giờ làm hôm nay + tuần này của mọi
   người. Lịch làm: founder xếp ca cho bất kỳ ai, nhân viên tự đăng ký
-  ca cho chính mình (và hủy ca của mình). Công việc hàng ngày: mỗi
-  người viết 1 bài mỗi ngày (sửa được), founder đọc được của mọi
-  người. Task hiện dạng bảng Trello 3 cột, kéo thả thẻ giữa các cột
-  để đổi trạng thái (nút trạng thái giữ lại cho điện thoại, kéo thả
-  HTML5 không chạy trên màn cảm ứng). Không có Postgres thì
+  ca cho chính mình (và hủy ca của mình). Task: founder giao cho bất
+  kỳ ai, nhân viên tự tạo việc cho chính mình (và xóa việc của mình);
+  bảng Trello 3 cột, kéo thả thẻ giữa các cột để đổi trạng thái (nút
+  trạng thái giữ lại cho điện thoại, kéo thả HTML5 không chạy trên
+  màn cảm ứng); lịch tuần hiện cả task theo hạn (chấm màu theo trạng
+  thái). Báo cáo cuối ngày: mục "Báo cáo cuối ngày" liệt kê việc
+  xong hôm nay (task ghi giờ xong khi chuyển sang "Đã xong", chuyển
+  lại thì xóa giờ) + tóm tắt viết tay mỗi người mỗi ngày (sửa được),
+  founder đọc được của mọi người. Không có Postgres thì
   trang nội bộ báo rõ là chưa dùng được, không ghi sang kho khác.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
   hay đổi tên chúng**: `backend/storage/file.ts` đọc seed từ

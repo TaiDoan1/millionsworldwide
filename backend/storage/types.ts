@@ -117,6 +117,8 @@ export type NoiboTask = {
   createdBy: number | null;
   createdAt: string;
   updatedAt: string;
+  /** ISO timestamp when the task last reached "done" (null otherwise). */
+  completedAt: string | null;
 };
 
 export type NoiboShift = {

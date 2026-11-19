@@ -27,6 +27,7 @@ import {
   formatMinutes,
   mondayOf,
   summarizeCheckins,
+  vnDateOf,
   vnTimeOf,
   vnToday,
   weekDates,
@@ -105,6 +106,23 @@ export default async function NoiboPage({
     shiftsByDate.set(s.date, list);
   }
 
+  // Tasks due each day of the week (for the calendar) and tasks finished
+  // today (for the end-of-day report).
+  const tasksByDate = new Map<string, typeof tasks>();
+  for (const t of tasks) {
+    if (!t.dueDate) continue;
+    const list = tasksByDate.get(t.dueDate) ?? [];
+    list.push(t);
+    tasksByDate.set(t.dueDate, list);
+  }
+  const doneToday = tasks.filter(
+    (t) =>
+      t.status === "done" &&
+      t.completedAt &&
+      vnDateOf(t.completedAt) === today &&
+      (isFounder || t.assigneeId === me.id)
+  );
+
   return (
     <NoiboShell>
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -173,6 +191,7 @@ export default async function NoiboPage({
         <ul className="space-y-2">
           {dates.map((d) => {
             const dayShifts = shiftsByDate.get(d) ?? [];
+            const dayTasks = tasksByDate.get(d) ?? [];
             const isToday = d === today;
             return (
               <li
@@ -221,6 +240,43 @@ export default async function NoiboPage({
                     ))}
                   </ul>
                 )}
+                {dayTasks.length > 0 ? (
+                  <ul className="mt-2 space-y-1 border-t border-black/10 pt-2">
+                    {dayTasks.map((t) => (
+                      <li
+                        key={t.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            t.status === "done"
+                              ? "bg-green-600"
+                              : t.status === "doing"
+                                ? "bg-amber-500"
+                                : "bg-black/30"
+                          }`}
+                        />
+                        <span>
+                          {t.title}
+                          <span className="text-black/50">
+                            {" · "}
+                            {t.status === "done"
+                              ? "Đã xong"
+                              : t.status === "doing"
+                                ? "Đang làm"
+                                : "Chưa làm"}
+                          </span>
+                          {t.assigneeName ? (
+                            <span className="text-black/50">
+                              {" · "}
+                              {t.assigneeName}
+                            </span>
+                          ) : null}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             );
           })}
@@ -228,7 +284,35 @@ export default async function NoiboPage({
       </section>
 
       <section className="mb-10">
-        <NoiboSectionTitle>Công việc hàng ngày</NoiboSectionTitle>
+        <NoiboSectionTitle>Báo cáo cuối ngày</NoiboSectionTitle>
+        {doneToday.length === 0 ? (
+          <p className="mb-4 text-sm text-black/40">
+            Hôm nay chưa xong việc nào.
+          </p>
+        ) : (
+          <ul className="mb-4 space-y-1">
+            {doneToday.map((t) => (
+              <li key={t.id} className="flex items-center gap-2 text-sm">
+                <span className="text-green-700">✓</span>
+                <span>
+                  {t.title}
+                  {isFounder && t.assigneeName ? (
+                    <span className="text-black/50">
+                      {" · "}
+                      {t.assigneeName}
+                    </span>
+                  ) : null}
+                  {t.completedAt ? (
+                    <span className="text-black/50">
+                      {" · "}
+                      {vnTimeOf(t.completedAt)} xong
+                    </span>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
         <DailyLogForm
           dates={dates}
           myLogs={dailyLogs.filter((l) => l.staffId === me.id)}
@@ -285,7 +369,7 @@ export default async function NoiboPage({
 
       <section>
         <NoiboSectionTitle>Công việc</NoiboSectionTitle>
-        {isFounder ? <AddTaskForm staff={staffList} /> : null}
+        <AddTaskForm staff={staffList} me={me} />
         <TaskBoard
           tasks={tasks}
           meId={me.id}

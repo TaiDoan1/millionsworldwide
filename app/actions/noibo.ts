@@ -87,7 +87,7 @@ export async function deleteStaff(id: number) {
   return deleteStaffService(id);
 }
 
-/** Founder-only: create a task. */
+/** Create a task (founder assigns to anyone; staff create for themselves). */
 export async function createTask(input: {
   title: string;
   assigneeId: number | null;
@@ -102,7 +102,7 @@ export async function updateTaskStatus(id: number, status: NoiboTaskStatus) {
   return updateTaskStatusService(id, status);
 }
 
-/** Founder-only: delete a task. */
+/** Delete a task (founder any task; staff only their own). */
 export async function deleteTask(id: number) {
   return deleteTaskService(id);
 }

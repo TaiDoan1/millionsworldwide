@@ -55,7 +55,8 @@ const SCHEMA = `
     note TEXT,
     created_by INTEGER,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    completed_at TEXT
   );
   CREATE TABLE IF NOT EXISTS noibo_shifts (
     id SERIAL PRIMARY KEY,
@@ -111,6 +112,13 @@ export async function migrateLegacyAdmins(): Promise<void> {
   );
 }
 
+/** Add completed_at to tasks created before the end-of-day report. */
+export async function migrateTaskCompletedAt(): Promise<void> {
+  await getPostgresPool().query(
+    "ALTER TABLE noibo_tasks ADD COLUMN IF NOT EXISTS completed_at TEXT"
+  );
+}
+
 async function seedFounderIfEmpty(): Promise<void> {
   const pool = getPostgresPool();
   const count = await pool.query<{ c: string }>(
@@ -136,6 +144,7 @@ export function ensureNoiboInit(): Promise<void> {
     initPromise = getPostgresPool()
       .query(SCHEMA)
       .then(() => migrateLegacyAdmins())
+      .then(() => migrateTaskCompletedAt())
       .then(() => seedFounderIfEmpty())
       .catch((error) => {
         console.error("[storage] Noibo init failed:", error);
@@ -341,6 +350,7 @@ type TaskRow = {
   created_by: number | null;
   created_at: string;
   updated_at: string;
+  completed_at: string | null;
 };
 
 function taskFromRow(r: TaskRow): NoiboTask {
@@ -356,11 +366,13 @@ function taskFromRow(r: TaskRow): NoiboTask {
     createdBy: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    completedAt: r.completed_at,
   };
 }
 
 const TASK_COLUMNS = `t.id, t.title, t.assignee_id, st.name AS assignee_name,
-  t.due_date, t.status, t.note, t.created_by, t.created_at, t.updated_at
+  t.due_date, t.status, t.note, t.created_by, t.created_at, t.updated_at,
+  t.completed_at
   FROM noibo_tasks t LEFT JOIN noibo_staff st ON st.id = t.assignee_id`;
 
 export async function listTasks(): Promise<NoiboTask[]> {
@@ -419,9 +431,12 @@ export async function updateTaskStatus(
   status: "todo" | "doing" | "done"
 ): Promise<boolean> {
   await ensureNoiboInit();
+  const now = new Date().toISOString();
+  // Reaching "done" stamps when it finished; moving it back clears it,
+  // so the end-of-day report only counts work finished today.
   const result = await getPostgresPool().query(
-    "UPDATE noibo_tasks SET status = $1, updated_at = $2 WHERE id = $3",
-    [status, new Date().toISOString(), id]
+    "UPDATE noibo_tasks SET status = $1, updated_at = $2, completed_at = $3 WHERE id = $4",
+    [status, now, status === "done" ? now : null, id]
   );
   return (result.rowCount ?? 0) > 0;
 }

@@ -145,11 +145,18 @@ export function DeleteButton({
   );
 }
 
-/** Founder-only: assign a new task. */
-export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
+/** Founder: giao việc cho bất kỳ ai. Nhân viên: tự tạo việc cho chính mình. */
+export function AddTaskForm({
+  staff,
+  me,
+}: {
+  staff: NoiboStaff[];
+  me: NoiboStaff;
+}) {
   const router = useRouter();
+  const isFounder = me.role === "founder";
   const [title, setTitle] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeId, setAssigneeId] = useState(isFounder ? "" : String(me.id));
   const [dueDate, setDueDate] = useState("");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -171,10 +178,10 @@ export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
       return;
     }
     setTitle("");
-    setAssigneeId("");
+    setAssigneeId(isFounder ? "" : String(me.id));
     setDueDate("");
     setNote("");
-    setMsg({ ok: true, text: "Đã giao việc." });
+    setMsg({ ok: true, text: isFounder ? "Đã giao việc." : "Đã tạo việc." });
     router.refresh();
   }
 
@@ -183,7 +190,9 @@ export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
       onSubmit={onSubmit}
       className="mb-6 rounded-lg border border-black/10 bg-black/[0.03] p-4"
     >
-      <p className="mb-3 text-sm font-semibold">Giao việc mới</p>
+      <p className="mb-3 text-sm font-semibold">
+        {isFounder ? "Giao việc mới" : "Tạo việc mới"}
+      </p>
       <div className="space-y-3">
         <input
           value={title}
@@ -195,20 +204,26 @@ export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
         <div className="flex flex-col gap-3 sm:flex-row">
           <label className="flex-1">
             <span className="mb-1 block text-xs text-black/60">Giao cho</span>
-            <select
-              value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
-            >
-              <option value="">Chưa giao ai</option>
-              {staff
-                .filter((s) => s.active)
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-            </select>
+            {isFounder ? (
+              <select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
+              >
+                <option value="">Chưa giao ai</option>
+                {staff
+                  .filter((s) => s.active)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+              </select>
+            ) : (
+              <p className="rounded-lg border border-black/20 bg-black/[0.03] p-2.5 text-sm">
+                {me.name} (bạn)
+              </p>
+            )}
           </label>
           <label className="flex-1">
             <span className="mb-1 block text-xs text-black/60">Hạn xong</span>
@@ -232,7 +247,7 @@ export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
           disabled={busy}
           className="rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "Đang giao…" : "Giao việc"}
+          {busy ? "Đang lưu…" : isFounder ? "Giao việc" : "Tạo việc"}
         </button>
       </div>
     </form>
@@ -487,7 +502,7 @@ export function TaskBoard({
                         >
                           {t.title}
                         </p>
-                        {isFounder ? (
+                        {isFounder || t.assigneeId === meId ? (
                           <DeleteButton
                             kind="task"
                             id={t.id}
@@ -583,7 +598,7 @@ export function DailyLogForm({
       onSubmit={onSubmit}
       className="mb-4 rounded-lg border border-black/10 bg-black/[0.03] p-4"
     >
-      <p className="mb-3 text-sm font-semibold">Viết công việc của mình</p>
+      <p className="mb-3 text-sm font-semibold">Viết tóm tắt ngày</p>
       <label className="mb-2 block">
         <span className="mb-1 block text-xs text-black/60">Ngày</span>
         <select
@@ -603,7 +618,7 @@ export function DailyLogForm({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={4}
-        placeholder="Hôm nay mình đã làm gì? VD: Kiểm kho, dọn kệ áo, chụp ảnh sản phẩm mới…"
+        placeholder="Hôm nay làm được gì, còn vướng gì, mai làm gì…"
         className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
         required
       />
