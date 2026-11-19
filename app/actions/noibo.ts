@@ -22,7 +22,9 @@ import {
   saveDailyLog as saveDailyLogService,
   saveNoiboSettings as saveNoiboSettingsService,
   setStaffActive as setStaffActiveService,
+  updateTaskPriority as updateTaskPriorityService,
   updateTaskStatus as updateTaskStatusService,
+  type NoiboTaskPriority,
   type NoiboTaskStatus,
 } from "../../backend/services/noibo";
 import { getNoiboSessionStaff } from "../../backend/auth/noibo-auth";
@@ -34,6 +36,7 @@ export type {
   NoiboShift,
   NoiboStaff,
   NoiboTask,
+  NoiboTaskPriority,
   NoiboTaskStatus,
 } from "../../backend/services/noibo";
 
@@ -92,6 +95,7 @@ export async function createTask(input: {
   title: string;
   assigneeId: number | null;
   dueDate: string | null;
+  priority?: NoiboTaskPriority;
   note: string | null;
 }) {
   return createTaskService(input);
@@ -100,6 +104,14 @@ export async function createTask(input: {
 /** Change a task's status (own tasks for staff, any task for founders). */
 export async function updateTaskStatus(id: number, status: NoiboTaskStatus) {
   return updateTaskStatusService(id, status);
+}
+
+/** Change a task's priority (founder-only). */
+export async function updateTaskPriority(
+  id: number,
+  priority: NoiboTaskPriority
+) {
+  return updateTaskPriorityService(id, priority);
 }
 
 /** Delete a task (founder any task; staff only their own). */

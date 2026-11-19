@@ -57,6 +57,14 @@ export function validateTaskNote(note: string | null): string | null {
   return null;
 }
 
+/** Priority must be one of the three levels; anything else is rejected. */
+export function validateTaskPriority(value: unknown): string | null {
+  if (value !== "high" && value !== "medium" && value !== "low") {
+    return "Mức ưu tiên không hợp lệ.";
+  }
+  return null;
+}
+
 export function validateShiftLabel(label: string): string | null {
   const clean = typeof label === "string" ? label.trim() : "";
   if (clean.length < 1 || clean.length > 50) {

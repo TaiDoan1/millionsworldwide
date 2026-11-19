@@ -213,6 +213,15 @@ export default async function NoiboLichPage({
                               {t.assigneeName}
                             </span>
                           ) : null}
+                          {t.priority === "high" ? (
+                            <span className="font-semibold text-red-600">
+                              {" · Ưu tiên cao"}
+                            </span>
+                          ) : t.priority === "low" ? (
+                            <span className="text-black/50">
+                              {" · Ưu tiên thấp"}
+                            </span>
+                          ) : null}
                         </span>
                       </li>
                     ))}

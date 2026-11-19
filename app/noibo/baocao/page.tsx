@@ -135,6 +135,11 @@ export default async function NoiboBaocaoPage({
                       {vnTimeOf(t.completedAt)} xong
                     </span>
                   ) : null}
+                  {t.priority === "high" ? (
+                    <span className="font-semibold text-red-600">
+                      {" · Ưu tiên cao"}
+                    </span>
+                  ) : null}
                 </span>
               </li>
             ))}

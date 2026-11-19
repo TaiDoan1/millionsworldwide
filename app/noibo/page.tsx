@@ -4,6 +4,7 @@ import {
   getMyCheckinToday,
   getNoiboSessionStaffAction,
   getNoiboSettings,
+  listNoiboStaff,
   listNoiboTasks,
 } from "../actions/noibo";
 import { NoiboHeader, NoiboNotice, NoiboShell } from "./shell";
@@ -44,11 +45,13 @@ export default async function NoiboPage() {
   let settings;
   let myCheckin;
   let tasks;
+  let staffList;
   try {
-    [settings, myCheckin, tasks] = await Promise.all([
+    [settings, myCheckin, tasks, staffList] = await Promise.all([
       getNoiboSettings(),
       getMyCheckinToday(),
       listNoiboTasks(),
+      isFounder ? listNoiboStaff() : Promise.resolve([]),
     ]);
   } catch (error) {
     return (
@@ -74,6 +77,24 @@ export default async function NoiboPage() {
       t.completedAt &&
       vnDateOf(t.completedAt) === today
   );
+
+  // Founder's progress board: one row per active staff member.
+  const progress = staffList
+    .filter((s) => s.active)
+    .map((s) => {
+      const mine = tasks.filter((t) => t.assigneeId === s.id);
+      return {
+        id: s.id,
+        name: s.name,
+        total: mine.length,
+        done: mine.filter((t) => t.status === "done").length,
+        doing: mine.filter((t) => t.status === "doing").length,
+        overdue: mine.filter(
+          (t) => t.status !== "done" && t.dueDate && t.dueDate < today
+        ).length,
+      };
+    });
+  const unassignedCount = tasks.filter((t) => t.assigneeId === null).length;
 
   return (
     <NoiboShell>
@@ -129,6 +150,44 @@ export default async function NoiboPage() {
           </p>
         </Link>
       </div>
+
+      {isFounder ? (
+        <section className="mt-8">
+          <h2 className="mb-3 text-base font-bold">Tiến độ nhân viên</h2>
+          {progress.length === 0 ? (
+            <p className="text-sm text-black/40">Chưa có nhân viên nào.</p>
+          ) : (
+            <ul className="space-y-2">
+              {progress.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/10 p-3 text-sm"
+                >
+                  <span className="font-medium">{r.name}</span>
+                  <span className="text-black/60">
+                    Đã xong {r.done}/{r.total}
+                    {" · "}Đang làm {r.doing}
+                    {r.overdue > 0 ? (
+                      <span className="font-semibold text-red-600">
+                        {" · "}
+                        {r.overdue} việc quá hạn
+                      </span>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+              {unassignedCount > 0 ? (
+                <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/10 p-3 text-sm">
+                  <span className="font-medium">Chưa giao ai</span>
+                  <span className="text-black/60">
+                    {unassignedCount} việc chưa giao
+                  </span>
+                </li>
+              ) : null}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </NoiboShell>
   );
 }

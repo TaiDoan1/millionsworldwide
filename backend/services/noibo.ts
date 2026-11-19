@@ -38,6 +38,7 @@ import {
   validateShiftTemplates,
   validateStaffName,
   validateTaskNote,
+  validateTaskPriority,
   validateTaskTitle,
   validateUsername,
 } from "./noibo-validation";
@@ -48,6 +49,7 @@ import type {
   NoiboShift,
   NoiboStaff,
   NoiboTask,
+  NoiboTaskPriority,
   NoiboTaskStatus,
 } from "../storage/types";
 
@@ -59,6 +61,7 @@ export type {
   NoiboShift,
   NoiboStaff,
   NoiboTask,
+  NoiboTaskPriority,
   NoiboTaskStatus,
 } from "../storage/types";
 
@@ -347,19 +350,30 @@ export async function deleteStaff(id: number): Promise<Result> {
 }
 
 /**
- * Create a task. Founders assign to anyone (or no one); staff create
- * tasks for themselves.
+ * Create a task. Founders assign to anyone (or no one) and set the
+ * priority; staff create tasks for themselves at medium priority.
  */
 export async function createTask(input: {
   title: string;
   assigneeId: number | null;
   dueDate: string | null;
+  priority?: unknown;
   note: string | null;
 }): Promise<Result> {
   const me = await getNoiboSessionStaff();
   if (!me) return { success: false, error: "Cần đăng nhập lại." };
   const assigneeId =
     me.role === "founder" ? input.assigneeId : me.id;
+  const rawPriority =
+    typeof input.priority === "string" ? input.priority : "medium";
+  if (me.role === "founder") {
+    const badPriority = validateTaskPriority(rawPriority);
+    if (badPriority) return { success: false, error: badPriority };
+  }
+  const priority: NoiboTaskPriority =
+    me.role === "founder"
+      ? (rawPriority as NoiboTaskPriority)
+      : "medium";
   const title = typeof input.title === "string" ? input.title.trim() : "";
   const badTitle = validateTaskTitle(title);
   if (badTitle) return { success: false, error: badTitle };
@@ -387,6 +401,7 @@ export async function createTask(input: {
       title,
       assigneeId,
       dueDate,
+      priority,
       note,
       createdBy: me.id,
     });
@@ -420,6 +435,36 @@ export async function updateTaskStatus(
       };
     }
     await store.updateTaskStatus(id, status);
+    revalidatePath("/noibo");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: dbErrorMessage(error) };
+  }
+}
+
+/**
+ * Change a task's priority. Founder-only — staff keep the priority
+ * the founder set (their own tasks stay at medium).
+ */
+export async function updateTaskPriority(
+  id: number,
+  priority: NoiboTaskPriority
+): Promise<Result> {
+  const me = await getNoiboSessionStaff();
+  if (!me) return { success: false, error: "Cần đăng nhập lại." };
+  if (me.role !== "founder") {
+    return {
+      success: false,
+      error: "Chỉ founder mới đổi được mức ưu tiên.",
+    };
+  }
+  const badPriority = validateTaskPriority(priority);
+  if (badPriority) return { success: false, error: badPriority };
+  try {
+    const task = await store.getTaskById(id);
+    if (!task) return { success: false, error: "Không tìm thấy công việc." };
+    const ok = await store.updateTaskPriority(id, priority);
+    if (!ok) return { success: false, error: "Không tìm thấy công việc." };
     revalidatePath("/noibo");
     return { success: true };
   } catch (error) {

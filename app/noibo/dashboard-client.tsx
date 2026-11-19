@@ -9,9 +9,11 @@ import {
   deleteTask,
   logoutStaff,
   saveDailyLog,
+  updateTaskPriority,
   updateTaskStatus,
   type NoiboStaff,
   type NoiboTask,
+  type NoiboTaskPriority,
   type NoiboTaskStatus,
 } from "../actions/noibo";
 import { dayLabel } from "./week";
@@ -158,6 +160,7 @@ export function AddTaskForm({
   const [title, setTitle] = useState("");
   const [assigneeId, setAssigneeId] = useState(isFounder ? "" : String(me.id));
   const [dueDate, setDueDate] = useState("");
+  const [priority, setPriority] = useState<NoiboTaskPriority>("medium");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -170,6 +173,7 @@ export function AddTaskForm({
       title,
       assigneeId: assigneeId === "" ? null : Number(assigneeId),
       dueDate: dueDate === "" ? null : dueDate,
+      priority,
       note,
     });
     setBusy(false);
@@ -180,6 +184,7 @@ export function AddTaskForm({
     setTitle("");
     setAssigneeId(isFounder ? "" : String(me.id));
     setDueDate("");
+    setPriority("medium");
     setNote("");
     setMsg({ ok: true, text: isFounder ? "Đã giao việc." : "Đã tạo việc." });
     router.refresh();
@@ -202,9 +207,9 @@ export function AddTaskForm({
           required
         />
         <div className="flex flex-col gap-3 sm:flex-row">
-          <label className="flex-1">
-            <span className="mb-1 block text-xs text-black/60">Giao cho</span>
-            {isFounder ? (
+          {isFounder && (
+            <label className="flex-1">
+              <span className="mb-1 block text-xs text-black/60">Giao cho</span>
               <select
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
@@ -219,12 +224,8 @@ export function AddTaskForm({
                     </option>
                   ))}
               </select>
-            ) : (
-              <p className="rounded-lg border border-black/20 bg-black/[0.03] p-2.5 text-sm">
-                {me.name} (bạn)
-              </p>
-            )}
-          </label>
+            </label>
+          )}
           <label className="flex-1">
             <span className="mb-1 block text-xs text-black/60">Hạn xong</span>
             <input
@@ -234,6 +235,24 @@ export function AddTaskForm({
               className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
             />
           </label>
+          {isFounder && (
+            <label className="flex-1">
+              <span className="mb-1 block text-xs text-black/60">
+                Mức ưu tiên
+              </span>
+              <select
+                value={priority}
+                onChange={(e) =>
+                  setPriority(e.target.value as NoiboTaskPriority)
+                }
+                className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
+              >
+                <option value="high">Ưu tiên cao</option>
+                <option value="medium">Trung bình</option>
+                <option value="low">Thấp</option>
+              </select>
+            </label>
+          )}
         </div>
         <input
           value={note}
@@ -487,6 +506,10 @@ export function TaskBoard({
                       className={`rounded-lg border border-black/10 bg-white p-3 ${
                         dragId === t.id ? "opacity-40" : ""
                       } ${
+                        t.priority === "high"
+                          ? "border-l-4 border-l-red-600"
+                          : ""
+                      } ${
                         canChange
                           ? "cursor-grab active:cursor-grabbing"
                           : ""
@@ -515,6 +538,13 @@ export function TaskBoard({
                           ? `Giao cho ${t.assigneeName}`
                           : "Chưa giao ai"}
                         {t.dueDate ? ` · Hạn ${t.dueDate}` : ""}
+                        {t.priority === "high" ? (
+                          <span className="ml-1 font-semibold text-red-600">
+                            · Ưu tiên cao
+                          </span>
+                        ) : t.priority === "low" ? (
+                          <span className="ml-1">· Ưu tiên thấp</span>
+                        ) : null}
                         {overdue ? (
                           <span className="ml-1 font-semibold text-red-600">
                             · Quá hạn
@@ -528,6 +558,40 @@ export function TaskBoard({
                         <div className="mt-2">
                           <TaskStatusButtons taskId={t.id} status={t.status} />
                         </div>
+                      ) : null}
+                      {isFounder ? (
+                        <label className="mt-2 flex items-center gap-2 text-xs text-black/60">
+                          Ưu tiên
+                          <select
+                            value={t.priority}
+                            disabled={busy}
+                            onChange={async (e) => {
+                              const next = e.target
+                                .value as NoiboTaskPriority;
+                              if (next === t.priority) return;
+                              setError(null);
+                              setBusy(true);
+                              const result = await updateTaskPriority(
+                                t.id,
+                                next
+                              );
+                              setBusy(false);
+                              if (!result.success) {
+                                setError(
+                                  result.error ??
+                                    "Đổi mức ưu tiên không được."
+                                );
+                                return;
+                              }
+                              router.refresh();
+                            }}
+                            className="rounded-lg border border-black/20 px-2 py-1 text-xs"
+                          >
+                            <option value="high">Ưu tiên cao</option>
+                            <option value="medium">Trung bình</option>
+                            <option value="low">Thấp</option>
+                          </select>
+                        </label>
                       ) : null}
                     </li>
                   );

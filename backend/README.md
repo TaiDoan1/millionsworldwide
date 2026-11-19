@@ -110,7 +110,13 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   bảng Trello 3 cột, kéo thả thẻ giữa các cột để đổi trạng thái (nút
   trạng thái giữ lại cho điện thoại, kéo thả HTML5 không chạy trên
   màn cảm ứng); lịch tuần hiện cả task theo hạn (chấm màu theo trạng
-  thái). Báo cáo cuối ngày: trang `/noibo/baocao` liệt kê việc
+  thái). Ưu tiên: task có 3 mức `high` / `medium` / `low` (cột
+  `priority`, migration `migrateTaskPriority()`; task cũ mặc định
+  `medium`), chỉ founder đặt lúc giao việc hoặc đổi trên thẻ task;
+  việc ưu tiên cao hiện viền đỏ + chữ đỏ trên bảng, lịch và báo cáo,
+  và xếp lên trên trong từng cột. Trang Tổng quan của founder có mục
+  "Tiến độ nhân viên": mỗi nhân viên 1 dòng (đã xong/tổng, đang làm,
+  quá hạn) + dòng việc chưa giao ai. Báo cáo cuối ngày: trang `/noibo/baocao` liệt kê việc
   xong hôm nay (task ghi giờ xong khi chuyển sang "Đã xong", chuyển
   lại thì xóa giờ) + tóm tắt viết tay mỗi người mỗi ngày (sửa được),
   founder đọc được của mọi người. Không có Postgres thì

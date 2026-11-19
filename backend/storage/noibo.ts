@@ -28,6 +28,7 @@ import type {
   NoiboShift,
   NoiboStaff,
   NoiboTask,
+  NoiboTaskPriority,
 } from "./types";
 
 const SCHEMA = `
@@ -52,6 +53,7 @@ const SCHEMA = `
     assignee_id INTEGER,
     due_date TEXT,
     status TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'medium',
     note TEXT,
     created_by INTEGER,
     created_at TEXT NOT NULL,
@@ -119,6 +121,20 @@ export async function migrateTaskCompletedAt(): Promise<void> {
   );
 }
 
+/**
+ * Add priority to tasks created before priority tags existed. Old rows
+ * get "medium" (the default), so nothing ever reads as priority-less.
+ */
+export async function migrateTaskPriority(): Promise<void> {
+  const pool = getPostgresPool();
+  await pool.query(
+    "ALTER TABLE noibo_tasks ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium'"
+  );
+  await pool.query(
+    "UPDATE noibo_tasks SET priority = 'medium' WHERE priority IS NULL"
+  );
+}
+
 async function seedFounderIfEmpty(): Promise<void> {
   const pool = getPostgresPool();
   const count = await pool.query<{ c: string }>(
@@ -145,6 +161,7 @@ export function ensureNoiboInit(): Promise<void> {
       .query(SCHEMA)
       .then(() => migrateLegacyAdmins())
       .then(() => migrateTaskCompletedAt())
+      .then(() => migrateTaskPriority())
       .then(() => seedFounderIfEmpty())
       .catch((error) => {
         console.error("[storage] Noibo init failed:", error);
@@ -346,6 +363,7 @@ type TaskRow = {
   assignee_name: string | null;
   due_date: string | null;
   status: string;
+  priority: string | null;
   note: string | null;
   created_by: number | null;
   created_at: string;
@@ -362,6 +380,12 @@ function taskFromRow(r: TaskRow): NoiboTask {
     dueDate: r.due_date,
     status:
       r.status === "doing" ? "doing" : r.status === "done" ? "done" : "todo",
+    priority:
+      r.priority === "high"
+        ? "high"
+        : r.priority === "low"
+          ? "low"
+          : "medium",
     note: r.note,
     createdBy: r.created_by,
     createdAt: r.created_at,
@@ -371,7 +395,7 @@ function taskFromRow(r: TaskRow): NoiboTask {
 }
 
 const TASK_COLUMNS = `t.id, t.title, t.assignee_id, st.name AS assignee_name,
-  t.due_date, t.status, t.note, t.created_by, t.created_at, t.updated_at,
+  t.due_date, t.status, t.priority, t.note, t.created_by, t.created_at, t.updated_at,
   t.completed_at
   FROM noibo_tasks t LEFT JOIN noibo_staff st ON st.id = t.assignee_id`;
 
@@ -381,6 +405,7 @@ export async function listTasks(): Promise<NoiboTask[]> {
     `SELECT ${TASK_COLUMNS}
      ORDER BY
        CASE t.status WHEN 'todo' THEN 0 WHEN 'doing' THEN 1 ELSE 2 END,
+       CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
        (t.due_date IS NULL), t.due_date, t.id DESC`
   );
   return result.rows.map(taskFromRow);
@@ -400,6 +425,7 @@ export async function insertTask(input: {
   title: string;
   assigneeId: number | null;
   dueDate: string | null;
+  priority: NoiboTaskPriority;
   note: string | null;
   createdBy: number | null;
 }): Promise<NoiboTask> {
@@ -407,13 +433,14 @@ export async function insertTask(input: {
   const now = new Date().toISOString();
   const inserted = await getPostgresPool().query<{ id: number }>(
     `INSERT INTO noibo_tasks
-       (title, assignee_id, due_date, status, note, created_by, created_at, updated_at)
-     VALUES ($1, $2, $3, 'todo', $4, $5, $6, $6)
+       (title, assignee_id, due_date, status, priority, note, created_by, created_at, updated_at)
+     VALUES ($1, $2, $3, 'todo', $4, $5, $6, $7, $7)
      RETURNING id`,
     [
       input.title,
       input.assigneeId,
       input.dueDate,
+      input.priority,
       input.note,
       input.createdBy,
       now,
@@ -424,6 +451,19 @@ export async function insertTask(input: {
   const task = await getTaskById(id);
   if (!task) throw new Error("Không tạo được công việc.");
   return task;
+}
+
+/** Change a task's priority (founder-only; enforced in the service). */
+export async function updateTaskPriority(
+  id: number,
+  priority: NoiboTaskPriority
+): Promise<boolean> {
+  await ensureNoiboInit();
+  const result = await getPostgresPool().query(
+    "UPDATE noibo_tasks SET priority = $1, updated_at = $2 WHERE id = $3",
+    [priority, new Date().toISOString(), id]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function updateTaskStatus(
