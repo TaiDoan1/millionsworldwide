@@ -1,12 +1,16 @@
 "use server";
 
 import {
+  checkIn as checkInService,
+  checkOut as checkOutService,
   createShift as createShiftService,
   createStaff as createStaffService,
   createTask as createTaskService,
   deleteShift as deleteShiftService,
   deleteTask as deleteTaskService,
+  getMyCheckinToday as getMyCheckinTodayService,
   getNoiboSettings as getNoiboSettingsService,
+  listCheckinWeek as listCheckinWeekService,
   listNoiboShifts as listNoiboShiftsService,
   listNoiboStaff as listNoiboStaffService,
   listNoiboTasks as listNoiboTasksService,
@@ -21,6 +25,7 @@ import {
 import { getNoiboSessionStaff } from "../../backend/auth/noibo-auth";
 
 export type {
+  NoiboCheckin,
   NoiboSettings,
   NoiboShift,
   NoiboStaff,
@@ -41,6 +46,16 @@ export async function loginStaff(username: string, password: string) {
 /** Log the current staff session out. */
 export async function logoutStaff() {
   return logoutStaffService();
+}
+
+/** Check in for the current staff member. */
+export async function checkIn() {
+  return checkInService();
+}
+
+/** Check out, closing the open session. */
+export async function checkOut() {
+  return checkOutService();
 }
 
 /** Founder-only: add a staff account. */
@@ -124,4 +139,14 @@ export async function listNoiboTasks() {
 /** Shifts between two dates (YYYY-MM-DD), inclusive. */
 export async function listNoiboShifts(startDate: string, endDate: string) {
   return listNoiboShiftsService(startDate, endDate);
+}
+
+/** My open check-in session (if any) + minutes I worked today. */
+export async function getMyCheckinToday() {
+  return getMyCheckinTodayService();
+}
+
+/** Founder-only: all check-in sessions in a date range. */
+export async function listCheckinWeek(startDate: string, endDate: string) {
+  return listCheckinWeekService(startDate, endDate);
 }

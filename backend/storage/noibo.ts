@@ -22,6 +22,7 @@
  */
 import { getPostgresPool } from "./postgres";
 import type {
+  NoiboCheckin,
   NoiboSettings,
   NoiboShift,
   NoiboStaff,
@@ -66,6 +67,12 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS noibo_settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     data JSONB NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS noibo_checkins (
+    id SERIAL PRIMARY KEY,
+    staff_id INTEGER NOT NULL,
+    check_in_at TEXT NOT NULL,
+    check_out_at TEXT
   );
 `;
 
@@ -484,6 +491,96 @@ export async function deleteShift(id: number): Promise<boolean> {
     [id]
   );
   return (result.rowCount ?? 0) > 0;
+}
+
+type CheckinRow = {
+  id: number;
+  staff_id: number;
+  staff_name: string | null;
+  check_in_at: string;
+  check_out_at: string | null;
+};
+
+function checkinFromRow(r: CheckinRow): NoiboCheckin {
+  return {
+    id: r.id,
+    staffId: r.staff_id,
+    staffName: r.staff_name ?? undefined,
+    checkInAt: r.check_in_at,
+    checkOutAt: r.check_out_at,
+  };
+}
+
+const CHECKIN_COLUMNS = `c.id, c.staff_id, st.name AS staff_name,
+  c.check_in_at, c.check_out_at
+  FROM noibo_checkins c LEFT JOIN noibo_staff st ON st.id = c.staff_id`;
+
+/** The currently open session of one staff member, if any. */
+export async function getOpenCheckin(
+  staffId: number
+): Promise<NoiboCheckin | null> {
+  await ensureNoiboInit();
+  const result = await getPostgresPool().query<CheckinRow>(
+    `SELECT ${CHECKIN_COLUMNS}
+     WHERE c.staff_id = $1 AND c.check_out_at IS NULL
+     ORDER BY c.check_in_at DESC LIMIT 1`,
+    [staffId]
+  );
+  const row = result.rows[0];
+  return row ? checkinFromRow(row) : null;
+}
+
+export async function insertCheckin(
+  staffId: number,
+  checkInAt: string
+): Promise<NoiboCheckin> {
+  await ensureNoiboInit();
+  const result = await getPostgresPool().query<
+    Omit<CheckinRow, "staff_name">
+  >(
+    `INSERT INTO noibo_checkins (staff_id, check_in_at, check_out_at)
+     VALUES ($1, $2, NULL)
+     RETURNING id, staff_id, check_in_at, check_out_at`,
+    [staffId, checkInAt]
+  );
+  const row = result.rows[0];
+  if (!row) throw new Error("Không check-in được.");
+  return checkinFromRow({ ...row, staff_name: null });
+}
+
+/** Close an open session. False when it was already closed. */
+export async function closeCheckin(
+  id: number,
+  checkOutAt: string
+): Promise<boolean> {
+  await ensureNoiboInit();
+  const result = await getPostgresPool().query(
+    "UPDATE noibo_checkins SET check_out_at = $1 WHERE id = $2 AND check_out_at IS NULL",
+    [checkOutAt, id]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Sessions whose check-in falls in [startIso, endIso), optionally one person. */
+export async function listCheckinsBetween(
+  startIso: string,
+  endIso: string,
+  staffId?: number
+): Promise<NoiboCheckin[]> {
+  await ensureNoiboInit();
+  const params: (string | number)[] = [startIso, endIso];
+  let where = "c.check_in_at >= $1 AND c.check_in_at < $2";
+  if (staffId !== undefined) {
+    params.push(staffId);
+    where += " AND c.staff_id = $3";
+  }
+  const result = await getPostgresPool().query<CheckinRow>(
+    `SELECT ${CHECKIN_COLUMNS}
+     WHERE ${where}
+     ORDER BY c.check_in_at`,
+    params
+  );
+  return result.rows.map(checkinFromRow);
 }
 
 export async function readNoiboSettings(): Promise<NoiboSettings | null> {

@@ -1,33 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  getMyCheckinToday,
   getNoiboSessionStaffAction,
   getNoiboSettings,
+  listCheckinWeek,
   listNoiboShifts,
   listNoiboStaff,
   listNoiboTasks,
-  type NoiboTask,
 } from "../actions/noibo";
 import { NoiboNotice, NoiboSectionTitle, NoiboShell } from "./shell";
 import NoiboLoginForm from "./NoiboLoginForm";
+import { CheckinPanel } from "./checkin-client";
 import {
   AddShiftForm,
   AddTaskForm,
   DeleteButton,
   LogoutButton,
-  TaskStatusButtons,
+  TaskBoard,
 } from "./dashboard-client";
-import { addDays, dayLabel, mondayOf, vnToday, weekDates } from "./week";
+import {
+  addDays,
+  dayLabel,
+  formatMinutes,
+  mondayOf,
+  summarizeCheckins,
+  vnTimeOf,
+  vnToday,
+  weekDates,
+} from "./week";
 
 export const metadata: Metadata = {
   title: "Nội bộ — Millions",
   robots: { index: false, follow: false },
-};
-
-const TASK_GROUP_LABEL: Record<NoiboTask["status"], string> = {
-  todo: "Chưa làm",
-  doing: "Đang làm",
-  done: "Đã xong",
 };
 
 export default async function NoiboPage({
@@ -62,13 +67,20 @@ export default async function NoiboPage({
   let tasks;
   let shifts;
   let staffList;
+  let myCheckin;
+  let weekSessions;
   try {
-    [settings, tasks, shifts, staffList] = await Promise.all([
-      getNoiboSettings(),
-      listNoiboTasks(),
-      listNoiboShifts(dates[0], dates[6]),
-      me.role === "founder" ? listNoiboStaff() : Promise.resolve([]),
-    ]);
+    [settings, tasks, shifts, staffList, myCheckin, weekSessions] =
+      await Promise.all([
+        getNoiboSettings(),
+        listNoiboTasks(),
+        listNoiboShifts(dates[0], dates[6]),
+        me.role === "founder" ? listNoiboStaff() : Promise.resolve([]),
+        getMyCheckinToday(),
+        me.role === "founder"
+          ? listCheckinWeek(dates[0], dates[6])
+          : Promise.resolve([]),
+      ]);
   } catch (error) {
     return (
       <NoiboShell>
@@ -108,6 +120,11 @@ export default async function NoiboPage({
         ) : null}
         <LogoutButton />
       </div>
+
+      <CheckinPanel
+        open={myCheckin.open}
+        todayMinutes={myCheckin.todayMinutes}
+      />
 
       {announcement ? (
         <p className="mb-6 rounded-lg border border-black/10 bg-black/[0.03] p-4 text-sm">
@@ -207,73 +224,44 @@ export default async function NoiboPage({
         </ul>
       </section>
 
+      {isFounder ? (
+        <section className="mb-10">
+          <NoiboSectionTitle>Giờ làm tuần này</NoiboSectionTitle>
+          <ul className="space-y-2">
+            {summarizeCheckins(
+              weekSessions,
+              staffList,
+              dates,
+              today,
+              new Date().toISOString()
+            ).map((r) => (
+              <li
+                key={r.staffId}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/10 p-3 text-sm"
+              >
+                <span className="font-medium">{r.name}</span>
+                <span className="text-black/60">
+                  Hôm nay: {formatMinutes(r.todayMinutes)}
+                  {" · "}Tuần này: {formatMinutes(r.totalMinutes)}
+                  {r.openSince ? (
+                    <>{" · "}Đang làm từ {vnTimeOf(r.openSince)}</>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section>
         <NoiboSectionTitle>Công việc</NoiboSectionTitle>
         {isFounder ? <AddTaskForm staff={staffList} /> : null}
-        {(["todo", "doing", "done"] as const).map((status) => {
-          const group = tasks.filter((t) => t.status === status);
-          if (group.length === 0) return null;
-          return (
-            <div key={status} className="mb-6">
-              <h3 className="mb-2 text-sm font-semibold text-black/60">
-                {TASK_GROUP_LABEL[status]} ({group.length})
-              </h3>
-              <ul className="space-y-2">
-                {group.map((t) => {
-                  const overdue =
-                    status !== "done" &&
-                    t.dueDate !== null &&
-                    t.dueDate < today;
-                  const canChange =
-                    isFounder || t.assigneeId === me.id;
-                  return (
-                    <li
-                      key={t.id}
-                      className="rounded-lg border border-black/10 p-3"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <p
-                          className={`text-sm font-medium ${
-                            status === "done" ? "line-through text-black/50" : ""
-                          }`}
-                        >
-                          {t.title}
-                        </p>
-                        {isFounder ? (
-                          <DeleteButton
-                            kind="task"
-                            id={t.id}
-                            label="Xóa công việc"
-                          />
-                        ) : null}
-                      </div>
-                      <p className="mt-1 text-xs text-black/60">
-                        {t.assigneeName ? `Giao cho ${t.assigneeName}` : "Chưa giao ai"}
-                        {t.dueDate ? ` · Hạn ${t.dueDate}` : ""}
-                        {overdue ? (
-                          <span className="ml-1 font-semibold text-red-600">
-                            · Quá hạn
-                          </span>
-                        ) : null}
-                      </p>
-                      {t.note ? (
-                        <p className="mt-1 text-xs text-black/50">{t.note}</p>
-                      ) : null}
-                      {canChange ? (
-                        <div className="mt-2">
-                          <TaskStatusButtons taskId={t.id} status={t.status} />
-                        </div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })}
-        {tasks.length === 0 ? (
-          <p className="text-sm text-black/40">Chưa có công việc nào.</p>
-        ) : null}
+        <TaskBoard
+          tasks={tasks}
+          meId={me.id}
+          isFounder={isFounder}
+          today={today}
+        />
       </section>
     </NoiboShell>
   );

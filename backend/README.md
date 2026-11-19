@@ -81,7 +81,7 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   to thay vì tính bằng giá seed cũ.
 - **Trang nội bộ** (`/noibo`, riêng hẳn với `/mw-office`) lưu ở các
   bảng `noibo_staff`, `noibo_sessions`, `noibo_tasks`,
-  `noibo_shifts`, `noibo_settings` trong Postgres — xem
+  `noibo_shifts`, `noibo_settings`, `noibo_checkins` trong Postgres — xem
   `backend/storage/noibo.ts` và `backend/services/noibo.ts`. Mỗi nhân
   viên 1 tài khoản riêng (mật khẩu hash scrypt, phiên cookie httpOnly
   30 ngày, chỉ dùng trong `/noibo`). Phân quyền 2 chức vụ: `founder`
@@ -90,7 +90,12 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   trạng thái việc được giao). Tài khoản founder `taidoan` được seed
   sẵn khi bảng nhân viên còn trống (chỉ hash scrypt trong code, xem
   `SEEDED_FOUNDER_*`); `/noibo/caidat` chỉ founder đăng nhập mới vào
-  được, không có form tạo tài khoản đầu tiên. Không có Postgres thì
+  được, không có form tạo tài khoản đầu tiên. Chấm công: mỗi nhân viên
+  tự check-in/check-out trên `/noibo` (1 ca đang mở mỗi người, giờ
+  tính theo giờ VN), founder xem giờ làm hôm nay + tuần này của mọi
+  người. Task hiện dạng bảng Trello 3 cột, kéo thả thẻ giữa các cột
+  để đổi trạng thái (nút trạng thái giữ lại cho điện thoại, kéo thả
+  HTML5 không chạy trên màn cảm ứng). Không có Postgres thì
   trang nội bộ báo rõ là chưa dùng được, không ghi sang kho khác.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
   hay đổi tên chúng**: `backend/storage/file.ts` đọc seed từ

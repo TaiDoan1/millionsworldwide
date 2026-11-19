@@ -16,6 +16,8 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { checkRateLimit, clientKey } from "../security/rate-limit";
+// Pure date helpers shared with the /noibo pages (no UI imports).
+import { addDays, vnDayStartIso, vnToday } from "../../app/noibo/week";
 import {
   NOIBO_SESSION_DAYS,
   clearNoiboSessionCookie,
@@ -39,6 +41,7 @@ import {
   validateUsername,
 } from "./noibo-validation";
 import type {
+  NoiboCheckin,
   NoiboSettings,
   NoiboShift,
   NoiboStaff,
@@ -47,6 +50,7 @@ import type {
 } from "../storage/types";
 
 export type {
+  NoiboCheckin,
   NoiboRole,
   NoiboSettings,
   NoiboShift,
@@ -159,6 +163,43 @@ export async function logoutStaff(): Promise<Result> {
   await clearNoiboSessionCookie();
   revalidatePath("/noibo");
   return { success: true };
+}
+
+/** Check in for the current staff member. One open session at a time. */
+export async function checkIn(): Promise<Result> {
+  const me = await getNoiboSessionStaff();
+  if (!me) return { success: false, error: "Cần đăng nhập lại." };
+  try {
+    const open = await store.getOpenCheckin(me.id);
+    if (open) {
+      return {
+        success: false,
+        error: "Bạn đang trong ca làm rồi, check-out trước đã.",
+      };
+    }
+    await store.insertCheckin(me.id, new Date().toISOString());
+    revalidatePath("/noibo");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: dbErrorMessage(error) };
+  }
+}
+
+/** Check out, closing the open session. */
+export async function checkOut(): Promise<Result> {
+  const me = await getNoiboSessionStaff();
+  if (!me) return { success: false, error: "Cần đăng nhập lại." };
+  try {
+    const open = await store.getOpenCheckin(me.id);
+    if (!open) {
+      return { success: false, error: "Bạn chưa check-in." };
+    }
+    await store.closeCheckin(open.id, new Date().toISOString());
+    revalidatePath("/noibo");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: dbErrorMessage(error) };
+  }
 }
 
 /** Founder-only: add a staff account. */
@@ -504,6 +545,54 @@ export async function listNoiboShifts(
   if (!me) throw new Error("Cần đăng nhập lại.");
   try {
     return await store.listShiftsBetween(startDate, endDate);
+  } catch (error) {
+    if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
+    throw error;
+  }
+}
+
+/** My open session (if any) + minutes I worked today (VN time). */
+export async function getMyCheckinToday(): Promise<{
+  open: NoiboCheckin | null;
+  todayMinutes: number;
+}> {
+  const me = await getNoiboSessionStaff();
+  if (!me) throw new Error("Cần đăng nhập lại.");
+  try {
+    const today = vnToday();
+    const sessions = await store.listCheckinsBetween(
+      vnDayStartIso(today),
+      vnDayStartIso(addDays(today, 1)),
+      me.id
+    );
+    const now = Date.now();
+    let todayMinutes = 0;
+    for (const s of sessions) {
+      const end = s.checkOutAt ? new Date(s.checkOutAt).getTime() : now;
+      todayMinutes += Math.max(
+        0,
+        (end - new Date(s.checkInAt).getTime()) / 60000
+      );
+    }
+    return { open: await store.getOpenCheckin(me.id), todayMinutes };
+  } catch (error) {
+    if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
+    throw error;
+  }
+}
+
+/** Founder-only: all check-in sessions in a VN date range. */
+export async function listCheckinWeek(
+  startDate: string,
+  endDate: string
+): Promise<NoiboCheckin[]> {
+  const me = await requireFounder();
+  if (!me) throw new Error("Chỉ founder mới xem được giờ làm của nhân viên.");
+  try {
+    return await store.listCheckinsBetween(
+      vnDayStartIso(startDate),
+      vnDayStartIso(addDays(endDate, 1))
+    );
   } catch (error) {
     if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
     throw error;

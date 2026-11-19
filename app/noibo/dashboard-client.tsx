@@ -10,6 +10,7 @@ import {
   logoutStaff,
   updateTaskStatus,
   type NoiboStaff,
+  type NoiboTask,
   type NoiboTaskStatus,
 } from "../actions/noibo";
 import { dayLabel } from "./week";
@@ -351,5 +352,163 @@ export function AddShiftForm({
         </button>
       </div>
     </form>
+  );
+}
+
+const BOARD_LABEL: Record<NoiboTaskStatus, string> = {
+  todo: "Chưa làm",
+  doing: "Đang làm",
+  done: "Đã xong",
+};
+
+const BOARD_ORDER: NoiboTaskStatus[] = ["todo", "doing", "done"];
+
+/**
+ * Trello-style board: three columns, drag a card between them to
+ * change its status. The status pills stay as the touch fallback —
+ * HTML5 drag-and-drop does not work on touch screens.
+ */
+export function TaskBoard({
+  tasks,
+  meId,
+  isFounder,
+  today,
+}: {
+  tasks: NoiboTask[];
+  meId: number;
+  isFounder: boolean;
+  today: string;
+}) {
+  const router = useRouter();
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [overStatus, setOverStatus] = useState<NoiboTaskStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function dropOn(status: NoiboTaskStatus) {
+    const id = dragId;
+    setDragId(null);
+    setOverStatus(null);
+    if (id === null || busy) return;
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.status === status) return;
+    setError(null);
+    setBusy(true);
+    const result = await updateTaskStatus(id, status);
+    setBusy(false);
+    if (!result.success) {
+      setError(result.error ?? "Đổi trạng thái không được.");
+      return;
+    }
+    router.refresh();
+  }
+
+  if (tasks.length === 0) {
+    return <p className="text-sm text-black/40">Chưa có công việc nào.</p>;
+  }
+
+  return (
+    <div>
+      {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
+      <div className="grid gap-4 md:grid-cols-3">
+        {BOARD_ORDER.map((status) => {
+          const group = tasks.filter((t) => t.status === status);
+          return (
+            <div
+              key={status}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (overStatus !== status) setOverStatus(status);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                void dropOn(status);
+              }}
+              className={`min-h-32 rounded-lg border p-3 ${
+                overStatus === status
+                  ? "border-black bg-black/[0.05]"
+                  : "border-black/10 bg-black/[0.02]"
+              }`}
+            >
+              <h3 className="mb-3 text-sm font-semibold text-black/60">
+                {BOARD_LABEL[status]} ({group.length})
+              </h3>
+              <ul className="space-y-2">
+                {group.map((t) => {
+                  const overdue =
+                    status !== "done" &&
+                    t.dueDate !== null &&
+                    t.dueDate < today;
+                  const canChange = isFounder || t.assigneeId === meId;
+                  return (
+                    <li
+                      key={t.id}
+                      draggable={canChange && !busy}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", String(t.id));
+                        e.dataTransfer.effectAllowed = "move";
+                        setDragId(t.id);
+                      }}
+                      onDragEnd={() => {
+                        setDragId(null);
+                        setOverStatus(null);
+                      }}
+                      className={`rounded-lg border border-black/10 bg-white p-3 ${
+                        dragId === t.id ? "opacity-40" : ""
+                      } ${
+                        canChange
+                          ? "cursor-grab active:cursor-grabbing"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p
+                          className={`text-sm font-medium ${
+                            status === "done"
+                              ? "line-through text-black/50"
+                              : ""
+                          }`}
+                        >
+                          {t.title}
+                        </p>
+                        {isFounder ? (
+                          <DeleteButton
+                            kind="task"
+                            id={t.id}
+                            label="Xóa công việc"
+                          />
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-xs text-black/60">
+                        {t.assigneeName
+                          ? `Giao cho ${t.assigneeName}`
+                          : "Chưa giao ai"}
+                        {t.dueDate ? ` · Hạn ${t.dueDate}` : ""}
+                        {overdue ? (
+                          <span className="ml-1 font-semibold text-red-600">
+                            · Quá hạn
+                          </span>
+                        ) : null}
+                      </p>
+                      {t.note ? (
+                        <p className="mt-1 text-xs text-black/50">{t.note}</p>
+                      ) : null}
+                      {canChange ? (
+                        <div className="mt-2">
+                          <TaskStatusButtons taskId={t.id} status={t.status} />
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+              {group.length === 0 ? (
+                <p className="text-xs text-black/40">Kéo task vào đây.</p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

@@ -137,3 +137,14 @@ export type NoiboSettings = {
   /** Shift labels offered in the schedule form, e.g. "Sáng 8h–12h". */
   shiftTemplates?: string[];
 };
+
+/** One check-in session: checkOutAt is null while still working. */
+export type NoiboCheckin = {
+  id: number;
+  staffId: number;
+  /** Resolved from the staff table when listed. */
+  staffName?: string;
+  /** ISO timestamps (UTC) of check-in / check-out. */
+  checkInAt: string;
+  checkOutAt: string | null;
+};
