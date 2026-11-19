@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createStaff,
+  deleteStaff,
   resetStaffPassword,
   saveNoiboSettings,
   setStaffActive,
@@ -114,6 +115,7 @@ export function StaffRow({
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
   const [showReset, setShowReset] = useState(false);
+  const [armedDelete, setArmedDelete] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -141,6 +143,23 @@ export function StaffRow({
     setNewPassword("");
     setShowReset(false);
     setMsg({ ok: true, text: "Đã đặt lại mật khẩu." });
+    router.refresh();
+  }
+
+  async function deleteStaffRow() {
+    if (!armedDelete) {
+      setArmedDelete(true);
+      return;
+    }
+    setMsg(null);
+    setBusy(true);
+    const result = await deleteStaff(staff.id);
+    setBusy(false);
+    setArmedDelete(false);
+    if (!result.success) {
+      setMsg({ ok: false, text: result.error ?? "Xóa nhân viên không được." });
+      return;
+    }
     router.refresh();
   }
 
@@ -178,6 +197,19 @@ export function StaffRow({
           >
             {staff.active ? "Khóa" : "Mở khóa"}
           </button>
+          {isMe ? null : (
+            <button
+              onClick={deleteStaffRow}
+              disabled={busy}
+              className={`rounded-lg border px-2.5 py-1 text-xs disabled:opacity-50 ${
+                armedDelete
+                  ? "border-red-600 font-semibold text-red-600"
+                  : "border-black/20 text-red-600"
+              }`}
+            >
+              {armedDelete ? "Chắc xóa?" : "Xóa"}
+            </button>
+          )}
         </span>
       </div>
       {showReset ? (

@@ -148,3 +148,14 @@ export type NoiboCheckin = {
   checkInAt: string;
   checkOutAt: string | null;
 };
+
+/** One staff member's written work log for one day. */
+export type NoiboDailyLog = {
+  id: number;
+  staffId: number;
+  /** Resolved from the staff table when listed. */
+  staffName?: string;
+  /** YYYY-MM-DD (VN date). */
+  date: string;
+  content: string;
+};

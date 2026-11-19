@@ -5,6 +5,7 @@ import {
   getNoiboSessionStaffAction,
   getNoiboSettings,
   listCheckinWeek,
+  listDailyLogs,
   listNoiboShifts,
   listNoiboStaff,
   listNoiboTasks,
@@ -15,6 +16,7 @@ import { CheckinPanel } from "./checkin-client";
 import {
   AddShiftForm,
   AddTaskForm,
+  DailyLogForm,
   DeleteButton,
   LogoutButton,
   TaskBoard,
@@ -69,8 +71,9 @@ export default async function NoiboPage({
   let staffList;
   let myCheckin;
   let weekSessions;
+  let dailyLogs;
   try {
-    [settings, tasks, shifts, staffList, myCheckin, weekSessions] =
+    [settings, tasks, shifts, staffList, myCheckin, weekSessions, dailyLogs] =
       await Promise.all([
         getNoiboSettings(),
         listNoiboTasks(),
@@ -80,6 +83,7 @@ export default async function NoiboPage({
         me.role === "founder"
           ? listCheckinWeek(dates[0], dates[6])
           : Promise.resolve([]),
+        listDailyLogs(dates[0], dates[6]),
       ]);
   } catch (error) {
     return (
@@ -159,13 +163,12 @@ export default async function NoiboPage({
           </span>
         </div>
 
-        {isFounder ? (
-          <AddShiftForm
-            staff={staffList}
-            dates={dates}
-            templates={templates}
-          />
-        ) : null}
+        <AddShiftForm
+          staff={staffList}
+          dates={dates}
+          templates={templates}
+          me={me}
+        />
 
         <ul className="space-y-2">
           {dates.map((d) => {
@@ -207,7 +210,7 @@ export default async function NoiboPage({
                             <span className="text-black/50"> — {s.note}</span>
                           ) : null}
                         </span>
-                        {isFounder ? (
+                        {isFounder || s.staffId === me.id ? (
                           <DeleteButton
                             kind="shift"
                             id={s.id}
@@ -222,6 +225,33 @@ export default async function NoiboPage({
             );
           })}
         </ul>
+      </section>
+
+      <section className="mb-10">
+        <NoiboSectionTitle>Công việc hàng ngày</NoiboSectionTitle>
+        <DailyLogForm
+          dates={dates}
+          myLogs={dailyLogs.filter((l) => l.staffId === me.id)}
+          today={today}
+        />
+        {dailyLogs.length === 0 ? (
+          <p className="text-sm text-black/40">Chưa ai viết công việc tuần này.</p>
+        ) : (
+          <ul className="space-y-2">
+            {dailyLogs.map((l) => (
+              <li
+                key={l.id}
+                className="rounded-lg border border-black/10 p-3"
+              >
+                <p className="mb-1 text-xs text-black/60">
+                  {dayLabel(l.date)}
+                  {isFounder && l.staffName ? ` · ${l.staffName}` : ""}
+                </p>
+                <p className="whitespace-pre-wrap text-sm">{l.content}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {isFounder ? (

@@ -7,16 +7,19 @@ import {
   createStaff as createStaffService,
   createTask as createTaskService,
   deleteShift as deleteShiftService,
+  deleteStaff as deleteStaffService,
   deleteTask as deleteTaskService,
   getMyCheckinToday as getMyCheckinTodayService,
   getNoiboSettings as getNoiboSettingsService,
   listCheckinWeek as listCheckinWeekService,
+  listDailyLogs as listDailyLogsService,
   listNoiboShifts as listNoiboShiftsService,
   listNoiboStaff as listNoiboStaffService,
   listNoiboTasks as listNoiboTasksService,
   loginStaff as loginStaffService,
   logoutStaff as logoutStaffService,
   resetStaffPassword as resetStaffPasswordService,
+  saveDailyLog as saveDailyLogService,
   saveNoiboSettings as saveNoiboSettingsService,
   setStaffActive as setStaffActiveService,
   updateTaskStatus as updateTaskStatusService,
@@ -26,6 +29,7 @@ import { getNoiboSessionStaff } from "../../backend/auth/noibo-auth";
 
 export type {
   NoiboCheckin,
+  NoiboDailyLog,
   NoiboSettings,
   NoiboShift,
   NoiboStaff,
@@ -76,6 +80,11 @@ export async function setStaffActive(id: number, active: boolean) {
 /** Founder-only: set a new password for a staff account. */
 export async function resetStaffPassword(id: number, newPassword: string) {
   return resetStaffPasswordService(id, newPassword);
+}
+
+/** Founder-only: delete a staff account. */
+export async function deleteStaff(id: number) {
+  return deleteStaffService(id);
 }
 
 /** Founder-only: create a task. */
@@ -149,4 +158,14 @@ export async function getMyCheckinToday() {
 /** Founder-only: all check-in sessions in a date range. */
 export async function listCheckinWeek(startDate: string, endDate: string) {
   return listCheckinWeekService(startDate, endDate);
+}
+
+/** Write (or rewrite) my work log for one day. */
+export async function saveDailyLog(input: { date: string; content: string }) {
+  return saveDailyLogService(input);
+}
+
+/** Work logs in a date range: mine for staff, everyone's for founders. */
+export async function listDailyLogs(startDate: string, endDate: string) {
+  return listDailyLogsService(startDate, endDate);
 }

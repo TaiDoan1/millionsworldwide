@@ -23,6 +23,7 @@
 import { getPostgresPool } from "./postgres";
 import type {
   NoiboCheckin,
+  NoiboDailyLog,
   NoiboSettings,
   NoiboShift,
   NoiboStaff,
@@ -73,6 +74,14 @@ const SCHEMA = `
     staff_id INTEGER NOT NULL,
     check_in_at TEXT NOT NULL,
     check_out_at TEXT
+  );
+  CREATE TABLE IF NOT EXISTS noibo_daily_logs (
+    id SERIAL PRIMARY KEY,
+    staff_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    content TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (staff_id, date)
   );
 `;
 
@@ -299,6 +308,26 @@ export async function deleteSessionsForStaff(staffId: number): Promise<void> {
     "DELETE FROM noibo_sessions WHERE staff_id = $1",
     [staffId]
   );
+}
+
+/**
+ * Delete a staff account: their sessions are cleared, their tasks
+ * become unassigned, and their shifts are removed. Check-in history
+ * stays (hours already worked).
+ */
+export async function deleteStaff(id: number): Promise<boolean> {
+  await ensureNoiboInit();
+  const pool = getPostgresPool();
+  await pool.query("DELETE FROM noibo_sessions WHERE staff_id = $1", [id]);
+  await pool.query(
+    "UPDATE noibo_tasks SET assignee_id = NULL WHERE assignee_id = $1",
+    [id]
+  );
+  await pool.query("DELETE FROM noibo_shifts WHERE staff_id = $1", [id]);
+  const result = await pool.query("DELETE FROM noibo_staff WHERE id = $1", [
+    id,
+  ]);
+  return (result.rowCount ?? 0) > 0;
 }
 
 type TaskRow = {
@@ -581,6 +610,87 @@ export async function listCheckinsBetween(
     params
   );
   return result.rows.map(checkinFromRow);
+}
+
+type DailyLogRow = {
+  id: number;
+  staff_id: number;
+  staff_name: string | null;
+  date: string;
+  content: string;
+};
+
+function dailyLogFromRow(r: DailyLogRow): NoiboDailyLog {
+  return {
+    id: r.id,
+    staffId: r.staff_id,
+    staffName: r.staff_name ?? undefined,
+    date: r.date,
+    content: r.content,
+  };
+}
+
+const DAILY_LOG_COLUMNS = `l.id, l.staff_id, st.name AS staff_name,
+  l.date, l.content
+  FROM noibo_daily_logs l LEFT JOIN noibo_staff st ON st.id = l.staff_id`;
+
+/** Write (or rewrite) one staff member's log for one day. */
+export async function upsertDailyLog(
+  staffId: number,
+  date: string,
+  content: string
+): Promise<NoiboDailyLog> {
+  await ensureNoiboInit();
+  const pool = getPostgresPool();
+  const now = new Date().toISOString();
+  // Explicit existence check first: the same pre-check pattern as
+  // insertShift (pg-mem reports upserts unreliably).
+  const existing = await pool.query(
+    "SELECT id FROM noibo_daily_logs WHERE staff_id = $1 AND date = $2",
+    [staffId, date]
+  );
+  if ((existing.rowCount ?? 0) > 0) {
+    await pool.query(
+      "UPDATE noibo_daily_logs SET content = $1, updated_at = $2 WHERE staff_id = $3 AND date = $4",
+      [content, now, staffId, date]
+    );
+  } else {
+    await pool.query(
+      `INSERT INTO noibo_daily_logs (staff_id, date, content, updated_at)
+       VALUES ($1, $2, $3, $4)`,
+      [staffId, date, content, now]
+    );
+  }
+  const row = await pool.query<DailyLogRow>(
+    `SELECT ${DAILY_LOG_COLUMNS}
+     WHERE l.staff_id = $1 AND l.date = $2`,
+    [staffId, date]
+  );
+  const saved = row.rows[0];
+  if (!saved) throw new Error("Không lưu được công việc ngày.");
+  return dailyLogFromRow(saved);
+}
+
+/** Logs in a date range (inclusive), optionally one person, newest first. */
+export async function listDailyLogsBetween(
+  startDate: string,
+  endDate: string,
+  staffId?: number
+): Promise<NoiboDailyLog[]> {
+  await ensureNoiboInit();
+  const params: (string | number)[] = [startDate, endDate];
+  let where = "l.date >= $1 AND l.date <= $2";
+  if (staffId !== undefined) {
+    params.push(staffId);
+    where += " AND l.staff_id = $3";
+  }
+  const result = await getPostgresPool().query<DailyLogRow>(
+    `SELECT ${DAILY_LOG_COLUMNS}
+     WHERE ${where}
+     ORDER BY l.date DESC, l.staff_id`,
+    params
+  );
+  return result.rows.map(dailyLogFromRow);
 }
 
 export async function readNoiboSettings(): Promise<NoiboSettings | null> {

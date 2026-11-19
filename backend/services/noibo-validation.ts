@@ -79,6 +79,14 @@ export function validateAnnouncement(text: string): string | null {
   return null;
 }
 
+export function validateDailyLogContent(content: string): string | null {
+  const clean = typeof content === "string" ? content.trim() : "";
+  if (clean.length < 1 || clean.length > 2000) {
+    return "Nội dung công việc phải từ 1 đến 2000 ký tự.";
+  }
+  return null;
+}
+
 export function validateShiftTemplates(templates: string[]): string | null {
   if (templates.length > 20) {
     return "Tối đa 20 mẫu ca làm.";

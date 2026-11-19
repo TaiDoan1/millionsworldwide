@@ -31,6 +31,7 @@ import {
   cleanUsername,
   isValidDateString,
   validateAnnouncement,
+  validateDailyLogContent,
   validatePassword,
   validateShiftLabel,
   validateShiftNote,
@@ -42,6 +43,7 @@ import {
 } from "./noibo-validation";
 import type {
   NoiboCheckin,
+  NoiboDailyLog,
   NoiboSettings,
   NoiboShift,
   NoiboStaff,
@@ -51,6 +53,7 @@ import type {
 
 export type {
   NoiboCheckin,
+  NoiboDailyLog,
   NoiboRole,
   NoiboSettings,
   NoiboShift,
@@ -307,6 +310,42 @@ export async function resetStaffPassword(
   }
 }
 
+/** Founder-only: delete a staff account (tasks unassigned, shifts removed). */
+export async function deleteStaff(id: number): Promise<Result> {
+  const me = await requireFounder();
+  if (!me) {
+    return {
+      success: false,
+      error: "Chỉ founder mới xóa được nhân viên.",
+    };
+  }
+  try {
+    const target = await store.getStaffById(id);
+    if (!target) return { success: false, error: "Không tìm thấy nhân viên." };
+    if (target.id === me.id) {
+      return {
+        success: false,
+        error: "Không tự xóa tài khoản của mình được.",
+      };
+    }
+    if (target.role === "founder" && target.active) {
+      const founders = await store.countActiveFounders();
+      if (founders <= 1) {
+        return {
+          success: false,
+          error: "Phải còn ít nhất 1 founder đang hoạt động.",
+        };
+      }
+    }
+    await store.deleteStaff(id);
+    revalidatePath("/noibo/caidat");
+    revalidatePath("/noibo");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: dbErrorMessage(error) };
+  }
+}
+
 /** Founder-only: create a task. */
 export async function createTask(input: {
   title: string;
@@ -407,18 +446,21 @@ export async function deleteTask(id: number): Promise<Result> {
   }
 }
 
-/** Founder-only: put a staff member on a shift for one day. */
+/** Founder: xếp ca cho bất kỳ ai. Nhân viên: chỉ đăng ký ca cho chính mình. */
 export async function createShift(input: {
   date: string;
   staffId: number;
   label: string;
   note: string | null;
 }): Promise<Result> {
-  const me = await requireFounder();
+  const me = await getNoiboSessionStaff();
   if (!me) {
+    return { success: false, error: "Cần đăng nhập lại." };
+  }
+  if (me.role !== "founder" && input.staffId !== me.id) {
     return {
       success: false,
-      error: "Chỉ founder mới xếp được lịch.",
+      error: "Bạn chỉ đăng ký ca cho chính mình.",
     };
   }
   if (!isValidDateString(input.date)) {
@@ -450,16 +492,23 @@ export async function createShift(input: {
   }
 }
 
-/** Founder-only: remove a shift. */
+/** Founder: xóa ca nào cũng được. Nhân viên: chỉ hủy ca của chính mình. */
 export async function deleteShift(id: number): Promise<Result> {
-  const me = await requireFounder();
+  const me = await getNoiboSessionStaff();
   if (!me) {
-    return {
-      success: false,
-      error: "Chỉ founder mới xóa được ca làm.",
-    };
+    return { success: false, error: "Cần đăng nhập lại." };
   }
   try {
+    if (me.role !== "founder") {
+      const shift = await store.getShiftById(id);
+      if (!shift) return { success: false, error: "Không tìm thấy ca làm." };
+      if (shift.staffId !== me.id) {
+        return {
+          success: false,
+          error: "Bạn chỉ hủy được ca của chính mình.",
+        };
+      }
+    }
     const ok = await store.deleteShift(id);
     if (!ok) return { success: false, error: "Không tìm thấy ca làm." };
     revalidatePath("/noibo");
@@ -592,6 +641,48 @@ export async function listCheckinWeek(
     return await store.listCheckinsBetween(
       vnDayStartIso(startDate),
       vnDayStartIso(addDays(endDate, 1))
+    );
+  } catch (error) {
+    if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
+    throw error;
+  }
+}
+
+/** Write (or rewrite) my work log for one day. */
+export async function saveDailyLog(input: {
+  date: string;
+  content: string;
+}): Promise<Result> {
+  const me = await getNoiboSessionStaff();
+  if (!me) return { success: false, error: "Cần đăng nhập lại." };
+  if (!isValidDateString(input.date)) {
+    return { success: false, error: "Ngày làm không đúng định dạng." };
+  }
+  const content =
+    typeof input.content === "string" ? input.content.trim() : "";
+  const badContent = validateDailyLogContent(content);
+  if (badContent) return { success: false, error: badContent };
+  try {
+    await store.upsertDailyLog(me.id, input.date, content);
+    revalidatePath("/noibo");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: dbErrorMessage(error) };
+  }
+}
+
+/** Work logs in a date range: mine for staff, everyone's for founders. */
+export async function listDailyLogs(
+  startDate: string,
+  endDate: string
+): Promise<NoiboDailyLog[]> {
+  const me = await getNoiboSessionStaff();
+  if (!me) throw new Error("Cần đăng nhập lại.");
+  try {
+    return await store.listDailyLogsBetween(
+      startDate,
+      endDate,
+      me.role === "founder" ? undefined : me.id
     );
   } catch (error) {
     if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);

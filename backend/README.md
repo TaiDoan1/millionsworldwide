@@ -90,9 +90,15 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   trạng thái việc được giao). Tài khoản founder `taidoan` được seed
   sẵn khi bảng nhân viên còn trống (chỉ hash scrypt trong code, xem
   `SEEDED_FOUNDER_*`); `/noibo/caidat` chỉ founder đăng nhập mới vào
-  được, không có form tạo tài khoản đầu tiên. Chấm công: mỗi nhân viên
+  được, không có form tạo tài khoản đầu tiên. Founder xóa được nhân
+  viên trong `/noibo/caidat` (không xóa chính mình / founder cuối
+  cùng; task của người đó thành chưa giao, ca của họ bị xóa, lịch
+  check-in giữ lại). Chấm công: mỗi nhân viên
   tự check-in/check-out trên `/noibo` (1 ca đang mở mỗi người, giờ
   tính theo giờ VN), founder xem giờ làm hôm nay + tuần này của mọi
+  người. Lịch làm: founder xếp ca cho bất kỳ ai, nhân viên tự đăng ký
+  ca cho chính mình (và hủy ca của mình). Công việc hàng ngày: mỗi
+  người viết 1 bài mỗi ngày (sửa được), founder đọc được của mọi
   người. Task hiện dạng bảng Trello 3 cột, kéo thả thẻ giữa các cột
   để đổi trạng thái (nút trạng thái giữ lại cho điện thoại, kéo thả
   HTML5 không chạy trên màn cảm ứng). Không có Postgres thì

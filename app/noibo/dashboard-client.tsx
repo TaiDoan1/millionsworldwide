@@ -8,6 +8,7 @@ import {
   deleteShift,
   deleteTask,
   logoutStaff,
+  saveDailyLog,
   updateTaskStatus,
   type NoiboStaff,
   type NoiboTask,
@@ -238,19 +239,22 @@ export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
   );
 }
 
-/** Founder-only: put a staff member on a shift for one day of the week. */
+/** Founder: xếp ca cho bất kỳ ai. Nhân viên: tự đăng ký ca cho chính mình. */
 export function AddShiftForm({
   staff,
   dates,
   templates,
+  me,
 }: {
   staff: NoiboStaff[];
   dates: string[];
   templates: string[];
+  me: NoiboStaff;
 }) {
   const router = useRouter();
+  const isFounder = me.role === "founder";
   const [date, setDate] = useState(dates[0] ?? "");
-  const [staffId, setStaffId] = useState("");
+  const [staffId, setStaffId] = useState(isFounder ? "" : String(me.id));
   const [label, setLabel] = useState(templates[0] ?? "");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -272,7 +276,7 @@ export function AddShiftForm({
       return;
     }
     setNote("");
-    setMsg({ ok: true, text: "Đã xếp ca." });
+    setMsg({ ok: true, text: isFounder ? "Đã xếp ca." : "Đã đăng ký ca." });
     router.refresh();
   }
 
@@ -281,7 +285,9 @@ export function AddShiftForm({
       onSubmit={onSubmit}
       className="mb-6 rounded-lg border border-black/10 bg-black/[0.03] p-4"
     >
-      <p className="mb-3 text-sm font-semibold">Xếp ca làm</p>
+      <p className="mb-3 text-sm font-semibold">
+        {isFounder ? "Xếp ca làm" : "Đăng ký ca làm"}
+      </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <label>
           <span className="mb-1 block text-xs text-black/60">Ngày</span>
@@ -299,21 +305,27 @@ export function AddShiftForm({
         </label>
         <label className="flex-1">
           <span className="mb-1 block text-xs text-black/60">Nhân viên</span>
-          <select
-            value={staffId}
-            onChange={(e) => setStaffId(e.target.value)}
-            className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
-            required
-          >
-            <option value="">Chọn nhân viên</option>
-            {staff
-              .filter((s) => s.active)
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-          </select>
+          {isFounder ? (
+            <select
+              value={staffId}
+              onChange={(e) => setStaffId(e.target.value)}
+              className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
+              required
+            >
+              <option value="">Chọn nhân viên</option>
+              {staff
+                .filter((s) => s.active)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+            </select>
+          ) : (
+            <p className="rounded-lg border border-black/20 bg-black/[0.03] p-2.5 text-sm">
+              {me.name} (bạn)
+            </p>
+          )}
         </label>
         <label className="flex-1">
           <span className="mb-1 block text-xs text-black/60">Ca làm</span>
@@ -348,7 +360,11 @@ export function AddShiftForm({
           disabled={busy}
           className="rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "Đang xếp…" : "Xếp ca"}
+          {busy
+            ? "Đang lưu…"
+            : isFounder
+              ? "Xếp ca"
+              : "Đăng ký ca"}
         </button>
       </div>
     </form>
@@ -510,5 +526,95 @@ export function TaskBoard({
         })}
       </div>
     </div>
+  );
+}
+
+/** One day's work log, as the dashboard consumes it. */
+export type DailyLogView = {
+  date: string;
+  staffId: number;
+  staffName?: string;
+  content: string;
+};
+
+/**
+ * My daily work log: pick a day of the current week, write what I did.
+ * Staff see only their own logs; founders see everyone's in the list below.
+ */
+export function DailyLogForm({
+  dates,
+  myLogs,
+  today,
+}: {
+  dates: string[];
+  myLogs: DailyLogView[];
+  today: string;
+}) {
+  const router = useRouter();
+  const [date, setDate] = useState(today);
+  const [content, setContent] = useState(
+    myLogs.find((l) => l.date === today)?.content ?? ""
+  );
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function pickDate(next: string) {
+    setDate(next);
+    setContent(myLogs.find((l) => l.date === next)?.content ?? "");
+    setMsg(null);
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg(null);
+    setBusy(true);
+    const result = await saveDailyLog({ date, content });
+    setBusy(false);
+    if (!result.success) {
+      setMsg({ ok: false, text: result.error ?? "Lưu không được." });
+      return;
+    }
+    setMsg({ ok: true, text: "Đã lưu công việc ngày." });
+    router.refresh();
+  }
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mb-4 rounded-lg border border-black/10 bg-black/[0.03] p-4"
+    >
+      <p className="mb-3 text-sm font-semibold">Viết công việc của mình</p>
+      <label className="mb-2 block">
+        <span className="mb-1 block text-xs text-black/60">Ngày</span>
+        <select
+          value={date}
+          onChange={(e) => pickDate(e.target.value)}
+          className="rounded-lg border border-black/20 p-2.5 text-sm"
+        >
+          {dates.map((d) => (
+            <option key={d} value={d}>
+              {dayLabel(d)}
+              {d === today ? " (hôm nay)" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        rows={4}
+        placeholder="Hôm nay mình đã làm gì? VD: Kiểm kho, dọn kệ áo, chụp ảnh sản phẩm mới…"
+        className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
+        required
+      />
+      <FormMessage msg={msg} />
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-2 rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+      >
+        {busy ? "Đang lưu…" : "Lưu công việc"}
+      </button>
+    </form>
   );
 }
