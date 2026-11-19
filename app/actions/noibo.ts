@@ -7,7 +7,6 @@ import {
   deleteShift as deleteShiftService,
   deleteTask as deleteTaskService,
   getNoiboSettings as getNoiboSettingsService,
-  hasNoiboStaff as hasNoiboStaffService,
   listNoiboShifts as listNoiboShiftsService,
   listNoiboStaff as listNoiboStaffService,
   listNoiboTasks as listNoiboTasksService,
@@ -16,7 +15,6 @@ import {
   resetStaffPassword as resetStaffPasswordService,
   saveNoiboSettings as saveNoiboSettingsService,
   setStaffActive as setStaffActiveService,
-  setupFirstAdmin as setupFirstAdminService,
   updateTaskStatus as updateTaskStatusService,
   type NoiboTaskStatus,
 } from "../../backend/services/noibo";
@@ -45,36 +43,27 @@ export async function logoutStaff() {
   return logoutStaffService();
 }
 
-/** First-run setup: create the first admin account and log it in. */
-export async function setupFirstAdmin(input: {
-  username: string;
-  name: string;
-  password: string;
-}) {
-  return setupFirstAdminService(input);
-}
-
-/** Admin-only: add a staff account. */
+/** Founder-only: add a staff account. */
 export async function createStaff(input: {
   username: string;
   name: string;
-  role: "admin" | "staff";
+  role: "founder" | "staff";
   password: string;
 }) {
   return createStaffService(input);
 }
 
-/** Admin-only: lock/unlock a staff account. */
+/** Founder-only: lock/unlock a staff account. */
 export async function setStaffActive(id: number, active: boolean) {
   return setStaffActiveService(id, active);
 }
 
-/** Admin-only: set a new password for a staff account. */
+/** Founder-only: set a new password for a staff account. */
 export async function resetStaffPassword(id: number, newPassword: string) {
   return resetStaffPasswordService(id, newPassword);
 }
 
-/** Admin-only: create a task. */
+/** Founder-only: create a task. */
 export async function createTask(input: {
   title: string;
   assigneeId: number | null;
@@ -84,17 +73,17 @@ export async function createTask(input: {
   return createTaskService(input);
 }
 
-/** Change a task's status (own tasks for staff, any task for admins). */
+/** Change a task's status (own tasks for staff, any task for founders). */
 export async function updateTaskStatus(id: number, status: NoiboTaskStatus) {
   return updateTaskStatusService(id, status);
 }
 
-/** Admin-only: delete a task. */
+/** Founder-only: delete a task. */
 export async function deleteTask(id: number) {
   return deleteTaskService(id);
 }
 
-/** Admin-only: put a staff member on a shift for one day. */
+/** Founder-only: put a staff member on a shift for one day. */
 export async function createShift(input: {
   date: string;
   staffId: number;
@@ -104,12 +93,12 @@ export async function createShift(input: {
   return createShiftService(input);
 }
 
-/** Admin-only: remove a shift. */
+/** Founder-only: remove a shift. */
 export async function deleteShift(id: number) {
   return deleteShiftService(id);
 }
 
-/** Admin-only: save the announcement + shift-label templates. */
+/** Founder-only: save the announcement + shift-label templates. */
 export async function saveNoiboSettings(input: {
   announcement: string;
   shiftTemplates: string[];
@@ -122,7 +111,7 @@ export async function getNoiboSettings() {
   return getNoiboSettingsService();
 }
 
-/** Admin-only: full staff list. */
+/** Founder-only: full staff list. */
 export async function listNoiboStaff() {
   return listNoiboStaffService();
 }
@@ -135,9 +124,4 @@ export async function listNoiboTasks() {
 /** Shifts between two dates (YYYY-MM-DD), inclusive. */
 export async function listNoiboShifts(startDate: string, endDate: string) {
   return listNoiboShiftsService(startDate, endDate);
-}
-
-/** True when at least one staff account exists. */
-export async function hasNoiboStaff() {
-  return hasNoiboStaffService();
 }

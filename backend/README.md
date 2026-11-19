@@ -84,8 +84,13 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   `noibo_shifts`, `noibo_settings` trong Postgres — xem
   `backend/storage/noibo.ts` và `backend/services/noibo.ts`. Mỗi nhân
   viên 1 tài khoản riêng (mật khẩu hash scrypt, phiên cookie httpOnly
-  30 ngày, chỉ dùng trong `/noibo`); tài khoản quản lý thêm nhân viên,
-  giao việc, xếp lịch trong `/noibo/caidat`. Không có Postgres thì
+  30 ngày, chỉ dùng trong `/noibo`). Phân quyền 2 chức vụ: `founder`
+  (làm mọi việc: thêm nhân viên, giao việc, xếp lịch, đổi cài đặt
+  trong `/noibo/caidat`) và `staff` (nhân viên: chỉ xem lịch + đổi
+  trạng thái việc được giao). Tài khoản founder `taidoan` được seed
+  sẵn khi bảng nhân viên còn trống (chỉ hash scrypt trong code, xem
+  `SEEDED_FOUNDER_*`); `/noibo/caidat` chỉ founder đăng nhập mới vào
+  được, không có form tạo tài khoản đầu tiên. Không có Postgres thì
   trang nội bộ báo rõ là chưa dùng được, không ghi sang kho khác.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
   hay đổi tên chúng**: `backend/storage/file.ts` đọc seed từ

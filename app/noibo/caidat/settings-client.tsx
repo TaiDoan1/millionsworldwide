@@ -7,7 +7,6 @@ import {
   resetStaffPassword,
   saveNoiboSettings,
   setStaffActive,
-  setupFirstAdmin,
   type NoiboSettings,
   type NoiboStaff,
 } from "../../actions/noibo";
@@ -21,85 +20,12 @@ function FormMessage({ msg }: { msg: { ok: boolean; text: string } | null }) {
   );
 }
 
-/** First-run setup: create the very first admin account. */
-export function SetupFirstAdminForm() {
-  const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setMsg(null);
-    setBusy(true);
-    const result = await setupFirstAdmin({ username, name, password });
-    setBusy(false);
-    if (!result.success) {
-      setMsg({ ok: false, text: result.error ?? "Tạo tài khoản không được." });
-      return;
-    }
-    router.refresh();
-  }
-
-  return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-sm space-y-4">
-      <h1 className="text-lg font-bold">Tạo tài khoản quản lý đầu tiên</h1>
-      <p className="text-sm text-black/60">
-        Tài khoản này quản lý nhân viên, giao việc và xếp lịch. Nhớ mật khẩu
-        này — đặt lại mật khẩu quản lý phải làm bằng code.
-      </p>
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">Tên đăng nhập</span>
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="VD: doan"
-          autoComplete="username"
-          className="w-full rounded-lg border border-black/20 p-3 text-base"
-          required
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">Tên hiển thị</span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="VD: Đoàn Anh Tài"
-          className="w-full rounded-lg border border-black/20 p-3 text-base"
-          required
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">Mật khẩu</span>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="new-password"
-          className="w-full rounded-lg border border-black/20 p-3 text-base"
-          required
-        />
-      </label>
-      <FormMessage msg={msg} />
-      <button
-        type="submit"
-        disabled={busy}
-        className="w-full rounded-lg bg-black py-3 text-sm font-semibold text-white disabled:opacity-50"
-      >
-        {busy ? "Đang tạo…" : "Tạo tài khoản quản lý"}
-      </button>
-    </form>
-  );
-}
-
 /** Add a staff account (username + display name + role + password). */
 export function AddStaffForm() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [role, setRole] = useState<"founder" | "staff">("staff");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -148,11 +74,11 @@ export function AddStaffForm() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value as "admin" | "staff")}
+            onChange={(e) => setRole(e.target.value as "founder" | "staff")}
             className="rounded-lg border border-black/20 p-2.5 text-sm"
           >
             <option value="staff">Nhân viên</option>
-            <option value="admin">Quản lý</option>
+            <option value="founder">Founder</option>
           </select>
           <input
             type="password"
@@ -225,7 +151,7 @@ export function StaffRow({
           <span className="font-medium">{staff.name}</span>{" "}
           <span className="text-black/50">@{staff.username}</span>{" "}
           <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-xs">
-            {staff.role === "admin" ? "Quản lý" : "Nhân viên"}
+            {staff.role === "founder" ? "Founder" : "Nhân viên"}
           </span>{" "}
           {isMe ? (
             <span className="rounded-full bg-black px-2 py-0.5 text-xs text-white">

@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   getNoiboSessionStaffAction,
   getNoiboSettings,
-  hasNoiboStaff,
   listNoiboShifts,
   listNoiboStaff,
   listNoiboTasks,
@@ -38,20 +37,15 @@ export default async function NoiboPage({
 }) {
   const me = await getNoiboSessionStaffAction();
   if (!me) {
-    let needsSetup = false;
     let dbError: string | null = null;
     try {
-      needsSetup = !(await hasNoiboStaff());
+      await getNoiboSettings();
     } catch (error) {
       dbError = error instanceof Error ? error.message : "Có lỗi xảy ra.";
     }
     return (
       <NoiboShell>
-        {dbError ? (
-          <NoiboNotice message={dbError} />
-        ) : (
-          <NoiboLoginForm needsSetup={needsSetup} />
-        )}
+        {dbError ? <NoiboNotice message={dbError} /> : <NoiboLoginForm />}
       </NoiboShell>
     );
   }
@@ -73,7 +67,7 @@ export default async function NoiboPage({
       getNoiboSettings(),
       listNoiboTasks(),
       listNoiboShifts(dates[0], dates[6]),
-      me.role === "admin" ? listNoiboStaff() : Promise.resolve([]),
+      me.role === "founder" ? listNoiboStaff() : Promise.resolve([]),
     ]);
   } catch (error) {
     return (
@@ -85,7 +79,7 @@ export default async function NoiboPage({
     );
   }
 
-  const isAdmin = me.role === "admin";
+  const isFounder = me.role === "founder";
   const announcement = (settings.announcement ?? "").trim();
   const templates = settings.shiftTemplates ?? [];
   const shiftsByDate = new Map<string, typeof shifts>();
@@ -101,10 +95,10 @@ export default async function NoiboPage({
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold">Xin chào, {me.name}</h1>
           <p className="text-sm text-black/60">
-            {isAdmin ? "Quản lý" : "Nhân viên"} · @{me.username}
+            {isFounder ? "Founder" : "Nhân viên"} · @{me.username}
           </p>
         </div>
-        {isAdmin ? (
+        {isFounder ? (
           <Link
             href="/noibo/caidat"
             className="rounded-lg border border-black/20 px-3 py-1.5 text-sm"
@@ -148,7 +142,7 @@ export default async function NoiboPage({
           </span>
         </div>
 
-        {isAdmin ? (
+        {isFounder ? (
           <AddShiftForm
             staff={staffList}
             dates={dates}
@@ -196,7 +190,7 @@ export default async function NoiboPage({
                             <span className="text-black/50"> — {s.note}</span>
                           ) : null}
                         </span>
-                        {isAdmin ? (
+                        {isFounder ? (
                           <DeleteButton
                             kind="shift"
                             id={s.id}
@@ -215,7 +209,7 @@ export default async function NoiboPage({
 
       <section>
         <NoiboSectionTitle>Công việc</NoiboSectionTitle>
-        {isAdmin ? <AddTaskForm staff={staffList} /> : null}
+        {isFounder ? <AddTaskForm staff={staffList} /> : null}
         {(["todo", "doing", "done"] as const).map((status) => {
           const group = tasks.filter((t) => t.status === status);
           if (group.length === 0) return null;
@@ -231,7 +225,7 @@ export default async function NoiboPage({
                     t.dueDate !== null &&
                     t.dueDate < today;
                   const canChange =
-                    isAdmin || t.assigneeId === me.id;
+                    isFounder || t.assigneeId === me.id;
                   return (
                     <li
                       key={t.id}
@@ -245,7 +239,7 @@ export default async function NoiboPage({
                         >
                           {t.title}
                         </p>
-                        {isAdmin ? (
+                        {isFounder ? (
                           <DeleteButton
                             kind="task"
                             id={t.id}

@@ -86,9 +86,11 @@ export type Settings = {
 /**
  * Internal staff pages (/noibo). Kept completely apart from the shop
  * admin (/mw-office): staff log in with their own accounts, managed
- * from /noibo/caidat by an "admin"-role account.
+ * from /noibo/caidat by a "founder"-role account. "staff" is Nhân viên,
+ * "founder" is Founder — the founder does everything the old admin
+ * role did (add staff, assign tasks, set schedules, edit settings).
  */
-export type NoiboRole = "admin" | "staff";
+export type NoiboRole = "founder" | "staff";
 
 /** A staff account. password_hash is NEVER selected into this type. */
 export type NoiboStaff = {

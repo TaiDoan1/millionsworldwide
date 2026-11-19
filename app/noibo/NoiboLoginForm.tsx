@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { loginStaff } from "../actions/noibo";
 
 /**
  * Staff login form for /noibo. On success the page re-renders as the
  * dashboard (the action revalidates /noibo; refresh() picks it up).
  */
-export default function NoiboLoginForm({
-  needsSetup,
-}: {
-  needsSetup: boolean;
-}) {
+export default function NoiboLoginForm() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -39,15 +34,6 @@ export default function NoiboLoginForm({
       <p className="mb-6 text-sm text-black/60">
         Dùng tài khoản nhân viên để xem lịch làm việc và công việc được giao.
       </p>
-      {needsSetup ? (
-        <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          Chưa có tài khoản nào.{" "}
-          <Link href="/noibo/caidat" className="font-semibold underline">
-            Tạo tài khoản quản lý đầu tiên
-          </Link>{" "}
-          rồi thêm nhân viên sau.
-        </p>
-      ) : null}
       <form onSubmit={onSubmit} className="space-y-4">
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Tên đăng nhập</span>

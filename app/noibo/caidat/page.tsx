@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   getNoiboSessionStaffAction,
   getNoiboSettings,
-  hasNoiboStaff,
   listNoiboStaff,
 } from "../../actions/noibo";
 import { NoiboNotice, NoiboSectionTitle, NoiboShell } from "../shell";
@@ -11,7 +10,6 @@ import NoiboLoginForm from "../NoiboLoginForm";
 import {
   AddStaffForm,
   SettingsForm,
-  SetupFirstAdminForm,
   StaffRow,
 } from "./settings-client";
 
@@ -23,41 +21,34 @@ export const metadata: Metadata = {
 export default async function NoiboSettingsPage() {
   const me = await getNoiboSessionStaffAction();
 
-  // No accounts at all yet: the first-run setup creates the admin.
-  let needsSetup = false;
-  let dbError: string | null = null;
-  try {
-    needsSetup = !(await hasNoiboStaff());
-  } catch (error) {
-    dbError = error instanceof Error ? error.message : "Có lỗi xảy ra.";
-  }
-  if (dbError) {
-    return (
-      <NoiboShell>
-        <NoiboNotice message={dbError} />
-      </NoiboShell>
-    );
-  }
+  // Founder-only from the start: the founder account is seeded (see
+  // backend/storage/noibo.ts), so there is no open setup form here.
   if (!me) {
+    let dbError: string | null = null;
+    try {
+      await getNoiboSettings();
+    } catch (error) {
+      dbError = error instanceof Error ? error.message : "Có lỗi xảy ra.";
+    }
     return (
       <NoiboShell>
-        {needsSetup ? (
-          <SetupFirstAdminForm />
+        {dbError ? (
+          <NoiboNotice message={dbError} />
         ) : (
           <>
             <p className="mb-6 rounded-lg border border-black/10 bg-black/[0.03] p-4 text-sm">
-              Trang này chỉ dành cho tài khoản quản lý. Đăng nhập để tiếp tục.
+              Trang này chỉ dành cho founder. Đăng nhập để tiếp tục.
             </p>
-            <NoiboLoginForm needsSetup={false} />
+            <NoiboLoginForm />
           </>
         )}
       </NoiboShell>
     );
   }
-  if (me.role !== "admin") {
+  if (me.role !== "founder") {
     return (
       <NoiboShell>
-        <NoiboNotice message="Chỉ tài khoản quản lý mới vào được trang Cài đặt." />
+        <NoiboNotice message="Chỉ founder mới vào được trang Cài đặt." />
         <p className="mt-4 text-sm">
           <Link href="/noibo" className="underline">
             ← Quay lại trang nội bộ

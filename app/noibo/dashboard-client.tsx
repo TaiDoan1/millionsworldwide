@@ -143,7 +143,7 @@ export function DeleteButton({
   );
 }
 
-/** Admin-only: assign a new task. */
+/** Founder-only: assign a new task. */
 export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -237,7 +237,7 @@ export function AddTaskForm({ staff }: { staff: NoiboStaff[] }) {
   );
 }
 
-/** Admin-only: put a staff member on a shift for one day of the week. */
+/** Founder-only: put a staff member on a shift for one day of the week. */
 export function AddShiftForm({
   staff,
   dates,

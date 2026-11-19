@@ -9,7 +9,9 @@
  * Tables:
  * - noibo_staff: one login account per staff member. password_hash is a
  *   scrypt hash (see backend/services/noibo.ts) and is never selected
- *   into the public NoiboStaff type.
+ *   into the public NoiboStaff type. The founder account ("taidoan")
+ *   is seeded on first init (see SEEDED_FOUNDER_*) so /noibo/caidat
+ *   is founder-login-only from the start — there is no open setup form.
  * - noibo_sessions: login sessions. Only the SHA-256 of the cookie
  *   token is stored; the raw token lives only in the httpOnly cookie.
  * - noibo_tasks: work items with an assignee, an optional deadline and
@@ -69,12 +71,56 @@ const SCHEMA = `
 
 let initPromise: Promise<void> | null = null;
 
+/**
+ * The founder account, seeded when the staff table is first created
+ * empty. Only the scrypt hash is stored here — never the password
+ * itself. The founder should change this password after the first
+ * login (/noibo/caidat → Đặt lại mật khẩu on their own row).
+ */
+const SEEDED_FOUNDER_USERNAME = "taidoan";
+const SEEDED_FOUNDER_NAME = "Đoàn Anh Tài";
+const SEEDED_FOUNDER_PASSWORD_HASH =
+  "scrypt$6ebff5f247e15f00aba85bd92e89a1c6$5a78fb37f606441ed64a587216dd2d45bc3114a834857f5f490a90ca566ac201eee5b4d0abbc1bf5a65ebcbfb27663e9b834d4adf195ab6ec0d0f7334d3722ff";
+
+/**
+ * One-time migration for accounts created by the first /noibo build,
+ * where the manager role was called "admin": those rows become
+ * "founder" so nobody is locked out of /noibo/caidat by the rename.
+ * Idempotent — a no-op once no "admin" rows remain. Exported for the
+ * pg-mem test (the full init chain cannot run twice on one pg-mem db).
+ */
+export async function migrateLegacyAdmins(): Promise<void> {
+  await getPostgresPool().query(
+    "UPDATE noibo_staff SET role = 'founder' WHERE role = 'admin'"
+  );
+}
+
+async function seedFounderIfEmpty(): Promise<void> {
+  const pool = getPostgresPool();
+  const count = await pool.query<{ c: string }>(
+    "SELECT COUNT(*) AS c FROM noibo_staff"
+  );
+  if (Number(count.rows[0]?.c ?? 0) > 0) return;
+  await pool.query(
+    `INSERT INTO noibo_staff (username, name, role, password_hash, active, created_at)
+     VALUES ($1, $2, 'founder', $3, true, $4)
+     ON CONFLICT (username) DO NOTHING`,
+    [
+      SEEDED_FOUNDER_USERNAME,
+      SEEDED_FOUNDER_NAME,
+      SEEDED_FOUNDER_PASSWORD_HASH,
+      new Date().toISOString(),
+    ]
+  );
+}
+
 /** Create the tables once per process. Loud on failure. */
 export function ensureNoiboInit(): Promise<void> {
   if (!initPromise) {
     initPromise = getPostgresPool()
       .query(SCHEMA)
-      .then(() => undefined)
+      .then(() => migrateLegacyAdmins())
+      .then(() => seedFounderIfEmpty())
       .catch((error) => {
         console.error("[storage] Noibo init failed:", error);
         throw error;
@@ -97,7 +143,7 @@ function staffFromRow(r: StaffRow): NoiboStaff {
     id: r.id,
     username: r.username,
     name: r.name,
-    role: r.role === "admin" ? "admin" : "staff",
+    role: r.role === "founder" ? "founder" : "staff",
     active: r.active,
     createdAt: r.created_at,
   };
@@ -145,10 +191,10 @@ export async function countStaff(): Promise<number> {
   return Number(result.rows[0]?.c ?? 0);
 }
 
-export async function countActiveAdmins(): Promise<number> {
+export async function countActiveFounders(): Promise<number> {
   await ensureNoiboInit();
   const result = await getPostgresPool().query<{ c: string }>(
-    "SELECT COUNT(*) AS c FROM noibo_staff WHERE role = 'admin' AND active = true"
+    "SELECT COUNT(*) AS c FROM noibo_staff WHERE role = 'founder' AND active = true"
   );
   return Number(result.rows[0]?.c ?? 0);
 }
@@ -156,7 +202,7 @@ export async function countActiveAdmins(): Promise<number> {
 export async function insertStaff(input: {
   username: string;
   name: string;
-  role: "admin" | "staff";
+  role: "founder" | "staff";
   passwordHash: string;
 }): Promise<NoiboStaff> {
   await ensureNoiboInit();

@@ -3,7 +3,7 @@
  *
  * Called only via app/actions/noibo.ts. Every mutation checks the
  * staff session itself (backend/auth/noibo-auth.ts): a missing or
- * non-admin session can never write, even if a page forgets its gate.
+ * non-founder session can never write, even if a page forgets its gate.
  *
  * Passwords are scrypt hashes (node:crypto, no new dependency).
  * Sessions are random tokens whose SHA-256 lives in noibo_sessions;
@@ -97,9 +97,9 @@ export function verifyPassword(password: string, stored: string): boolean {
 
 type Result = { success: boolean; error?: string };
 
-async function requireAdmin(): Promise<NoiboStaff | null> {
+async function requireFounder(): Promise<NoiboStaff | null> {
   const me = await getNoiboSessionStaff();
-  return me && me.role === "admin" ? me : null;
+  return me && me.role === "founder" ? me : null;
 }
 
 async function createSessionFor(staffId: number): Promise<void> {
@@ -161,54 +161,18 @@ export async function logoutStaff(): Promise<Result> {
   return { success: true };
 }
 
-/**
- * First-run setup: creates the first account (role admin) when the
- * staff table is still empty, and logs it in straight away. After
- * this, new accounts are created only from /noibo/caidat by an admin.
- */
-export async function setupFirstAdmin(input: {
-  username: string;
-  name: string;
-  password: string;
-}): Promise<Result> {
-  const username = cleanUsername(input.username);
-  const name = typeof input.name === "string" ? input.name.trim() : "";
-  const badUsername = validateUsername(username);
-  if (badUsername) return { success: false, error: badUsername };
-  const badName = validateStaffName(name);
-  if (badName) return { success: false, error: badName };
-  const badPassword = validatePassword(input.password);
-  if (badPassword) return { success: false, error: badPassword };
-  try {
-    if ((await store.countStaff()) > 0) {
-      return { success: false, error: "Đã có tài khoản quản lý rồi." };
-    }
-    const staff = await store.insertStaff({
-      username,
-      name,
-      role: "admin",
-      passwordHash: hashPassword(input.password),
-    });
-    await createSessionFor(staff.id);
-    revalidatePath("/noibo/caidat");
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: dbErrorMessage(error) };
-  }
-}
-
-/** Admin-only: add a staff account. */
+/** Founder-only: add a staff account. */
 export async function createStaff(input: {
   username: string;
   name: string;
-  role: "admin" | "staff";
+  role: "founder" | "staff";
   password: string;
 }): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới thêm được nhân viên.",
+      error: "Chỉ founder mới thêm được nhân viên.",
     };
   }
   const username = cleanUsername(input.username);
@@ -217,7 +181,7 @@ export async function createStaff(input: {
   if (badUsername) return { success: false, error: badUsername };
   const badName = validateStaffName(name);
   if (badName) return { success: false, error: badName };
-  if (input.role !== "admin" && input.role !== "staff") {
+  if (input.role !== "founder" && input.role !== "staff") {
     return { success: false, error: "Vai trò không hợp lệ." };
   }
   const badPassword = validatePassword(input.password);
@@ -240,16 +204,16 @@ export async function createStaff(input: {
   }
 }
 
-/** Admin-only: lock/unlock a staff account. */
+/** Founder-only: lock/unlock a staff account. */
 export async function setStaffActive(
   id: number,
   active: boolean
 ): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới đổi được trạng thái nhân viên.",
+      error: "Chỉ founder mới đổi được trạng thái nhân viên.",
     };
   }
   try {
@@ -258,12 +222,12 @@ export async function setStaffActive(
     if (target.id === me.id && !active) {
       return { success: false, error: "Không tự khóa tài khoản của mình được." };
     }
-    if (target.role === "admin" && !active) {
-      const admins = await store.countActiveAdmins();
-      if (admins <= 1) {
+    if (target.role === "founder" && !active) {
+      const founders = await store.countActiveFounders();
+      if (founders <= 1) {
         return {
           success: false,
-          error: "Phải còn ít nhất 1 tài khoản quản lý đang hoạt động.",
+          error: "Phải còn ít nhất 1 founder đang hoạt động.",
         };
       }
     }
@@ -276,16 +240,16 @@ export async function setStaffActive(
   }
 }
 
-/** Admin-only: set a new password; logs that staff out everywhere. */
+/** Founder-only: set a new password; logs that staff out everywhere. */
 export async function resetStaffPassword(
   id: number,
   newPassword: string
 ): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới đặt lại được mật khẩu.",
+      error: "Chỉ founder mới đặt lại được mật khẩu.",
     };
   }
   const badPassword = validatePassword(newPassword);
@@ -302,18 +266,18 @@ export async function resetStaffPassword(
   }
 }
 
-/** Admin-only: create a task. */
+/** Founder-only: create a task. */
 export async function createTask(input: {
   title: string;
   assigneeId: number | null;
   dueDate: string | null;
   note: string | null;
 }): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới giao được việc.",
+      error: "Chỉ founder mới giao được việc.",
     };
   }
   const title = typeof input.title === "string" ? input.title.trim() : "";
@@ -354,7 +318,7 @@ export async function createTask(input: {
 }
 
 /**
- * Change a task's status. Admins may change any task; staff may only
+ * Change a task's status. Founders may change any task; staff may only
  * change tasks assigned to them.
  */
 export async function updateTaskStatus(
@@ -369,7 +333,7 @@ export async function updateTaskStatus(
   try {
     const task = await store.getTaskById(id);
     if (!task) return { success: false, error: "Không tìm thấy công việc." };
-    if (me.role !== "admin" && task.assigneeId !== me.id) {
+    if (me.role !== "founder" && task.assigneeId !== me.id) {
       return {
         success: false,
         error: "Chỉ người được giao việc mới đổi được trạng thái.",
@@ -383,13 +347,13 @@ export async function updateTaskStatus(
   }
 }
 
-/** Admin-only: delete a task. */
+/** Founder-only: delete a task. */
 export async function deleteTask(id: number): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới xóa được công việc.",
+      error: "Chỉ founder mới xóa được công việc.",
     };
   }
   try {
@@ -402,18 +366,18 @@ export async function deleteTask(id: number): Promise<Result> {
   }
 }
 
-/** Admin-only: put a staff member on a shift for one day. */
+/** Founder-only: put a staff member on a shift for one day. */
 export async function createShift(input: {
   date: string;
   staffId: number;
   label: string;
   note: string | null;
 }): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới xếp được lịch.",
+      error: "Chỉ founder mới xếp được lịch.",
     };
   }
   if (!isValidDateString(input.date)) {
@@ -445,13 +409,13 @@ export async function createShift(input: {
   }
 }
 
-/** Admin-only: remove a shift. */
+/** Founder-only: remove a shift. */
 export async function deleteShift(id: number): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới xóa được ca làm.",
+      error: "Chỉ founder mới xóa được ca làm.",
     };
   }
   try {
@@ -464,16 +428,16 @@ export async function deleteShift(id: number): Promise<Result> {
   }
 }
 
-/** Admin-only: save the announcement + shift-label templates. */
+/** Founder-only: save the announcement + shift-label templates. */
 export async function saveNoiboSettings(input: {
   announcement: string;
   shiftTemplates: string[];
 }): Promise<Result> {
-  const me = await requireAdmin();
+  const me = await requireFounder();
   if (!me) {
     return {
       success: false,
-      error: "Chỉ tài khoản quản lý mới đổi được cài đặt.",
+      error: "Chỉ founder mới đổi được cài đặt.",
     };
   }
   const announcement =
@@ -511,8 +475,8 @@ export async function getNoiboSettings(): Promise<NoiboSettings> {
 }
 
 export async function listNoiboStaff(): Promise<NoiboStaff[]> {
-  const me = await requireAdmin();
-  if (!me) throw new Error("Chỉ tài khoản quản lý mới xem được danh sách nhân viên.");
+  const me = await requireFounder();
+  if (!me) throw new Error("Chỉ founder mới xem được danh sách nhân viên.");
   try {
     return await store.listStaff();
   } catch (error) {
@@ -540,16 +504,6 @@ export async function listNoiboShifts(
   if (!me) throw new Error("Cần đăng nhập lại.");
   try {
     return await store.listShiftsBetween(startDate, endDate);
-  } catch (error) {
-    if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
-    throw error;
-  }
-}
-
-/** True when at least one staff account exists (setup gate). */
-export async function hasNoiboStaff(): Promise<boolean> {
-  try {
-    return (await store.countStaff()) > 0;
   } catch (error) {
     if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
     throw error;
