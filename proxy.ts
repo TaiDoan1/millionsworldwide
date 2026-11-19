@@ -72,6 +72,25 @@ function unauthorized(message: string): Response {
 }
 
 export function proxy(request: NextRequest) {
+  // The internal staff pages (/noibo) have their OWN login: one account
+  // per staff member, cookie sessions, managed from /noibo/caidat. They
+  // must never go through the shop admin Basic Auth, so they pass
+  // through here with a request header the root layout reads to skip
+  // the shop chrome (header, cart, floating buttons) for those pages.
+  // The X-Robots-Tag keeps them out of search results.
+  if (
+    request.nextUrl.pathname === "/noibo" ||
+    request.nextUrl.pathname.startsWith("/noibo/")
+  ) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-noibo", "1");
+    const response = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
+
   const user = process.env.ADMIN_USER;
   const pass = process.env.ADMIN_PASS;
 
@@ -120,5 +139,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/mw-office/:path*", "/previewsite/:path*", "/riviewsite/:path*"],
+  matcher: [
+    "/mw-office/:path*",
+    "/previewsite/:path*",
+    "/riviewsite/:path*",
+    "/noibo/:path*",
+  ],
 };

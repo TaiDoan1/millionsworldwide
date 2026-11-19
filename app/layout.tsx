@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { headers } from "next/headers";
 import "./globals.css";
 import Header from "./components/Header";
 import PromoBar from "./components/PromoBar";
@@ -69,6 +70,23 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The internal staff pages (/noibo) are a separate product from the
+  // shop: no shop header, promo strip, cart or floating buttons, and no
+  // catalog/settings fetch. The proxy marks those requests with the
+  // x-noibo request header (see proxy.ts).
+  if ((await headers()).get("x-noibo") === "1") {
+    return (
+      <html lang="vi" className={`${archivo.variable} h-full antialiased`}>
+        <head>
+          <link rel="icon" href="/favicon.png?v=3" type="image/png" />
+          <link rel="shortcut icon" href="/favicon.png?v=3" type="image/x-icon" />
+          <link rel="apple-touch-icon" href="/favicon.png?v=3" />
+        </head>
+        <body className="min-h-full bg-white text-black">{children}</body>
+      </html>
+    );
+  }
+
   // Settings are read here (not just on the homepage) because the promo
   // strip and the header offset below it are site-wide. Every route reads
   // fresh per request, so a promo edit in /mw-office applies immediately.

@@ -79,6 +79,14 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   gốc trong code.
   lỗi thì rơi về seed cho web vẫn mở được, nhưng tính giá đơn thì báo lỗi
   to thay vì tính bằng giá seed cũ.
+- **Trang nội bộ** (`/noibo`, riêng hẳn với `/mw-office`) lưu ở các
+  bảng `noibo_staff`, `noibo_sessions`, `noibo_tasks`,
+  `noibo_shifts`, `noibo_settings` trong Postgres — xem
+  `backend/storage/noibo.ts` và `backend/services/noibo.ts`. Mỗi nhân
+  viên 1 tài khoản riêng (mật khẩu hash scrypt, phiên cookie httpOnly
+  30 ngày, chỉ dùng trong `/noibo`); tài khoản quản lý thêm nhân viên,
+  giao việc, xếp lịch trong `/noibo/caidat`. Không có Postgres thì
+  trang nội bộ báo rõ là chưa dùng được, không ghi sang kho khác.
 - File `app/data/*.json` trong repo chỉ là dữ liệu mẫu/seed — **không dời
   hay đổi tên chúng**: `backend/storage/file.ts` đọc seed từ
   `app/data/settings.json` theo đường dẫn tuyệt đối từ root project, và

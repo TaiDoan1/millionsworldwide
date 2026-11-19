@@ -82,3 +82,56 @@ export type Settings = {
   bankAccountNumber?: string;
   bankAccountName?: string;
 };
+
+/**
+ * Internal staff pages (/noibo). Kept completely apart from the shop
+ * admin (/mw-office): staff log in with their own accounts, managed
+ * from /noibo/caidat by an "admin"-role account.
+ */
+export type NoiboRole = "admin" | "staff";
+
+/** A staff account. password_hash is NEVER selected into this type. */
+export type NoiboStaff = {
+  id: number;
+  username: string;
+  name: string;
+  role: NoiboRole;
+  active: boolean;
+  createdAt: string;
+};
+
+export type NoiboTaskStatus = "todo" | "doing" | "done";
+
+export type NoiboTask = {
+  id: number;
+  title: string;
+  assigneeId: number | null;
+  /** Resolved from the staff table when the task is listed. */
+  assigneeName?: string;
+  /** YYYY-MM-DD, or null when no deadline was set. */
+  dueDate: string | null;
+  status: NoiboTaskStatus;
+  note: string | null;
+  createdBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NoiboShift = {
+  id: number;
+  /** YYYY-MM-DD. */
+  date: string;
+  staffId: number;
+  /** Resolved from the staff table when the shift is listed. */
+  staffName?: string;
+  label: string;
+  note: string | null;
+};
+
+/** Settings for the internal pages, edited in /noibo/caidat. */
+export type NoiboSettings = {
+  /** Announcement banner shown at the top of /noibo. */
+  announcement?: string;
+  /** Shift labels offered in the schedule form, e.g. "Sáng 8h–12h". */
+  shiftTemplates?: string[];
+};
