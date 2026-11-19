@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { NoiboStaff } from "../../backend/storage/types";
+import { LogoutButton } from "./dashboard-client";
 
 /**
  * Shared shell for the internal staff pages (/noibo). Plain server
@@ -32,4 +34,19 @@ export function NoiboNotice({ message }: { message: string }) {
 
 export function NoiboSectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-3 text-base font-bold">{children}</h2>;
+}
+
+/** Greeting header shared by every logged-in /noibo sub-page. */
+export function NoiboHeader({ me }: { me: NoiboStaff }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <h1 className="text-lg font-bold">Xin chào, {me.name}</h1>
+        <p className="text-sm text-black/60">
+          {me.role === "founder" ? "Founder" : "Nhân viên"} · @{me.username}
+        </p>
+      </div>
+      <LogoutButton />
+    </div>
+  );
 }

@@ -82,7 +82,12 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
 - **Trang nội bộ** (`/noibo`, riêng hẳn với `/mw-office`) lưu ở các
   bảng `noibo_staff`, `noibo_sessions`, `noibo_tasks`,
   `noibo_shifts`, `noibo_settings`, `noibo_checkins` trong Postgres — xem
-  `backend/storage/noibo.ts` và `backend/services/noibo.ts`. Mỗi nhân
+  `backend/storage/noibo.ts` và `backend/services/noibo.ts`. Trang
+  nội bộ tách thành nhiều trang con, mỗi trang 1 mục, chung thanh
+  tab `app/noibo/nav.tsx`: `/noibo` Tổng quan (chấm công + thông báo
+  + thẻ tắt), `/noibo/lich` Lịch làm, `/noibo/viec` Công việc,
+  `/noibo/baocao` Báo cáo cuối ngày, `/noibo/giolam` Giờ làm (chỉ
+  founder), `/noibo/caidat` Cài đặt (chỉ founder). Mỗi nhân
   viên 1 tài khoản riêng (mật khẩu hash scrypt, phiên cookie httpOnly
   30 ngày, chỉ dùng trong `/noibo`). Phân quyền 2 chức vụ: `founder`
   (làm mọi việc: thêm nhân viên, giao việc, xếp lịch, đổi cài đặt
@@ -102,7 +107,7 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   bảng Trello 3 cột, kéo thả thẻ giữa các cột để đổi trạng thái (nút
   trạng thái giữ lại cho điện thoại, kéo thả HTML5 không chạy trên
   màn cảm ứng); lịch tuần hiện cả task theo hạn (chấm màu theo trạng
-  thái). Báo cáo cuối ngày: mục "Báo cáo cuối ngày" liệt kê việc
+  thái). Báo cáo cuối ngày: trang `/noibo/baocao` liệt kê việc
   xong hôm nay (task ghi giờ xong khi chuyển sang "Đã xong", chuyển
   lại thì xóa giờ) + tóm tắt viết tay mỗi người mỗi ngày (sửa được),
   founder đọc được của mọi người. Không có Postgres thì

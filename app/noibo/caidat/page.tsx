@@ -5,7 +5,8 @@ import {
   getNoiboSettings,
   listNoiboStaff,
 } from "../../actions/noibo";
-import { NoiboNotice, NoiboSectionTitle, NoiboShell } from "../shell";
+import { NoiboHeader, NoiboNotice, NoiboSectionTitle, NoiboShell } from "../shell";
+import { NoiboNav } from "../nav";
 import NoiboLoginForm from "../NoiboLoginForm";
 import {
   AddStaffForm,
@@ -48,6 +49,8 @@ export default async function NoiboSettingsPage() {
   if (me.role !== "founder") {
     return (
       <NoiboShell>
+        <NoiboHeader me={me} />
+        <NoiboNav isFounder={false} />
         <NoiboNotice message="Chỉ founder mới vào được trang Cài đặt." />
         <p className="mt-4 text-sm">
           <Link href="/noibo" className="underline">
@@ -77,15 +80,10 @@ export default async function NoiboSettingsPage() {
 
   return (
     <NoiboShell>
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-lg font-bold">Cài đặt nội bộ</h1>
-        <Link
-          href="/noibo"
-          className="rounded-lg border border-black/20 px-3 py-1.5 text-sm"
-        >
-          ← Trang nội bộ
-        </Link>
-      </div>
+      <NoiboHeader me={me} />
+      <NoiboNav isFounder />
+
+      <h1 className="mb-3 text-base font-bold">Cài đặt nội bộ</h1>
 
       <section className="mb-10">
         <NoiboSectionTitle>Nhân viên ({staffList.length})</NoiboSectionTitle>
