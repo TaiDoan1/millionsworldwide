@@ -10,15 +10,22 @@
  *   immediately, with no code push and no redeploy. When R2 is
  *   configured (backend/storage/r2.ts) new uploads go to R2 instead
  *   — the volume kept losing them — and the serve route reads R2
- *   when the volume has no copy. Either way the stored path keeps
- *   the "/uploads/<file>" shape.
+ *   when the volume has no copy. Until R2 is configured, new
+ *   uploads are saved in Postgres instead
+ *   (backend/storage/db-images.ts) — the volume lost every uploaded
+ *   photo by 19/11 — and the serve route reads the database when
+ *   the volume has no copy. Either way the stored path keeps the
+ *   "/uploads/<file>" shape.
  * - The database stores ONLY the URL path ("/uploads/<file>" or
  *   "/products/<file>"), never the image bytes: bytes in Postgres
- *   would bloat the database and serve slowly for no benefit.
+ *   would bloat the database and serve slowly for no benefit. The
+ *   one exception is the temporary uploaded_images table above,
+ *   which holds bytes only until R2 takes over.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { dataDir } from "./file";
+import { dbImageExists } from "./db-images";
 import { r2Configured, r2Exists, r2PublicUrl } from "./r2";
 
 /** Uploaded files live under the data dir, next to orders/settings. */
@@ -96,15 +103,26 @@ export function imageFileExists(src: string): boolean {
 
 /**
  * Async version of the save check: "/uploads/<file>" counts when the
- * file is on the volume OR in R2 (when R2 is configured), and a full
- * R2 public URL counts when that object exists. A file that exists
- * nowhere still fails, so a product can never be saved pointing at
- * a photo that was lost — the same rule that caught the 33 broken
- * images, now looking on R2 instead of only on the volume.
+ * file is on the volume OR in the temporary Postgres store OR in R2
+ * (when R2 is configured), and a full R2 public URL counts when that
+ * object exists. A file that exists nowhere still fails, so a product
+ * can never be saved pointing at a photo that was lost — the same
+ * rule that caught the 33 broken images, now looking in the database
+ * too. A database outage is treated as "not in the database" (and
+ * logged) so it cannot block a save for a photo that lives on the
+ * volume or R2.
  */
 export async function imageFileExistsAsync(src: string): Promise<boolean> {
   if (src.startsWith("/uploads/")) {
     if (imageFileExists(src)) return true;
+    try {
+      if (await dbImageExists(src.slice("/uploads/".length))) return true;
+    } catch (error) {
+      console.error(
+        "Failed to check uploaded image in Postgres:",
+        error,
+      );
+    }
     if (!r2Configured()) return false;
     return r2Exists(src.slice("/uploads/".length));
   }

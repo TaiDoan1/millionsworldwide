@@ -9,6 +9,8 @@ import {
   uploadsDir,
 } from "../../../../backend/storage/uploads";
 import { r2Configured, r2Upload } from "../../../../backend/storage/r2";
+import { postgresConfigured } from "../../../../backend/storage/postgres";
+import { saveDbImage } from "../../../../backend/storage/db-images";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +21,11 @@ export const dynamic = "force-dynamic";
  * browser sends the saved login automatically on this origin). The
  * file is validated (type + 5MB), resized to at most 1200px wide so
  * a phone photo doesn't ship at full size, and stored on R2 when it
- * is configured (Cloudflare R2, bucket millions-images) — or on the
- * Railway volume when it isn't; only its URL path is returned — the
- * caller saves that path on the product, and the photo shows on the
- * web immediately.
+ * is configured (Cloudflare R2, bucket millions-images) — or in
+ * Postgres when that is configured (temporary: the Railway volume
+ * kept losing uploads) — or on the Railway volume when neither is;
+ * only its URL path is returned — the caller saves that path on the
+ * product, and the photo shows on the web immediately.
  */
 export async function POST(req: Request) {
   if (!(await isAdminRequest())) {
@@ -88,6 +91,24 @@ export async function POST(req: Request) {
       console.error("Failed to upload image to R2:", error);
       return NextResponse.json(
         { error: "Không up được ảnh lên R2, thử lại nhé." },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ url: `/uploads/${name}` });
+  }
+  // Temporary durable store (19/11): when Postgres is configured the
+  // bytes go there — the volume has lost every uploaded photo so far
+  // (all 57 /uploads/ paths 404), and a volume copy would pass the
+  // save check only to vanish again on the next deploy. A DB failure
+  // is reported, never silently written to the volume. When R2 is
+  // configured the R2 branch above takes over and this never runs.
+  if (postgresConfigured()) {
+    try {
+      await saveDbImage(name, output, file.type);
+    } catch (error) {
+      console.error("Failed to save uploaded image to Postgres:", error);
+      return NextResponse.json(
+        { error: "Không lưu được ảnh, thử lại nhé." },
         { status: 500 },
       );
     }

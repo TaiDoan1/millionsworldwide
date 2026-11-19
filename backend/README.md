@@ -69,7 +69,10 @@ hay chạy trực tiếp code ở đây — trình duyệt chỉ gọi vào nó 
   đó; món lẻ kiểu cũ {id, tên, giá} vẫn đọc được), ảnh bảng size, thông
   số, thứ tự) — sửa, thêm, xóa trong
   /mw-office có hiệu lực ngay, không cần đẩy code. Ảnh tải lên từ admin
-  lưu vào Volume (`<DATA_DIR>/uploads`, phục vụ ở /uploads/ — xem
+  lưu vào R2 khi đã cấu hình, tạm thời lưu vào Postgres (bảng
+  `uploaded_images` — Volume làm mất hết ảnh up lên nên không dùng
+  nữa, xem backend/storage/db-images.ts), còn không thì lưu vào
+  Volume (`<DATA_DIR>/uploads`, phục vụ ở /uploads/ — xem
   backend/storage/uploads.ts) và chỉ lưu đường dẫn vào bảng; ảnh có sẵn
   trong web vẫn kiểm tra file tồn tại trước khi cho lưu. Đọc hiển thị
 - **Danh mục** lưu ở bảng `categories` trong Postgres (mã slug, tên,

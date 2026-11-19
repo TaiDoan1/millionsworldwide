@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import { resolveUploadPath } from "../../../backend/storage/uploads";
+import { getDbImage } from "../../../backend/storage/db-images";
 import { r2Configured, r2Fetch } from "../../../backend/storage/r2";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,10 @@ const CONTENT_TYPES: Record<string, string> = {
  * /mw-office. Public on purpose: these are product photos. The
  * path is resolved strictly inside the uploads directory, so no
  * request can read anything else on disk. The volume copy is tried
- * first; when it is gone (or the photo was uploaded straight to R2)
- * the bytes come from R2 instead, so one "/uploads/<file>" path
- * keeps working across the move.
+ * first; when it is gone (or the photo was saved to Postgres while
+ * R2 was not configured yet) the bytes come from the database
+ * instead; when neither has it, R2 is tried last — so one
+ * "/uploads/<file>" path keeps working across the move.
  */
 export async function GET(
   _req: Request,
@@ -36,8 +38,15 @@ export async function GET(
       const data = await fs.readFile(file);
       return serveImage(data, file);
     } catch {
-      // No volume copy — fall through to R2 below.
+      // No volume copy — fall through to the database below.
     }
+  }
+  try {
+    const stored = await getDbImage(key);
+    if (stored) return serveImage(stored.data, key);
+  } catch (error) {
+    // A database outage must not block R2 photos — fall through.
+    console.error("Failed to read uploaded image from Postgres:", error);
   }
   if (r2Configured()) {
     const data = await r2Fetch(key);
