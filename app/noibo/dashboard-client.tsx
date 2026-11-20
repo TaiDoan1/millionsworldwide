@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createShift,
@@ -434,7 +434,23 @@ export function TaskBoard({
   const [overStatus, setOverStatus] = useState<NoiboTaskStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selected = tasks.find((t) => t.id === selectedId) ?? null;
+  const selectedOverdue =
+    selected !== null &&
+    selected.status !== "done" &&
+    selected.dueDate !== null &&
+    selected.dueDate < today;
+  const selectedCanChange =
+    selected !== null && (isFounder || selected.assigneeId === meId);
+  useEffect(() => {
+    if (selectedId === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId]);
 
   async function dropOn(status: NoiboTaskStatus) {
     const id = dragId;
@@ -531,15 +547,11 @@ export function TaskBoard({
                         setOverStatus(null);
                       }}
                       onClick={(e) => {
-                        // Clicks on buttons/selects keep their own action;
-                        // a click anywhere else toggles the detail view.
-                        if (
-                          (e.target as HTMLElement).closest(
-                            "button, select, input, a, textarea, label"
-                          )
-                        )
+                        // The delete button keeps its own action; a click
+                        // anywhere else opens the detail popup.
+                        if ((e.target as HTMLElement).closest("button"))
                           return;
-                        setExpandedId(expandedId === t.id ? null : t.id);
+                        setSelectedId(t.id);
                       }}
                       className={`rounded-lg border border-black/10 bg-white p-3 ${
                         dragId === t.id ? "opacity-40" : ""
@@ -557,7 +569,7 @@ export function TaskBoard({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p
-                          className={`text-sm font-medium ${
+                          className={`line-clamp-2 text-sm font-medium ${
                             status === "done"
                               ? "line-through text-black/50"
                               : ""
@@ -593,66 +605,6 @@ export function TaskBoard({
                           </span>
                         ) : null}
                       </p>
-                      {expandedId === t.id ? (
-                        <div className="mt-2 rounded-lg bg-black/[0.03] p-2 text-xs text-black/70">
-                          {t.note ? (
-                            <p className="whitespace-pre-wrap">{t.note}</p>
-                          ) : (
-                            <p className="text-black/40">Không có ghi chú.</p>
-                          )}
-                          <p className="mt-1">
-                            Tạo bởi {t.createdByName ?? "—"} ·{" "}
-                            {vnDateOf(t.createdAt)}
-                          </p>
-                          {t.completedAt ? (
-                            <p className="mt-1 font-semibold text-green-700">
-                              Xong lúc {vnDateOf(t.completedAt)}{" "}
-                              {vnTimeOf(t.completedAt)}
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : null}
-                      <p className="mt-2 text-xs text-black/40">
-                        {expandedId === t.id ? "Thu gọn ▴" : "Xem chi tiết ▾"}
-                      </p>
-                      {canChange ? (
-                        <div className="mt-2">
-                          <TaskStatusButtons taskId={t.id} status={t.status} />
-                        </div>
-                      ) : null}
-                      {isFounder ? (
-                        <label className="mt-2 flex items-center gap-2 text-xs text-black/60">
-                          Ưu tiên
-                          <select
-                            value={t.priority}
-                            disabled={busy}
-                            onChange={async (e) => {
-                              const next = e.target
-                                .value as NoiboTaskPriority;
-                              if (next === t.priority) return;
-                              setError(null);
-                              setBusy(true);
-                              const result = await updateTaskPriority(
-                                t.id,
-                                next
-                              );
-                              setBusy(false);
-                              if (!result.success) {
-                                setError(
-                                  result.error ??
-                                    "Đổi mức ưu tiên không được."
-                                );
-                                return;
-                              }
-                              router.refresh();
-                            }}
-                            className="rounded-lg border border-black/20 px-2 py-1 text-xs"
-                          >
-                            <option value="high">Ưu tiên</option>
-                            <option value="normal">Bình thường</option>
-                          </select>
-                        </label>
-                      ) : null}
                     </li>
                   );
                 })}
@@ -664,6 +616,122 @@ export function TaskBoard({
           );
         })}
       </div>
+      {selected ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedId(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={selected.title}
+            className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
+                  Chi tiết công việc
+                </p>
+                <h3
+                  className={`mt-1 text-base font-semibold ${
+                    selected.status === "done"
+                      ? "line-through text-black/50"
+                      : ""
+                  }`}
+                >
+                  {selected.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedId(null)}
+                aria-label="Đóng"
+                className="rounded-full border border-black/20 px-2.5 py-1 text-sm leading-none text-black/60"
+              >
+                ×
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-black/60">
+              {selected.assigneeName
+                ? `Giao cho ${selected.assigneeName}`
+                : "Chưa giao ai"}
+              {selected.dueDate ? ` · Hạn ${selected.dueDate}` : ""}
+              {selected.priority === "high" ? (
+                <span className="ml-1 font-semibold text-red-600">
+                  · Ưu tiên
+                </span>
+              ) : (
+                <span className="ml-1 font-semibold text-yellow-600">
+                  · Bình thường
+                </span>
+              )}
+              {selectedOverdue ? (
+                <span className="ml-1 font-semibold text-red-600">
+                  · Quá hạn
+                </span>
+              ) : null}
+            </p>
+            <div className="mt-3 rounded-lg bg-black/[0.03] p-3 text-sm text-black/70">
+              {selected.note ? (
+                <p className="whitespace-pre-wrap">{selected.note}</p>
+              ) : (
+                <p className="text-black/40">Không có ghi chú.</p>
+              )}
+              <p className="mt-2 text-xs">
+                Tạo bởi {selected.createdByName ?? "—"} ·{" "}
+                {vnDateOf(selected.createdAt)}
+              </p>
+              {selected.completedAt ? (
+                <p className="mt-1 text-xs font-semibold text-green-700">
+                  Xong lúc {vnDateOf(selected.completedAt)}{" "}
+                  {vnTimeOf(selected.completedAt)}
+                </p>
+              ) : null}
+            </div>
+            {selectedCanChange ? (
+              <div className="mt-4">
+                <p className="mb-2 text-xs text-black/60">Trạng thái</p>
+                <TaskStatusButtons
+                  taskId={selected.id}
+                  status={selected.status}
+                />
+              </div>
+            ) : null}
+            {isFounder ? (
+              <label className="mt-4 flex items-center gap-2 text-xs text-black/60">
+                Ưu tiên
+                <select
+                  value={selected.priority}
+                  disabled={busy}
+                  onChange={async (e) => {
+                    const next = e.target.value as NoiboTaskPriority;
+                    if (next === selected.priority) return;
+                    setError(null);
+                    setBusy(true);
+                    const result = await updateTaskPriority(
+                      selected.id,
+                      next
+                    );
+                    setBusy(false);
+                    if (!result.success) {
+                      setError(result.error ?? "Đổi mức ưu tiên không được.");
+                      return;
+                    }
+                    router.refresh();
+                  }}
+                  className="rounded-lg border border-black/20 px-2 py-1 text-xs"
+                >
+                  <option value="high">Ưu tiên</option>
+                  <option value="normal">Bình thường</option>
+                </select>
+              </label>
+            ) : null}
+            {error ? (
+              <p className="mt-3 text-xs text-red-600">{error}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
