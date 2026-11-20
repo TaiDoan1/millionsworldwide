@@ -59,7 +59,7 @@ export function validateTaskNote(note: string | null): string | null {
 
 /** Priority must be one of the three levels; anything else is rejected. */
 export function validateTaskPriority(value: unknown): string | null {
-  if (value !== "high" && value !== "medium" && value !== "low") {
+  if (value !== "high" && value !== "normal") {
     return "Mức ưu tiên không hợp lệ.";
   }
   return null;

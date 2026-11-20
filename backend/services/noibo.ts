@@ -350,8 +350,9 @@ export async function deleteStaff(id: number): Promise<Result> {
 }
 
 /**
- * Create a task. Founders assign to anyone (or no one) and set the
- * priority; staff create tasks for themselves at medium priority.
+ * Create a task. Founders assign to anyone (or no one); staff create
+ * tasks for themselves. Whoever creates the task picks its priority
+ * tag; changing the tag afterwards stays founder-only.
  */
 export async function createTask(input: {
   title: string;
@@ -365,15 +366,12 @@ export async function createTask(input: {
   const assigneeId =
     me.role === "founder" ? input.assigneeId : me.id;
   const rawPriority =
-    typeof input.priority === "string" ? input.priority : "medium";
-  if (me.role === "founder") {
-    const badPriority = validateTaskPriority(rawPriority);
-    if (badPriority) return { success: false, error: badPriority };
-  }
-  const priority: NoiboTaskPriority =
-    me.role === "founder"
-      ? (rawPriority as NoiboTaskPriority)
-      : "medium";
+    typeof input.priority === "string" ? input.priority : "normal";
+  const badPriority = validateTaskPriority(rawPriority);
+  if (badPriority) return { success: false, error: badPriority };
+  // Whoever creates the task picks its priority tag — founders and
+  // staff alike. Changing the tag afterwards stays founder-only.
+  const priority = rawPriority as NoiboTaskPriority;
   const title = typeof input.title === "string" ? input.title.trim() : "";
   const badTitle = validateTaskTitle(title);
   if (badTitle) return { success: false, error: badTitle };
@@ -381,7 +379,10 @@ export async function createTask(input: {
     typeof input.dueDate === "string" && input.dueDate.trim() !== ""
       ? input.dueDate.trim()
       : null;
-  if (dueDate !== null && !isValidDateString(dueDate)) {
+  if (dueDate === null) {
+    return { success: false, error: "Nhập hạn xong cho công việc nhé." };
+  }
+  if (!isValidDateString(dueDate)) {
     return { success: false, error: "Hạn xong không đúng định dạng ngày." };
   }
   const note =
@@ -443,8 +444,8 @@ export async function updateTaskStatus(
 }
 
 /**
- * Change a task's priority. Founder-only — staff keep the priority
- * the founder set (their own tasks stay at medium).
+ * Change a task's priority. Founder-only — staff pick the tag when
+ * they create the task, but only the founder changes it afterwards.
  */
 export async function updateTaskPriority(
   id: number,

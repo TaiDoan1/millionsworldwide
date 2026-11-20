@@ -16,7 +16,7 @@ import {
   type NoiboTaskPriority,
   type NoiboTaskStatus,
 } from "../actions/noibo";
-import { dayLabel } from "./week";
+import { dayLabel, vnDateOf, vnTimeOf } from "./week";
 
 /** Small inline feedback line used by the forms below. */
 function FormMessage({ msg }: { msg: { ok: boolean; text: string } | null }) {
@@ -160,7 +160,7 @@ export function AddTaskForm({
   const [title, setTitle] = useState("");
   const [assigneeId, setAssigneeId] = useState(isFounder ? "" : String(me.id));
   const [dueDate, setDueDate] = useState("");
-  const [priority, setPriority] = useState<NoiboTaskPriority>("medium");
+  const [priority, setPriority] = useState<NoiboTaskPriority>("normal");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -184,7 +184,7 @@ export function AddTaskForm({
     setTitle("");
     setAssigneeId(isFounder ? "" : String(me.id));
     setDueDate("");
-    setPriority("medium");
+    setPriority("normal");
     setNote("");
     setMsg({ ok: true, text: isFounder ? "Đã giao việc." : "Đã tạo việc." });
     router.refresh();
@@ -227,32 +227,32 @@ export function AddTaskForm({
             </label>
           )}
           <label className="flex-1">
-            <span className="mb-1 block text-xs text-black/60">Hạn xong</span>
+            <span className="mb-1 block text-xs text-black/60">
+              Hạn xong *
+            </span>
             <input
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
+              required
             />
           </label>
-          {isFounder && (
-            <label className="flex-1">
-              <span className="mb-1 block text-xs text-black/60">
-                Mức ưu tiên
-              </span>
-              <select
-                value={priority}
-                onChange={(e) =>
-                  setPriority(e.target.value as NoiboTaskPriority)
-                }
-                className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
-              >
-                <option value="high">Ưu tiên cao</option>
-                <option value="medium">Trung bình</option>
-                <option value="low">Thấp</option>
-              </select>
-            </label>
-          )}
+          <label className="flex-1">
+            <span className="mb-1 block text-xs text-black/60">
+              Mức ưu tiên
+            </span>
+            <select
+              value={priority}
+              onChange={(e) =>
+                setPriority(e.target.value as NoiboTaskPriority)
+              }
+              className="w-full rounded-lg border border-black/20 p-2.5 text-sm"
+            >
+              <option value="high">Ưu tiên</option>
+              <option value="normal">Bình thường</option>
+            </select>
+          </label>
         </div>
         <input
           value={note}
@@ -434,6 +434,7 @@ export function TaskBoard({
   const [overStatus, setOverStatus] = useState<NoiboTaskStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   async function dropOn(status: NoiboTaskStatus) {
     const id = dragId;
@@ -457,9 +458,35 @@ export function TaskBoard({
     return <p className="text-sm text-black/40">Chưa có công việc nào.</p>;
   }
 
+  const doneCount = tasks.filter((t) => t.status === "done").length;
+  const pct = Math.round((doneCount / tasks.length) * 100);
+
   return (
     <div>
       {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
+      <div className="mb-4">
+        <div className="mb-1 flex items-center justify-between text-sm">
+          <span className="font-medium">
+            {isFounder ? "Tiến độ chung" : "Tiến độ của bạn"}
+          </span>
+          <span className="text-black/60">
+            Đã xong {doneCount}/{tasks.length} ({pct}%)
+          </span>
+        </div>
+        <div
+          className="h-2 w-full overflow-hidden rounded-full bg-black/10"
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Tiến độ công việc"
+        >
+          <div
+            className="h-full rounded-full bg-black"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
       <div className="grid gap-4 md:grid-cols-3">
         {BOARD_ORDER.map((status) => {
           const group = tasks.filter((t) => t.status === status);
@@ -503,16 +530,29 @@ export function TaskBoard({
                         setDragId(null);
                         setOverStatus(null);
                       }}
+                      onClick={(e) => {
+                        // Clicks on buttons/selects keep their own action;
+                        // a click anywhere else toggles the detail view.
+                        if (
+                          (e.target as HTMLElement).closest(
+                            "button, select, input, a, textarea, label"
+                          )
+                        )
+                          return;
+                        setExpandedId(expandedId === t.id ? null : t.id);
+                      }}
                       className={`rounded-lg border border-black/10 bg-white p-3 ${
                         dragId === t.id ? "opacity-40" : ""
                       } ${
-                        t.priority === "high"
-                          ? "border-l-4 border-l-red-600"
-                          : ""
+                        status === "done"
+                          ? "border-l-4 border-l-green-600"
+                          : t.priority === "high"
+                            ? "border-l-4 border-l-red-600"
+                            : "border-l-4 border-l-yellow-500"
                       } ${
                         canChange
                           ? "cursor-grab active:cursor-grabbing"
-                          : ""
+                          : "cursor-pointer"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -540,20 +580,41 @@ export function TaskBoard({
                         {t.dueDate ? ` · Hạn ${t.dueDate}` : ""}
                         {t.priority === "high" ? (
                           <span className="ml-1 font-semibold text-red-600">
-                            · Ưu tiên cao
+                            · Ưu tiên
                           </span>
-                        ) : t.priority === "low" ? (
-                          <span className="ml-1">· Ưu tiên thấp</span>
-                        ) : null}
+                        ) : (
+                          <span className="ml-1 font-semibold text-yellow-600">
+                            · Bình thường
+                          </span>
+                        )}
                         {overdue ? (
                           <span className="ml-1 font-semibold text-red-600">
                             · Quá hạn
                           </span>
                         ) : null}
                       </p>
-                      {t.note ? (
-                        <p className="mt-1 text-xs text-black/50">{t.note}</p>
+                      {expandedId === t.id ? (
+                        <div className="mt-2 rounded-lg bg-black/[0.03] p-2 text-xs text-black/70">
+                          {t.note ? (
+                            <p className="whitespace-pre-wrap">{t.note}</p>
+                          ) : (
+                            <p className="text-black/40">Không có ghi chú.</p>
+                          )}
+                          <p className="mt-1">
+                            Tạo bởi {t.createdByName ?? "—"} ·{" "}
+                            {vnDateOf(t.createdAt)}
+                          </p>
+                          {t.completedAt ? (
+                            <p className="mt-1 font-semibold text-green-700">
+                              Xong lúc {vnDateOf(t.completedAt)}{" "}
+                              {vnTimeOf(t.completedAt)}
+                            </p>
+                          ) : null}
+                        </div>
                       ) : null}
+                      <p className="mt-2 text-xs text-black/40">
+                        {expandedId === t.id ? "Thu gọn ▴" : "Xem chi tiết ▾"}
+                      </p>
                       {canChange ? (
                         <div className="mt-2">
                           <TaskStatusButtons taskId={t.id} status={t.status} />
@@ -587,9 +648,8 @@ export function TaskBoard({
                             }}
                             className="rounded-lg border border-black/20 px-2 py-1 text-xs"
                           >
-                            <option value="high">Ưu tiên cao</option>
-                            <option value="medium">Trung bình</option>
-                            <option value="low">Thấp</option>
+                            <option value="high">Ưu tiên</option>
+                            <option value="normal">Bình thường</option>
                           </select>
                         </label>
                       ) : null}

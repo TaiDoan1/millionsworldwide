@@ -137,9 +137,13 @@ export default async function NoiboBaocaoPage({
                   ) : null}
                   {t.priority === "high" ? (
                     <span className="font-semibold text-red-600">
-                      {" · Ưu tiên cao"}
+                      {" · Ưu tiên"}
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="font-semibold text-yellow-600">
+                      {" · Bình thường"}
+                    </span>
+                  )}
                 </span>
               </li>
             ))}

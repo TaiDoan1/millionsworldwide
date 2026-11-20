@@ -215,13 +215,13 @@ export default async function NoiboLichPage({
                           ) : null}
                           {t.priority === "high" ? (
                             <span className="font-semibold text-red-600">
-                              {" · Ưu tiên cao"}
+                              {" · Ưu tiên"}
                             </span>
-                          ) : t.priority === "low" ? (
-                            <span className="text-black/50">
-                              {" · Ưu tiên thấp"}
+                          ) : (
+                            <span className="font-semibold text-yellow-600">
+                              {" · Bình thường"}
                             </span>
-                          ) : null}
+                          )}
                         </span>
                       </li>
                     ))}

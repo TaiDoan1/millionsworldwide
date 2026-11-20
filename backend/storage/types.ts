@@ -105,7 +105,7 @@ export type NoiboStaff = {
 export type NoiboTaskStatus = "todo" | "doing" | "done";
 
 /** Task priority: only the founder sets it when assigning work. */
-export type NoiboTaskPriority = "high" | "medium" | "low";
+export type NoiboTaskPriority = "high" | "normal";
 
 export type NoiboTask = {
   id: number;
@@ -116,10 +116,12 @@ export type NoiboTask = {
   /** YYYY-MM-DD, or null when no deadline was set. */
   dueDate: string | null;
   status: NoiboTaskStatus;
-  /** "medium" when the task was created before priorities existed. */
+  /** "high" = Ưu tiên (đỏ), "normal" = Bình thường (vàng). */
   priority: NoiboTaskPriority;
   note: string | null;
   createdBy: number | null;
+  /** Resolved from the staff table when the task is listed. */
+  createdByName?: string;
   createdAt: string;
   updatedAt: string;
   /** ISO timestamp when the task last reached "done" (null otherwise). */

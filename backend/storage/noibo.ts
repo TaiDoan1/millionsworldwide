@@ -53,7 +53,7 @@ const SCHEMA = `
     assignee_id INTEGER,
     due_date TEXT,
     status TEXT NOT NULL,
-    priority TEXT NOT NULL DEFAULT 'medium',
+    priority TEXT NOT NULL DEFAULT 'normal',
     note TEXT,
     created_by INTEGER,
     created_at TEXT NOT NULL,
@@ -123,15 +123,18 @@ export async function migrateTaskCompletedAt(): Promise<void> {
 
 /**
  * Add priority to tasks created before priority tags existed. Old rows
- * get "medium" (the default), so nothing ever reads as priority-less.
+ * get "normal" (the default), so nothing ever reads as priority-less.
  */
 export async function migrateTaskPriority(): Promise<void> {
   const pool = getPostgresPool();
   await pool.query(
-    "ALTER TABLE noibo_tasks ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium'"
+    "ALTER TABLE noibo_tasks ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'normal'"
   );
+  // Priorities used to have three levels (high/medium/low); since
+  // 2026-11-20 there are only two — "high" (Ưu tiên) and "normal"
+  // (Bình thường). Old medium/low rows become normal.
   await pool.query(
-    "UPDATE noibo_tasks SET priority = 'medium' WHERE priority IS NULL"
+    "UPDATE noibo_tasks SET priority = 'normal' WHERE priority IS NULL OR priority IN ('medium', 'low')"
   );
 }
 
@@ -366,6 +369,7 @@ type TaskRow = {
   priority: string | null;
   note: string | null;
   created_by: number | null;
+  created_by_name: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -380,14 +384,10 @@ function taskFromRow(r: TaskRow): NoiboTask {
     dueDate: r.due_date,
     status:
       r.status === "doing" ? "doing" : r.status === "done" ? "done" : "todo",
-    priority:
-      r.priority === "high"
-        ? "high"
-        : r.priority === "low"
-          ? "low"
-          : "medium",
+    priority: r.priority === "high" ? "high" : "normal",
     note: r.note,
     createdBy: r.created_by,
+    createdByName: r.created_by_name ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     completedAt: r.completed_at,
@@ -395,9 +395,10 @@ function taskFromRow(r: TaskRow): NoiboTask {
 }
 
 const TASK_COLUMNS = `t.id, t.title, t.assignee_id, st.name AS assignee_name,
-  t.due_date, t.status, t.priority, t.note, t.created_by, t.created_at, t.updated_at,
+  t.due_date, t.status, t.priority, t.note, t.created_by, cr.name AS created_by_name, t.created_at, t.updated_at,
   t.completed_at
-  FROM noibo_tasks t LEFT JOIN noibo_staff st ON st.id = t.assignee_id`;
+  FROM noibo_tasks t LEFT JOIN noibo_staff st ON st.id = t.assignee_id
+  LEFT JOIN noibo_staff cr ON cr.id = t.created_by`;
 
 export async function listTasks(): Promise<NoiboTask[]> {
   await ensureNoiboInit();
@@ -405,7 +406,7 @@ export async function listTasks(): Promise<NoiboTask[]> {
     `SELECT ${TASK_COLUMNS}
      ORDER BY
        CASE t.status WHEN 'todo' THEN 0 WHEN 'doing' THEN 1 ELSE 2 END,
-       CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
+       CASE t.priority WHEN 'high' THEN 0 ELSE 1 END,
        (t.due_date IS NULL), t.due_date, t.id DESC`
   );
   return result.rows.map(taskFromRow);

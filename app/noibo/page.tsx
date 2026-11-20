@@ -158,24 +158,44 @@ export default async function NoiboPage() {
             <p className="text-sm text-black/40">Chưa có nhân viên nào.</p>
           ) : (
             <ul className="space-y-2">
-              {progress.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/10 p-3 text-sm"
-                >
-                  <span className="font-medium">{r.name}</span>
-                  <span className="text-black/60">
-                    Đã xong {r.done}/{r.total}
-                    {" · "}Đang làm {r.doing}
-                    {r.overdue > 0 ? (
-                      <span className="font-semibold text-red-600">
-                        {" · "}
-                        {r.overdue} việc quá hạn
+              {progress.map((r) => {
+                const pct =
+                  r.total > 0 ? Math.round((r.done / r.total) * 100) : 0;
+                return (
+                  <li
+                    key={r.id}
+                    className="space-y-2 rounded-lg border border-black/10 p-3 text-sm"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-black/60">
+                        Đã xong {r.done}/{r.total}
+                        {r.total > 0 ? ` (${pct}%)` : ""}
+                        {" · "}Đang làm {r.doing}
+                        {r.overdue > 0 ? (
+                          <span className="font-semibold text-red-600">
+                            {" · "}
+                            {r.overdue} việc quá hạn
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
+                    </div>
+                    <div
+                      className="h-2 w-full overflow-hidden rounded-full bg-black/10"
+                      role="progressbar"
+                      aria-valuenow={pct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Tiến độ của ${r.name}`}
+                    >
+                      <div
+                        className="h-full rounded-full bg-black"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
               {unassignedCount > 0 ? (
                 <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/10 p-3 text-sm">
                   <span className="font-medium">Chưa giao ai</span>
