@@ -629,7 +629,12 @@ export async function listNoiboTasks(): Promise<NoiboTask[]> {
   const me = await getNoiboSessionStaff();
   if (!me) throw new Error("Cần đăng nhập lại.");
   try {
-    return await store.listTasks();
+    const tasks = await store.listTasks();
+    // Staff only ever see their own tasks — the board, the week
+    // calendar and the report all read through this list. Founders
+    // see the whole board, including unassigned tasks.
+    if (me.role === "founder") return tasks;
+    return tasks.filter((t) => t.assigneeId === me.id);
   } catch (error) {
     if (isPostgresMissing(error)) throw new Error(NO_POSTGRES_MESSAGE);
     throw error;

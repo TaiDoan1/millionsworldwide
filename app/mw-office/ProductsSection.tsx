@@ -44,7 +44,7 @@ export default async function ProductsSection() {
     <AdminSection
       id="san-pham"
       title={`Sản phẩm & Danh mục${products ? ` (${products.length})` : ""}`}
-      description="Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size, màu, món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong form (lưu vào Volume của web, hiện ngay sau khi lưu); ảnh có sẵn trong web thì ghi đường dẫn tay."
+      description="Sửa giá, giá gốc, tên, danh mục, hết hàng, đặt trước, ẩn/hiện, size, màu, món lẻ trong set (link sản phẩm riêng) và thông số từng món — đổi có hiệu lực ngay trên web, không cần đẩy code. Ảnh mới tải lên bằng nút trong form (lưu vào R2 của web, hiện ngay sau khi lưu); ảnh có sẵn trong web thì ghi đường dẫn tay."
     >
       {error || !products ? (
         <p className="text-sm text-gray-400">

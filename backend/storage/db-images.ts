@@ -96,3 +96,19 @@ export async function dbImageExists(key: string): Promise<boolean> {
   );
   return result.rows.length > 0;
 }
+
+/**
+ * Delete one stored photo's row. Returns true when a row was removed,
+ * false when Postgres is not configured or the key was not stored.
+ * Used by the orphan cleanup after a product save/delete drops the
+ * last reference to an uploaded photo.
+ */
+export async function deleteDbImage(key: string): Promise<boolean> {
+  if (!postgresConfigured()) return false;
+  await ensureDbImagesInit();
+  const result = await getPostgresPool().query(
+    "DELETE FROM uploaded_images WHERE key = $1",
+    [key],
+  );
+  return (result.rowCount ?? 0) > 0;
+}

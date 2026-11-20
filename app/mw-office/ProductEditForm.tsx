@@ -175,9 +175,10 @@ export default function ProductEditForm({
         <ImageUpload onUploaded={(url) => setImages([...images, url])} />
         <Hint>
           Kéo thả ảnh để xếp thứ tự hiển thị (ảnh đầu là ảnh chính); trên
-          điện thoại dùng nút ‹ › dưới mỗi ảnh. Ảnh tải lên lưu vào Volume
-          của web và hiện ngay sau khi bấm Lưu sản phẩm. Xóa ảnh ở đây chỉ
-          gỡ khỏi sản phẩm, file vẫn còn trên web.
+          điện thoại dùng nút ‹ › dưới mỗi ảnh. Ảnh tải lên lưu vào R2
+          của web và hiện ngay sau khi bấm Lưu sản phẩm. Xóa ảnh ở đây
+          sẽ gỡ khỏi sản phẩm, và file cũng bị xóa khỏi R2 khi lưu nếu
+          không còn sản phẩm nào dùng tới.
         </Hint>
       </div>
       <div>

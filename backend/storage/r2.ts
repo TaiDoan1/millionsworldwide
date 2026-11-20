@@ -22,7 +22,12 @@
  * same path, the serve route reads R2 when the volume has no copy,
  * and the save check looks the file up on R2.
  */
-import { HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 function env(name: string): string {
   return (process.env[name] ?? "").trim();
@@ -120,6 +125,25 @@ export async function r2Head(key: string): Promise<boolean> {
     );
     return true;
   } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete one object from R2. Returns false when R2 is not configured
+ * or the delete fails — cleanup is best-effort and must never fail the
+ * product save that triggered it. (S3 DeleteObject is idempotent, so
+ * deleting a key that is already gone still counts as success.)
+ */
+export async function r2Delete(key: string): Promise<boolean> {
+  if (!r2Configured()) return false;
+  try {
+    await r2Client().send(
+      new DeleteObjectCommand({ Bucket: env("R2_BUCKET"), Key: key }),
+    );
+    return true;
+  } catch (error) {
+    console.error(`Failed to delete ${key} from R2:`, error);
     return false;
   }
 }

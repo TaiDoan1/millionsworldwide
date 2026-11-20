@@ -25,8 +25,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { dataDir } from "./file";
-import { dbImageExists } from "./db-images";
-import { r2Configured, r2Exists, r2PublicUrl } from "./r2";
+import { dbImageExists, deleteDbImage } from "./db-images";
+import { r2Configured, r2Delete, r2Exists, r2PublicUrl } from "./r2";
 
 /** Uploaded files live under the data dir, next to orders/settings. */
 export function uploadsDir(): string {
@@ -136,4 +136,37 @@ export async function imageFileExistsAsync(src: string): Promise<boolean> {
   }
   if (!src.startsWith("/") || src.includes("..")) return false;
   return fs.existsSync(path.join(process.cwd(), "public", src));
+}
+
+/**
+ * Delete one "/uploads/<file>" photo from every store that may hold
+ * it: R2 (when configured), the temporary Postgres store, and the
+ * volume. Best-effort — each store is tried independently and a
+ * failure is logged, never thrown — so a cleanup failure can never
+ * fail the product save that triggered it. Paths outside /uploads/
+ * are ignored: code-shipped "/products/..." photos must never be
+ * deleted from here.
+ */
+export async function deleteUploadedFile(src: string): Promise<void> {
+  if (!src.startsWith("/uploads/")) return;
+  const key = src.slice("/uploads/".length);
+  if (!key || key.includes("..")) return;
+  if (r2Configured()) {
+    await r2Delete(key);
+  }
+  try {
+    await deleteDbImage(key);
+  } catch (error) {
+    console.error(`Failed to delete ${src} from Postgres:`, error);
+  }
+  const file = resolveUploadPath(src);
+  if (file) {
+    try {
+      await fs.promises.unlink(file);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        console.error(`Failed to delete ${src} from volume:`, error);
+      }
+    }
+  }
 }

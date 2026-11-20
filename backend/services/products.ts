@@ -20,7 +20,7 @@ import {
   type ProductPiece,
 } from "../../app/data/products";
 import { postgresConfigured } from "../storage/postgres";
-import { imageFileExistsAsync } from "../storage/uploads";
+import { deleteUploadedFile, imageFileExistsAsync } from "../storage/uploads";
 import {
   deleteProduct as deleteStoredProduct,
   getProduct as getStoredProduct,
@@ -157,8 +157,12 @@ export async function updateProduct(
         }
       }
     }
+    const oldProduct = await readProductForCleanup(id);
     const found = await updateStoredProduct(id, clean);
     if (!found) return { success: false, error: "Không tìm thấy sản phẩm." };
+    if (oldProduct) {
+      await deleteOrphanedUploads(uploadPathsOf(oldProduct));
+    }
     revalidateProductPages(id);
     return { success: true };
   } catch (error) {
@@ -271,8 +275,12 @@ export async function deleteProduct(
     return { success: false, error: "Cần kết nối Postgres để xóa sản phẩm." };
   }
   try {
+    const oldProduct = await readProductForCleanup(id);
     const found = await deleteStoredProduct(id);
     if (!found) return { success: false, error: "Không tìm thấy sản phẩm." };
+    if (oldProduct) {
+      await deleteOrphanedUploads(uploadPathsOf(oldProduct));
+    }
     revalidateProductPages(id);
     return { success: true };
   } catch (error) {
@@ -388,6 +396,69 @@ async function findPieceProblem(
     }
   }
   return null;
+}
+
+/** Every "/uploads/..." path a product points at: gallery, size chart,
+ *  per-color photos and per-piece photos. Linked pieces carry no photos
+ *  of their own — the linked product's paths are counted through that
+ *  product itself. */
+function uploadPathsOf(p: Product): string[] {
+  const out: string[] = [...(p.images ?? [])];
+  if (p.sizeChart) out.push(p.sizeChart);
+  for (const c of p.colors ?? []) out.push(...(c.images ?? []));
+  for (const pc of p.pieces ?? []) {
+    if (!isLinkedPiece(pc)) out.push(...(pc.images ?? []));
+  }
+  return out;
+}
+
+/**
+ * Read a product for the orphan cleanup, including hidden ones (the
+ * storage getProduct hides them). Never throws — when the read fails
+ * the save still goes through and the cleanup is simply skipped.
+ */
+async function readProductForCleanup(id: string): Promise<Product | null> {
+  try {
+    return (await listStoredProducts(true)).find((p) => p.id === id) ?? null;
+  } catch (error) {
+    console.error("Failed to read product for upload cleanup:", error);
+    return null;
+  }
+}
+
+/**
+ * Delete uploaded files that no product points at any more. Runs after
+ * a product save/delete succeeds: the candidates are the old
+ * product's uploads, minus every path the live catalog still
+ * references. A file shared by two products (or used twice in one
+ * product — gallery + size chart, say) is kept until its last
+ * reference is gone. Best-effort — a failed delete is logged, never
+ * fails the save.
+ */
+async function deleteOrphanedUploads(oldPaths: string[]): Promise<void> {
+  const candidates = [...new Set(oldPaths)].filter((s) =>
+    s.startsWith("/uploads/"),
+  );
+  if (candidates.length === 0) return;
+  let all: Product[];
+  try {
+    all = await listStoredProducts(true);
+  } catch (error) {
+    console.error("Failed to list products for upload cleanup:", error);
+    return;
+  }
+  const stillUsed = new Set<string>();
+  for (const p of all) {
+    for (const s of uploadPathsOf(p)) stillUsed.add(s);
+  }
+  for (const src of candidates) {
+    if (stillUsed.has(src)) continue;
+    try {
+      await deleteUploadedFile(src);
+    } catch (error) {
+      console.error(`Failed to delete orphaned upload ${src}:`, error);
+    }
+  }
 }
 
 function revalidateProductPages(id: string) {
